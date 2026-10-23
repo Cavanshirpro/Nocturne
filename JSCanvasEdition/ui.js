@@ -58,7 +58,7 @@
       document.getElementById('grimoire-button').addEventListener('click',()=>this.toggleGrimoire());
       document.addEventListener('keydown',e=>{
         if(e.code!=='Tab'||this.overlay.hidden)return;
-        const buttons=[...this.menu.querySelectorAll('button:not(:disabled)')];if(!buttons.length)return;
+        const buttons=[...this.menu.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled)')];if(!buttons.length)return;
         const first=buttons[0],last=buttons.at(-1);
         if(e.shiftKey&&(document.activeElement===first||!this.menu.contains(document.activeElement))){e.preventDefault();last.focus();}
         else if(!e.shiftKey&&(document.activeElement===last||!this.menu.contains(document.activeElement))){e.preventDefault();first.focus();}
@@ -68,22 +68,36 @@
     describe(item){return typeof item.text==='function'?item.text(this.game.player):item.text;}
     resetShop(){this.slots=Array.from({length:4},()=>({item:null,locked:false,price:0}));this.rolls=0;}
     show(html,focus=true){
+      this.transition?.cancel();
       this.overlay.hidden=false;this.menu.innerHTML=html;this.overlay.scrollTop=0;this.menu.scrollTop=0;
+      if(!this.game.reducedMotion&&this.menu.animate)this.transition=this.menu.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:170,easing:'cubic-bezier(.2,.7,.3,1)'});
       document.getElementById('wave-banner').classList.remove('visible');
       document.getElementById('game').inert=true;
       document.getElementById('hud').inert=true;
       if(focus)this.menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
     }
-    hide(){this.overlay.hidden=true;document.getElementById('game').inert=false;document.getElementById('hud').inert=false;document.getElementById('pause-button').focus({preventScroll:true});}
-    on(selector,fn){this.menu.querySelector(selector)?.addEventListener('click',fn);}
+    hide(){this.transition?.cancel();this.overlay.hidden=true;document.getElementById('game').inert=false;document.getElementById('hud').inert=false;document.getElementById('pause-button').focus({preventScroll:true});}
+    on(selector,fn){this.menu.querySelector(selector)?.addEventListener('click',e=>{this.game.combat.sound('ui');fn(e);});}
+    audioControls(){
+      const engine=this.game.combat.audioEngine;
+      return `<div class="audio-settings"><label for="volume">SOUND VOLUME <strong id="volume-value">${Math.round(engine.volume*100)}%</strong><input id="volume" type="range" min="0" max="100" step="1" value="${Math.round(engine.volume*100)}" aria-label="Sound volume"></label><button class="secondary" id="ambience">AMBIENCE: ${engine.ambience?'ON':'OFF'}</button><button class="secondary" id="test-sound">TEST SOUND</button></div>`;
+    }
+    bindAudioControls(){
+      const g=this.game,engine=g.combat.audioEngine;
+      this.menu.querySelector('#volume')?.addEventListener('input',e=>{
+        engine.setVolume(Number(e.currentTarget.value)/100);this.menu.querySelector('#volume-value').textContent=`${Math.round(engine.volume*100)}%`;g.saveSettings();
+      });
+      this.on('#ambience',e=>{engine.setAmbience(!engine.ambience);g.saveSettings();e.currentTarget.textContent=`AMBIENCE: ${engine.ambience?'ON':'OFF'}`;});
+      this.on('#test-sound',()=>{g.combat.soundEnabled=true;g.combat.enableAudio('choose');g.saveSettings();const b=this.menu.querySelector('#sound');if(b)b.textContent='SOUND: ON';});
+    }
     title(){
       const g=this.game;g.state='title';g.input.clear();
       const profile=g.save.data.profile,checkpoint=g.save.data.checkpoint;
-      this.show(`<span class="moon" aria-hidden="true">☾</span><p class="eyebrow">THE COVEN UPDATE · ${N.VERSION}</p><h1 id="menu-title">Nocturne</h1><p class="subtitle-name">Witch of Ash</p><p class="subtitle title-sub">Three covens. One endless night.<br>Choose a witch and write a different ending.</p><div class="coven-grid" role="group" aria-label="Choose your starting witch">${Object.entries(N.COVENS).map(([id,c])=>`<button class="coven-choice ${g.selectedCoven===id?'chosen':''}" data-coven="${id}" aria-pressed="${g.selectedCoven===id}"><span aria-hidden="true" style="color:${c.color}">${c.icon}</span><strong>${c.name}</strong><small>${c.text}</small></button>`).join('')}</div><div class="shop-actions">${checkpoint?`<button class="primary" id="continue">CONTINUE · WAVE ${checkpoint.wave}</button>`:''}<button class="${checkpoint?'secondary':'primary'}" id="begin">${checkpoint?'NEW RITUAL':'ENTER THE HOLLOW'} ↗</button></div><div class="controls"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> DASH</span><span><kbd>I</kbd> GRIMOIRE</span><span><kbd>ESC</kbd> PAUSE</span></div><p class="hint">${checkpoint?'Continue restores your merchant or restarts the saved wave.<br>A new ritual replaces the saved run.':'Spells cast automatically. Gather souls, discover evolutions, face the Wardens.'}<br>${g.save.available?'Checkpoints and records are saved on this browser.':'Storage is unavailable; play works, but records and checkpoints cannot persist.'}</p><div class="title-bottom"><button class="text-button" id="chronicle">CHRONICLE · ${profile.achievements.length} / ${ACHIEVEMENTS.length}</button><span>BEST WAVE ${profile.bestWave} · BEST SOULS ${profile.bestKills}</span><button class="text-button" id="audio">SOUND: ${g.save.data.settings.sound?'ON':'OFF'}</button></div>`);
+      this.show(`<span class="moon" aria-hidden="true">☾</span><p class="eyebrow">MOTION &amp; ECHOES · ${N.VERSION}</p><h1 id="menu-title">Nocturne</h1><p class="subtitle-name">Witch of Ash</p><p class="subtitle title-sub">Three covens. One endless night.<br>Choose a witch and write a different ending.</p><div class="coven-grid" role="group" aria-label="Choose your starting witch">${Object.entries(N.COVENS).map(([id,c])=>`<button class="coven-choice ${g.selectedCoven===id?'chosen':''}" data-coven="${id}" aria-pressed="${g.selectedCoven===id}"><span aria-hidden="true" style="color:${c.color}">${c.icon}</span><strong>${c.name}</strong><small>${c.text}</small></button>`).join('')}</div><div class="shop-actions">${checkpoint?`<button class="primary" id="continue">CONTINUE · WAVE ${checkpoint.wave}</button>`:''}<button class="${checkpoint?'secondary':'primary'}" id="begin">${checkpoint?'NEW RITUAL':'ENTER THE HOLLOW'} ↗</button></div><div class="controls"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> DASH</span><span><kbd>I</kbd> GRIMOIRE</span><span><kbd>ESC</kbd> PAUSE</span></div><p class="hint">${checkpoint?'Continue restores your merchant or restarts the saved wave.<br>A new ritual replaces the saved run.':'Spells cast automatically. Gather souls, discover evolutions, face the Wardens.'}<br>${g.save.available?'Checkpoints and records are saved on this browser.':'Storage is unavailable; play works, but records and checkpoints cannot persist.'}</p><div class="title-bottom"><button class="text-button" id="chronicle">CHRONICLE · ${profile.achievements.length} / ${ACHIEVEMENTS.length}</button><span>BEST WAVE ${profile.bestWave} · BEST SOULS ${profile.bestKills}</span><button class="text-button" id="audio">SOUND: ${g.save.data.settings.sound?'ON':'OFF'}</button></div>`);
       this.menu.querySelectorAll('[data-coven]').forEach(b=>b.addEventListener('click',()=>{g.selectedCoven=b.dataset.coven;this.title();this.menu.querySelector(`[data-coven="${g.selectedCoven}"]`)?.focus({preventScroll:true});}));
-      this.on('#begin',()=>{g.combat.enableAudio();g.reset(g.selectedCoven);});
+      this.on('#begin',()=>{g.combat.enableAudio('wave');g.reset(g.selectedCoven);});
       this.on('#continue',()=>{g.combat.enableAudio();g.continueRun();});
-      this.on('#audio',e=>{g.combat.soundEnabled=!g.combat.soundEnabled;if(g.combat.soundEnabled)g.combat.enableAudio();g.saveSettings();e.currentTarget.textContent=`SOUND: ${g.combat.soundEnabled?'ON':'OFF'}`;});
+      this.on('#audio',e=>{g.combat.soundEnabled=!g.combat.soundEnabled;if(g.combat.soundEnabled)g.combat.enableAudio('choose');g.saveSettings();e.currentTarget.textContent=`SOUND: ${g.combat.soundEnabled?'ON':'OFF'}`;});
       this.on('#chronicle',()=>this.chronicle());
     }
     chronicle(){
@@ -112,6 +126,8 @@
     banner(title,sub){const el=document.getElementById('wave-banner');el.innerHTML=`<small>${sub}</small>${title}`;el.classList.add('visible');clearTimeout(this.bannerTimer);this.bannerTimer=setTimeout(()=>el.classList.remove('visible'),2400);}
     toast(text){const el=document.getElementById('toast');el.textContent=text;el.classList.add('visible');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>el.classList.remove('visible'),2400);}
     levelUp(){
+      this.game.combat.sound('level');
+      this.game.combat.effect('rune',this.game.player.x,this.game.player.y-6,0,0,95,'#d2bfeb',.65);
       this.game.state='levelup';this.game.input.clear();this.selected=false;
       const pool=UPGRADES.filter(u=>!u.valid||u.valid(this.game.player));
       const spells=N.shuffle(pool.filter(u=>u.weapon)),others=N.shuffle(pool.filter(u=>!u.weapon));
@@ -128,7 +144,7 @@
     }
     chooseLevel(index){
       if(this.game.state!=='levelup'||this.selected||!this.choices[index])return;
-      this.selected=true;const u=this.choices[index],p=this.game.player;u.apply(p);p.upgrades.push(u.id);p.pendingLevels--;
+      this.selected=true;const u=this.choices[index],p=this.game.player;u.apply(p);p.upgrades.push(u.id);p.pendingLevels--;this.game.combat.sound('choose');
       if(p.pendingLevels>0)this.levelUp();else if(this.afterLevel==='shop')this.openShop();else{this.game.state='playing';this.hide();}
     }
     eligibleItems(){return ITEMS.filter(u=>!u.valid||u.valid(this.game.player));}
@@ -145,14 +161,15 @@
     rerollCost(){return 3+this.game.wave+this.rolls*2;}
     reroll(){
       const g=this.game,cost=this.rerollCost();if(g.state!=='shop'||g.player.gold<cost||this.slots.every(s=>s.locked))return;
-      g.player.gold-=cost;this.rolls++;for(const slot of this.slots)if(!slot.locked)this.rollSlot(slot);
+      g.player.gold-=cost;this.rolls++;for(const slot of this.slots)if(!slot.locked)this.rollSlot(slot);g.combat.sound('reroll');
       this.renderShop('[data-reroll]');g.checkpoint('shop');
     }
-    toggleLock(index){const s=this.slots[index];if(this.game.state!=='shop'||!s?.item)return;s.locked=!s.locked;this.renderShop(`[data-lock="${index}"]`);this.game.checkpoint('shop');}
+    toggleLock(index){const s=this.slots[index];if(this.game.state!=='shop'||!s?.item)return;s.locked=!s.locked;this.game.combat.sound('lock');this.renderShop(`[data-lock="${index}"]`);this.game.checkpoint('shop');}
     buy(index){
       const g=this.game,s=this.slots[index];if(g.state!=='shop'||!s?.item||g.player.gold<s.price)return;
       if(s.item.valid&&!s.item.valid(g.player)){this.toast('This gift has reached its limit. Unlock or reroll its slot.');return;}
       const name=s.item.name;g.player.gold-=s.price;s.item.apply(g.player);g.player.upgrades.push(s.item.id);s.item=null;s.locked=false;
+      g.combat.sound('buy');
       this.renderShop('[data-start]');g.checkpoint('shop');this.toast(`${name} acquired`);
     }
     statStrip(){
@@ -181,15 +198,17 @@
     togglePause(){if(this.game.state==='grimoire')this.toggleGrimoire();else if(this.game.state==='playing')this.pause();else if(this.game.state==='paused')this.resume();}
     pause(){
       const g=this.game;if(g.state!=='playing')return;g.state='paused';g.input.clear();
-      this.show(`<p class="eyebrow">THE NIGHT HOLDS ITS BREATH</p><h2 id="menu-title">Ritual paused</h2><p class="subtitle">Take a moment. Your magic will be here.</p><button class="primary" id="resume">RESUME RITUAL</button><div class="rule"></div><div class="shop-actions"><button class="secondary" id="sound">SOUND: ${g.combat.soundEnabled?'ON':'OFF'}</button><button class="secondary" id="effects">REDUCED MOTION: ${g.reducedMotion?'ON':'OFF'}</button><button class="secondary" id="quality">QUALITY: ${g.quality.toUpperCase()}</button><button class="secondary" id="inventory">GRIMOIRE · I</button></div><p class="hint">WASD / arrows / touch stick: move · SPACE / SHIFT: dash<br>I: grimoire · ESC / P: resume · Focus loss pauses the game<br>Title keeps the last merchant / wave-start checkpoint; current wave progress will restart.</p><button class="text-button" id="title">RETURN TO TITLE</button>`);
+      this.show(`<p class="eyebrow">THE NIGHT HOLDS ITS BREATH</p><h2 id="menu-title">Ritual paused</h2><p class="subtitle">Take a moment. Your magic will be here.</p><button class="primary" id="resume">RESUME RITUAL</button><div class="rule"></div><div class="shop-actions"><button class="secondary" id="sound">SOUND: ${g.combat.soundEnabled?'ON':'OFF'}</button><button class="secondary" id="effects">REDUCED MOTION: ${g.reducedMotion?'ON':'OFF'}</button><button class="secondary" id="quality">QUALITY: ${g.quality.toUpperCase()}</button><button class="secondary" id="inventory">GRIMOIRE · I</button></div>${this.audioControls()}<p class="hint">WASD / arrows / touch stick: move · SPACE / SHIFT: dash<br>I: grimoire · ESC / P: resume · Focus loss pauses the game<br>Title keeps the last merchant / wave-start checkpoint; current wave progress will restart.</p><button class="text-button" id="title">RETURN TO TITLE</button>`);
       this.on('#resume',()=>this.resume());this.on('#inventory',()=>this.toggleGrimoire());this.on('#title',()=>this.title());
       this.on('#sound',()=>{g.combat.soundEnabled=!g.combat.soundEnabled;if(g.combat.soundEnabled)g.combat.enableAudio();g.saveSettings();this.pauseRefresh();});
       this.on('#effects',()=>{g.reducedMotion=!g.reducedMotion;g.saveSettings();this.pauseRefresh();});
       this.on('#quality',()=>{g.quality=g.quality==='high'?'low':'high';g.resize();g.saveSettings();this.pauseRefresh();});
+      this.bindAudioControls();
     }
     pauseRefresh(){this.game.state='playing';this.pause();}
     resume(){if(this.game.state!=='paused')return;this.game.state='playing';this.game.input.clear();this.hide();}
     gameOver(){
+      this.game.combat.audioEngine.stopVoices();this.game.combat.sound('gameover');
       const g=this.game,p=g.player,total=Math.max(1,g.stats.damage);
       this.show(`<span class="moon" aria-hidden="true">☾</span><p class="eyebrow">THE HOLLOW CLAIMS ANOTHER</p><h2 id="menu-title">Even stars turn to ash.</h2><p class="subtitle">${N.COVENS[p.coven].name} · The ritual ends. The chronicle remains.</p><div class="stat-strip"><span>WAVE <b>${g.wave}</b></span><span>LEVEL <b>${p.level}</b></span><span>SOULS <b>${p.kills}</b></span><span>SURVIVED <b>${Math.floor(g.time/60)}m ${Math.floor(g.time%60)}s</b></span><span>WARDENS <b>${g.stats.bosses}</b></span></div><div class="damage-report">${Object.entries(N.WEAPONS).filter(([id])=>p.weapons[id]).map(([id,w])=>`<div><span>${w.icon} ${p.evolved(id)?w.evolution:w.name}</span><b>${Math.round(g.stats.weapons[id]).toLocaleString('en-US')}</b><i style="width:${g.stats.weapons[id]/total*100}%;background:${w.color}"></i></div>`).join('')}</div><p class="hint">${Math.round(g.stats.damage).toLocaleString('en-US')} damage dealt · ${Math.round(g.stats.damageTaken)} vitality lost · ◈ ${g.stats.goldEarned} earned</p><div class="shop-actions"><button class="primary" id="retry">TRY THIS WITCH AGAIN ↗</button><button class="secondary" id="coven">CHOOSE ANOTHER COVEN</button></div>`);
       this.on('#retry',()=>g.reset(p.coven));this.on('#coven',()=>this.title());

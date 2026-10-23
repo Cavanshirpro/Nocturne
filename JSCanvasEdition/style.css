@@ -23,3 +23,8 @@
   .menu:has(.shop-cards)>.stat-strip{margin:12px 0}
   .menu:has(.shop-cards)>.hint{margin:11px 0 0;font-size:9px}
 }
+/* 2.1 · Motion & Echoes */
+.audio-settings{display:flex;justify-content:center;align-items:center;gap:16px;margin:22px auto;flex-wrap:wrap}.audio-settings label{width:230px;font-size:9px;letter-spacing:2px;color:var(--muted);text-align:left}.audio-settings label strong{float:right;color:var(--gold);font:10px monospace}.audio-settings input{display:block;width:100%;margin:15px 0 0;accent-color:var(--gold);cursor:pointer}.audio-settings input:focus-visible{outline:2px solid var(--gold);outline-offset:6px}.card-icon{transition:transform .18s}.choice:hover .card-icon{transform:translateY(-3px) rotate(-7deg)}.primary:active,.buy:active{transform:translateY(1px)}.belt-spell.evolved{background:linear-gradient(145deg,#3f304a88,#182020a1)}
+@media(max-width:700px){.audio-settings{gap:10px;margin:17px auto}.audio-settings label{width:100%;max-width:300px}.audio-settings .secondary{padding:11px 15px;font-size:9px}.wave-banner small{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.card-icon{transition:none}.choice:hover .card-icon{transform:none}}
+body.reduce-motion .card-icon,body.reduce-motion .choice:hover .card-icon{transform:none;transition:none}

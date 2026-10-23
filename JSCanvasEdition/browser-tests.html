@@ -8,18 +8,20 @@
 </style>
 <main>
 <h1>Nocturne · Browser verification</h1>
-<p>Real Canvas, decoded images, DOM buttons and keyboard events. These fixtures use a separate test save key and do not change your normal ritual.</p>
+<p>Real Canvas, decoded animation strips, DOM buttons, keyboard events and offline audio rendering. Fixtures use a separate test save key.</p>
 <div class="actions"><button id="run" disabled>RUN BROWSER CHECKS</button><button data-scene="boss" disabled>PREVIEW WARDEN</button><button data-scene="shop" disabled>PREVIEW MERCHANT</button><button data-scene="level" disabled>PREVIEW AWAKENING</button><button data-scene="evolved" disabled>PREVIEW EVOLUTIONS</button><a href="index.html">OPEN GAME</a></div>
 <p id="status" role="status">Loading the game…</p>
 <iframe id="arena" src="index.html#verification" title="Nocturne game verification frame"></iframe>
 <pre id="results" aria-live="polite">Serve this folder over HTTP for frame access: python -m http.server 8000</pre>
-<small>These are development fixtures, not normal starting stats. Audio output, physical touch input and real-device performance require separate checks.</small>
+<p><a href="walking-preview.gif" target="_blank" rel="noopener">VIEW ALL EIGHT WALK CYCLES</a></p>
+<small>These are development fixtures, not normal starting stats. Audio waveforms are checked digitally; actual speaker output, physical touch input and real-device performance require separate checks.</small>
 </main>
 <script>
 'use strict';
 const frame=document.getElementById('arena'),run=document.getElementById('run'),status=document.getElementById('status'),output=document.getElementById('results');
 let g,N,doc,win;
 function setup(){
+  g.reducedMotion=false;
   g.reset('moon');g.player.hp=g.player.maxHp=1000;g.player.gold=250;
   g.wave=5;g.waveDuration=50;g.waveTime=10;
   g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};
@@ -43,10 +45,12 @@ function present(scene){
 }
 function key(code,type='keydown'){win.dispatchEvent(new win.KeyboardEvent(type,{code,bubbles:true,cancelable:true}));}
 function check(condition,message){if(!condition)throw new Error(message);}
-run.onclick=()=>{
+run.onclick=async()=>{
+  run.disabled=true;
   const results=[];let passed=0,failed=0;
   const test=(name,fn)=>{try{fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
-  test('16 actual images decode',()=>check(Object.values(g.images).length===16&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
+  const testAsync=async(name,fn)=>{try{await fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
+  test('30 actual images decode',()=>check(Object.values(g.images).length===30&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
   test('starting coven buttons',()=>{g.ui.title();doc.querySelector('[data-coven="storm"]').click();doc.querySelector('#begin').click();check(g.player.coven==='storm'&&g.player.weapons.lightning===1,'Wrong starting witch');});
   test('real keyboard movement and dash',()=>{g.reset();key('KeyD');g.player.update(1/60);key('KeyD','keyup');check(g.player.x>0&&g.player.facing==='E','Movement failed');key('Space');key('Space','keyup');check(g.player.dashTimer>0&&g.stats.dashes===1,'Dash failed');});
   test('pause and resume buttons',()=>{key('Escape');check(g.state==='paused'&&doc.querySelector('#resume'),'Pause did not open');doc.querySelector('#resume').click();check(g.state==='playing','Resume failed');});
@@ -60,8 +64,43 @@ run.onclick=()=>{
   test('Warden health HUD and telegraph draw',()=>{present('boss');check(!doc.querySelector('#boss-hud').hidden&&doc.querySelector('#boss-hp').textContent.includes('/'),'Boss HUD missing');check(g.combat.hazards.active.length===1,'Hazard missing');});
   test('low quality and reduced motion controls',()=>{g.state='playing';g.ui.pause();const old=g.quality;doc.querySelector('#quality').click();check(g.quality!==old,'Quality unchanged');const reduced=g.reducedMotion;doc.querySelector('#effects').click();check(g.reducedMotion!==reduced,'Motion setting unchanged');});
   test('death summary, retry and chronicle',()=>{g.state='playing';g.die();check(doc.querySelector('.damage-report')&&doc.querySelector('#retry'),'Summary missing');doc.querySelector('#retry').click();check(g.wave===1&&g.state==='playing','Retry failed');g.ui.title();doc.querySelector('#chronicle').click();check(doc.querySelectorAll('.achievement').length===6,'Chronicle missing');});
+  test('eight-direction frame strips draw correctly',()=>{
+    g.reducedMotion=false;g.reset();
+    for(const [direction,x,y] of [['N',0,-1],['NE',1,-1],['E',1,0],['SE',1,1],['S',0,1],['SW',-1,1],['W',-1,0],['NW',-1,-1]]){
+      g.input.x=x;g.input.y=y;g.player.update(.09);const sheet=g.images['witch_walk_'+direction];
+      check(sheet.naturalWidth===768&&sheet.naturalHeight===128,'Wrong strip dimensions');check(g.player.facing===direction&&g.player.walkFrame>=0,'Facing or frame failed');g.draw();
+    }
+    g.input.clear();g.player.update(.01);check(g.player.walkFrame===-1,'Idle did not return');
+  });
+  test('dash echoes, dust, corpse and new spell effects render',()=>{
+    setup();g.player.dash();g.player.update(.016);g.combat.dust(10,20);
+    const e=new N.Enemy(g,'skeleton',90,0,++g.nextId);g.combat.remains(e);
+    for(const kind of ['muzzle','impact','rune','pickup'])g.combat.effect(kind,0,-20,0,0,22,'#ebd9b6',.4);
+    g.draw();check(g.combat.remnants.active.length>=3,'Missing transient art');
+  });
+  test('real volume slider and ambience control persist',()=>{
+    g.state='playing';g.ui.pause();const slider=doc.querySelector('#volume');check(slider,'Volume slider missing');slider.value='37';slider.dispatchEvent(new win.Event('input',{bubbles:true}));
+    check(g.combat.audioEngine.volume===.37,'Volume was not applied');const old=g.combat.audioEngine.ambience;doc.querySelector('#ambience').click();check(g.combat.audioEngine.ambience!==old,'Ambience unchanged');
+    if(g.save.available)check(new N.SaveStore().data.settings.volume===.37,'Volume was not saved');
+  });
+  test('reduced motion suppresses animated walking and dash ghosts',()=>{
+    g.reducedMotion=true;g.state='playing';g.combat.clear();g.input.x=1;g.player.update(.1);g.combat.ghost(g.player);g.combat.dust(0,0);
+    check(g.player.walkFrame===-1&&g.combat.remnants.active.length===0,'Motion preference was ignored');g.draw();g.input.clear();
+  });
+  await testAsync('all 24 sound recipes render distinct, non-silent finite waveforms',async()=>{
+    check(win.OfflineAudioContext,'Offline Web Audio unavailable');const signatures=new Set();
+    for(const kind of Object.keys(N.AudioEngine.SOUNDS)){
+      const context=new win.OfflineAudioContext(2,33075,22050),engine=new N.AudioEngine(g);engine.setEnabled(true);engine.attach(context);
+      check(engine.play(kind),'Recipe did not schedule: '+kind);const buffer=await context.startRendering(),samples=buffer.getChannelData(0);
+      let energy=0,peak=0,hash=2166136261;
+      for(let i=0;i<samples.length;i++){const value=samples[i];check(Number.isFinite(value),'Invalid audio sample');energy+=value*value;peak=Math.max(peak,Math.abs(value));if(i%23===0)hash=Math.imul(hash^Math.round(value*1e7),16777619);}
+      check(Math.sqrt(energy/samples.length)>1e-6,'Silent effect: '+kind);check(peak<=1,'Clipping: '+kind);signatures.add(hash);engine.dispose();
+    }
+    check(signatures.size===24,'Sound recipes produced duplicate waveforms');
+  });
   output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
   present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;
+  run.disabled=false;
 };
 for(const b of document.querySelectorAll('[data-scene]'))b.onclick=()=>present(b.dataset.scene);
 frame.onload=()=>{

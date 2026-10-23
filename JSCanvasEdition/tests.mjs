@@ -24,10 +24,10 @@ const create=()=>new N.Game({getContext:()=>context},images);
 let passed=0;
 function test(name,fn){memory.clear();seed=271828;fn();passed++;console.log(`PASS ${name}`);}
 
-test('all 16 procedural PNG assets are real, encoded images',()=>{
-  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,16);
+test('all 30 procedural PNG assets are real, encoded images',()=>{
+  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,30);
   for(const src of Object.values(sandbox.NOCTURNE_ASSETS))assert.equal(Buffer.from(src.split(',')[1],'base64').subarray(1,4).toString(),'PNG');
-  assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')).map(([,v])=>v)).size,8);
+  assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_walk_')).map(([,v])=>v)).size,8);
 });
 test('normalized diagonal movement and all eight facings',()=>{
   const g=create(),p=g.player;
@@ -307,7 +307,7 @@ test('partially chosen levels do not overwrite a valid wave-start checkpoint',()
   assert.equal(memory.get(g.save.key),before);g.ui.chooseLevel(0);assert.equal(g.checkpoint('wave'),false);
 });
 test('every finite combat pool enforces its cap and can be cleared',()=>{
-  const g=create();g.reset();const pools=[g.combat.projectiles,g.combat.particles,g.combat.numbers,g.combat.hostile,g.combat.hazards,g.combat.effects];
+  const g=create();g.reset();const pools=[g.combat.projectiles,g.combat.particles,g.combat.numbers,g.combat.hostile,g.combat.hazards,g.combat.effects,g.combat.remnants];
   for(const pool of pools){for(let i=0;i<pool.limit;i++)assert.ok(pool.acquire());assert.equal(pool.acquire(),null);assert.equal(pool.created,pool.limit);}
   g.combat.clear();for(const pool of pools){assert.equal(pool.active.length,0);assert.equal(pool.free.length,pool.limit);}
 });
@@ -325,5 +325,109 @@ test('Warden always spawns outside square, portrait and landscape camera views',
       assert.ok(Math.abs(e.x-g.camera.x)>w/2||Math.abs(e.y-g.camera.y)>h/2);
     }
   }
+});
+
+
+class FakeParam {
+  constructor(){this.value=0;this.events=[];}
+  setValueAtTime(value,time){assert.ok(Number.isFinite(value)&&Number.isFinite(time));this.value=value;this.events.push(['set',value,time]);}
+  exponentialRampToValueAtTime(value,time){assert.ok(value>0&&Number.isFinite(value)&&Number.isFinite(time));this.events.push(['exp',value,time]);}
+  setTargetAtTime(value,time,constant){assert.ok(Number.isFinite(value)&&Number.isFinite(time)&&constant>0);this.value=value;this.events.push(['target',value,time]);}
+  cancelScheduledValues(){}
+}
+class FakeNode {
+  constructor(){for(const key of ['gain','frequency','pan','Q','threshold','knee','ratio','attack','release'])this[key]=new FakeParam();this.connections=[];this.disconnected=false;}
+  connect(node){assert.ok(node);this.connections.push(node);return node;}
+  disconnect(){this.disconnected=true;this.connections=[];}
+  start(time=0){this.startTime=time;}
+  stop(time=0){this.stopTime=time;}
+}
+class FakeAudioContext {
+  constructor(){this.sampleRate=48000;this.currentTime=0;this.state='running';this.destination=new FakeNode();this.nodes=[];}
+  node(){const n=new FakeNode();this.nodes.push(n);return n;}
+  createGain(){return this.node();}createDynamicsCompressor(){return this.node();}createBufferSource(){return this.node();}createBiquadFilter(){return this.node();}createOscillator(){return this.node();}createStereoPanner(){return this.node();}
+  createBuffer(channels,length){const data=Array.from({length:channels},()=>new Float32Array(length));return {getChannelData:i=>data[i]};}
+  resume(){this.state='running';return Promise.resolve();}
+}
+
+test('eight walk sheets have eight frames and six enemy sheets have four frames',()=>{
+  const dimensions=key=>{const png=Buffer.from(sandbox.NOCTURNE_ASSETS[key].split(',')[1],'base64');return [png.readUInt32BE(16),png.readUInt32BE(20)];};
+  for(const dir of ['N','NE','E','SE','S','SW','W','NW'])assert.deepEqual(dimensions('witch_walk_'+dir),[768,128]);
+  for(const type of Object.keys(N.ENEMY_TYPES))assert.deepEqual(dimensions('enemy_walk_'+type),[320,88]);
+  assert.equal(sandbox.NOCTURNE_ANIMATIONS.witch.frames,8);assert.equal(sandbox.NOCTURNE_ANIMATIONS.enemy.frames,4);
+});
+test('walk phase is distance based, diagonal safe and independent of update rate',()=>{
+  const g=create();g.reset();g.input.x=1;
+  g.player.update(.1);const phase=g.player.walk;const frame=g.player.walkFrame;
+  const g2=create();g2.reset();g2.input.x=1;for(let i=0;i<6;i++)g2.player.update(1/60);
+  assert.ok(Math.abs(g2.player.walk-phase)<1e-8);assert.equal(g2.player.walkFrame,frame);
+  g2.input.clear();const stopped=g2.player.walk;g2.player.update(.2);assert.equal(g2.player.walkFrame,-1);assert.equal(g2.player.walk,stopped);
+  g2.input.x=1;g2.reducedMotion=true;g2.player.update(.1);assert.equal(g2.player.walkFrame,-1);
+});
+test('walk drawing crops the correct facing sheet and frame',()=>{
+  const g=create();g.reset();g.input.x=1;g.player.update(.1);const calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);
+  try{g.player.draw(context);}finally{context.drawImage=old;}
+  const call=calls.find(args=>args[0]===g.images.witch_walk_E);assert.ok(call);assert.equal(call.length,9);assert.equal(call[1],g.player.walkFrame*96);assert.equal(call[3],96);assert.equal(call[4],128);
+});
+test('footsteps require actual normal walking; dash leaves bounded fading echoes',()=>{
+  const g=create();g.reset();const events=[];g.combat.sound=kind=>events.push(kind);g.input.x=1;g.player.update(44/g.player.speed);
+  assert.equal(events.filter(k=>k==='step').length,1);g.input.clear();g.player.update(.1);assert.equal(events.filter(k=>k==='step').length,1);
+  g.player.dash();for(let i=0;i<10;i++)g.player.update(1/60);assert.ok(g.combat.remnants.active.some(r=>r.kind==='ghost'));assert.equal(events.filter(k=>k==='step').length,1);
+  g.combat.cooldown=99;for(let i=0;i<50;i++)g.combat.update(1/60);assert.equal(g.combat.remnants.active.length,0);
+});
+test('reduced motion suppresses dash echoes and walking dust',()=>{
+  const g=create();g.reset();g.reducedMotion=true;g.combat.ghost(g.player);g.combat.dust(0,0);assert.equal(g.combat.remnants.active.length,0);
+  g.player.invulnerable=.7;g.player.draw(context);
+});
+test('paused simulation freezes walk, spell and remnant animation clocks',()=>{
+  const g=create();g.reset();g.input.x=1;g.player.update(.1);g.combat.ghost(g.player);g.combat.effect('muzzle',0,0,0,0,15,'white',.2);
+  const walk=g.player.walk,life=g.combat.remnants.active[0].life,fx=g.combat.effects.active[0].life;g.ui.pause();g.update(3);
+  assert.equal(g.player.walk,walk);assert.equal(g.combat.remnants.active[0].life,life);assert.equal(g.combat.effects.active[0].life,fx);
+});
+test('cosmetic draw frequency and extra particles do not change gameplay randomness',()=>{
+  function simulate(extra){
+    seed=271828;const g=create();g.reset();g.player.hp=g.player.maxHp=10000;
+    for(let i=0;i<500;i++){
+      g.input.x=Math.cos(g.time*.15);g.input.y=Math.sin(g.time*.15);g.update(1/60);
+      if(g.state==='levelup')g.ui.chooseLevel(0);
+      if(extra){g.combat.burst(0,0,7,'white');g.draw();}
+    }
+    return JSON.stringify({time:g.time,stats:g.stats,x:g.player.x,y:g.player.y,hp:g.player.hp,xp:g.player.xp,enemies:g.enemies.map(e=>[e.type,e.x,e.y,e.hp]),gold:g.player.gold});
+  }
+  assert.equal(simulate(false),simulate(true));
+});
+test('all 24 sound recipes schedule finite, bounded voices and clean up their nodes',()=>{
+  const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;engine.attach(a);engine.setEnabled(true);
+  assert.equal(Object.keys(N.AudioEngine.SOUNDS).length,24);
+  for(const kind of Object.keys(N.AudioEngine.SOUNDS)){engine.play(kind);assert.ok(engine.voices.size<=28);}
+  assert.ok(engine.voices.size>0);engine.stopVoices();assert.equal(engine.voices.size,0);
+  engine.dispose();assert.equal(engine.ambientSources.length,0);
+  assert.ok(a.nodes.filter(n=>n.startTime!==undefined&&!n.loop).every(n=>n.disconnected));
+});
+test('sound limits are per event and important warnings take priority over footsteps',()=>{
+  const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;engine.attach(a);engine.setEnabled(true);
+  assert.equal(engine.play('fire'),true);assert.equal(engine.play('fire'),false);assert.equal(engine.play('hurt'),true);
+  engine.stopVoices();
+  for(let i=0;i<28;i++)engine.voice({noise:true,d:.2,g:.02},a.currentTime,0,0);
+  assert.equal(engine.voices.size,28);assert.equal(engine.play('boss'),true);assert.equal(engine.voices.size,28);assert.ok([...engine.voices].some(v=>v.priority===3));
+  engine.setEnabled(false);assert.equal(engine.voices.size,0);assert.equal(engine.play('nova'),false);
+});
+test('volume, ambience and foreground muting do not change player state',()=>{
+  const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;g.reset();const hp=g.player.hp;
+  engine.attach(a);engine.setEnabled(true);engine.setVolume(3);assert.equal(engine.volume,1);engine.setVolume(-2);assert.equal(engine.volume,0);
+  engine.setVolume(.35);engine.transport(true);assert.ok(engine.ambient.gain.value>0);engine.setAmbience(false);assert.equal(engine.ambient.gain.value,0);
+  engine.play('hurt');engine.setForeground(false);assert.equal(engine.voices.size,0);assert.equal(engine.master.gain.value,0);assert.equal(engine.play('fire'),false);
+  engine.setForeground(true);assert.ok(engine.master.gain.value>0);assert.equal(g.player.hp,hp);
+});
+test('new sound settings save and legacy version 2 checkpoints remain usable',()=>{
+  const g=create();g.reset();g.combat.audioEngine.setVolume(.42);g.combat.audioEngine.setAmbience(false);g.saveSettings();
+  const loaded=create();assert.equal(loaded.combat.audioEngine.volume,.42);assert.equal(loaded.combat.audioEngine.ambience,false);assert.equal(loaded.continueRun(),true);
+  const old=JSON.parse(memory.get(g.save.key));delete old.settings.volume;delete old.settings.ambience;old.settings.sound=false;memory.set(g.save.key,JSON.stringify(old));
+  const migrated=create();assert.equal(migrated.combat.audioEngine.volume,.6);assert.equal(migrated.combat.audioEngine.ambience,true);assert.equal(migrated.combat.soundEnabled,false);assert.equal(migrated.continueRun(),true);
+});
+test('unavailable Web Audio and missing stereo panning fail gracefully',()=>{
+  const g=create();assert.equal(g.combat.enableAudio(),false);assert.equal(g.combat.sound('fire'),false);
+  const a=new FakeAudioContext();a.createStereoPanner=undefined;g.combat.audioEngine.attach(a);g.combat.soundEnabled=true;
+  assert.equal(g.combat.sound('fire'),true);g.combat.audioEngine.dispose();
 });
 console.log(`\n${passed} test groups passed.`);

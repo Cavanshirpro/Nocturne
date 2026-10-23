@@ -2,9 +2,12 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '2.0.0';
+  N.VERSION = '2.1.0';
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
+  // Cosmetic randomness must not alter enemy spawns, crits or item rolls.
+  let fxSeed=81723;
+  N.fxRand=(a,b)=>{fxSeed=(fxSeed*1664525+1013904223)>>>0;return a+fxSeed/4294967296*(b-a);};
   N.pick = a => a[Math.floor(Math.random() * a.length)];
   N.dist2 = (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
   N.shuffle = list => {
@@ -39,7 +42,7 @@
 
   class SaveStore {
     constructor(){this.key=window.location?.hash==='#verification'?'nocturne.coven.qa.v2':'nocturne.coven.v2';this.available=true;this.data=this.read();}
-    defaults(){return {schema:2,profile:{runs:0,bestWave:0,bestKills:0,bestTime:0,bosses:0,achievements:[]},settings:{sound:false,reduced:null,quality:'high'},checkpoint:null};}
+    defaults(){return {schema:2,profile:{runs:0,bestWave:0,bestKills:0,bestTime:0,bosses:0,achievements:[]},settings:{sound:true,volume:.6,ambience:true,reduced:null,quality:'high'},checkpoint:null};}
     read(){
       const fresh=this.defaults();
       try{
@@ -52,6 +55,8 @@
         }
         if(data.settings){
           fresh.settings.sound=data.settings.sound===true;
+          fresh.settings.volume=Number.isFinite(data.settings.volume)?N.clamp(data.settings.volume,0,1):.6;
+          fresh.settings.ambience=data.settings.ambience!==false;
           fresh.settings.reduced=typeof data.settings.reduced==='boolean'?data.settings.reduced:null;
           fresh.settings.quality=data.settings.quality==='low'?'low':'high';
         }
@@ -120,8 +125,10 @@
         if (/^Digit[123]$/.test(e.code) && game.state === 'levelup') game.ui.chooseLevel(Number(e.code.slice(-1)) - 1);
       });
       window.addEventListener('keyup', e => this.keys.delete(e.code));
-      window.addEventListener('blur', () => { this.clear(); if (game.state === 'playing') game.ui.pause(); });
+      window.addEventListener('blur', () => { this.clear();game.combat?.audioEngine.setForeground(false); if (game.state === 'playing') game.ui.pause(); });
+      window.addEventListener('focus',()=>game.combat?.audioEngine.setForeground(true));
       document.addEventListener('visibilitychange', () => {
+        game.combat?.audioEngine.setForeground(!document.hidden);
         if (document.hidden) { this.clear(); if (game.state === 'playing') game.ui.pause(); }
       });
       const zone = document.getElementById('touch-zone');
@@ -174,7 +181,9 @@
       this.waveKills=0;this.waveDamage=0;this.stats=this.freshStats();this.fps=60;
       this.hash = new SpatialHash(); this.camera = {x:0, y:0};
       this.shake = 0; this.hitStop = 0;this.impactCooldown=0; this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.hurtFlash=0;
       if(this.save.data.settings.reduced!==null)this.reducedMotion=this.save.data.settings.reduced;
+      document.body?.classList.toggle('reduce-motion',this.reducedMotion);
       this.groundPattern = this.ctx.createPattern(images.ground, 'repeat');
       this.input = new Input(this); this.player = new N.Player(this);
       this.combat = new N.Combat(this);this.combat.soundEnabled=this.save.data.settings.sound;
@@ -210,10 +219,12 @@
       this.waveDuration = 30 + Math.min(this.wave - 1, 6) * 5;
       if(!resuming)this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * .12);
       this.player.invulnerable = 1;
+      this.hurtFlash=0;
       this.player.dashTimer=0;this.player.dashRemaining=0;this.combat.clear();this.combat.cooldown = .1;
       this.state = 'playing'; this.input.clear(); this.ui.hide();
       this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%5===0?'A WARDEN APPROACHES':this.wave === 1 ? 'THE HOLLOW AWAKENS' : this.biome().name.toUpperCase());
       this.checkpoint('wave');
+      this.combat.sound('wave');
     }
     biome(){return [{name:'The Hollow',color:'#7e9b8030',accent:'#b7c09d'}, {name:'Ember Mire',color:'#97584a27',accent:'#d1a18a'}, {name:'Moonlit Ruins',color:'#7274aa2c',accent:'#b7a9db'}][Math.floor(Math.max(0,this.wave-1)/3)%3];}
     checkpoint(phase){
@@ -239,7 +250,8 @@
       return true;
     }
     saveSettings(){
-      this.save.data.settings={sound:this.combat.soundEnabled,reduced:this.reducedMotion,quality:this.quality};this.save.write();
+      document.body?.classList.toggle('reduce-motion',this.reducedMotion);
+      this.save.data.settings={sound:this.combat.soundEnabled,volume:this.combat.audioEngine.volume,ambience:this.combat.audioEngine.ambience,reduced:this.reducedMotion,quality:this.quality};this.save.write();
     }
     spawn() {
       if (this.enemies.length >= 320) return;
@@ -259,6 +271,7 @@
         (this.viewHeight/2+110)/Math.max(.0001,Math.abs(Math.sin(angle))));
       this.boss=new N.Enemy(this,'warden',this.camera.x+Math.cos(angle)*r,this.camera.y+Math.sin(angle)*r,++this.nextId);
       this.enemies.push(this.boss);this.bossSpawned=true;this.ui.banner('THE HOLLOW WARDEN','BREAK THE SEAL');
+      this.combat.sound('boss');
     }
     earnGold(amount){this.player.gold+=amount;this.stats.goldEarned+=amount;}
     unlock(id){
@@ -304,6 +317,7 @@
       this.impactCooldown=Math.max(0,this.impactCooldown-dt);
       if (this.hitStop > 0) { this.hitStop -= dt; return; }
       this.time += dt; this.waveTime += dt;
+      this.hurtFlash=Math.max(0,this.hurtFlash-dt);
       this.player.update(dt);
       if(this.wave%5===0&&!this.bossSpawned&&this.waveTime>=3)this.spawnBoss();
       this.spawnClock -= dt;
@@ -331,6 +345,7 @@
     frame(now) {
       const elapsed = this.lastFrame === null ? 0 : Math.min((now - this.lastFrame) / 1000, .15);
       this.lastFrame = now;
+      this.combat.audioEngine.transport(this.state==='playing');
       if(elapsed>0)this.fps+=(1/elapsed-this.fps)*.04;
       if (this.state === 'playing') {
         this.accumulator += elapsed;
@@ -382,7 +397,7 @@
       c.fillStyle='#171d1e'; c.fillRect(0,0,this.width,this.height);
       c.save(); c.translate(this.width/2,this.height/2); c.scale(this.zoom,this.zoom);
       const amount = this.reducedMotion ? 0 : this.shake;
-      c.translate(-this.camera.x+N.rand(-amount,amount),-this.camera.y+N.rand(-amount,amount));
+      c.translate(-this.camera.x+N.fxRand(-amount,amount),-this.camera.y+N.fxRand(-amount,amount));
       this.drawGround(c);
       c.fillStyle=this.biome().color;c.fillRect(this.camera.x-this.viewWidth/2-20,this.camera.y-this.viewHeight/2-20,this.viewWidth+40,this.viewHeight+40);
       this.combat.drawGround(c);
@@ -392,7 +407,17 @@
       list.push(this.player);list.sort((a,b)=>a.y-b.y);
       for(const entity of list) entity.draw(c);
       this.combat.draw(c);
+      if(!this.reducedMotion&&this.quality!=='low'){
+        c.save();c.globalCompositeOperation='lighter';c.fillStyle='#c9c5b833';
+        for(let i=0;i<20;i++){
+          const phase=this.time*(.1+(i%4)*.025)+i*2.39996;
+          const x=this.camera.x+Math.sin(phase)*this.viewWidth*.52,y=this.camera.y+Math.cos(phase*.77+i)*this.viewHeight*.48;
+          c.globalAlpha=.2+.35*Math.sin(phase+i)**2;c.beginPath();c.arc(x,y,i%3===0?1.5:1,0,Math.PI*2);c.fill();
+        }
+        c.restore();
+      }
       c.restore();
+      if(this.hurtFlash>0&&!this.reducedMotion){c.fillStyle=`rgba(160,65,57,${this.hurtFlash*.16})`;c.fillRect(0,0,this.width,this.height);}
       // Soft illumination follows the screen center, leaving UI legible.
       if(this.quality!=='low'){
         const fog=c.createRadialGradient(this.width/2,this.height/2,70,this.width/2,this.height/2,Math.max(this.width,this.height)*.7);
