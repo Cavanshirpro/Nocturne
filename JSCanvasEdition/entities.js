@@ -195,11 +195,12 @@
       if(this.terrified)movement=-Math.abs(movement)*1.15;else if(this.boss&&p.progress.demonTime>0&&len<360)movement*=.9;
       const moveAngle=Math.atan2(dy*(this.terrified?-1:1),dx*(this.terrified?-1:1));this.facing=DIRECTIONS[(Math.round(moveAngle/(Math.PI/4))+8)%8];
       const ox=this.x,oy=this.y;
-      this.x+=(dx/len*this.speed*movement+this.knockX)*dt;this.y+=(dy/len*this.speed*movement+this.knockY)*dt;
+      const orbit=this.boss&&len<420&&len>130&&!(this.guardian?.windup>0)?Math.sin(this.phase*.27)*.42:0;
+      this.x+=((dx/len-dy/len*orbit)*this.speed*movement+this.knockX)*dt;this.y+=((dy/len+dx/len*orbit)*this.speed*movement+this.knockY)*dt;
       this.moving=Math.hypot(this.x-ox,this.y-oy)>.01;
       if(this.frozen<=0)this.gait=(this.gait+Math.hypot(this.x-ox,this.y-oy)/76*Math.PI*2)%(Math.PI*2);
       this.knockX*=Math.exp(-10*dt);this.knockY*=Math.exp(-10*dt);
-      if(!this.terrified&&N.segmentDistance2(ox,oy,this.x,this.y,p.x,p.y)<(this.radius+p.radius)**2){if(this.castTimer<=0)this.castTimer=.3;p.hurt(this.damage);}
+      if(!this.terrified&&N.segmentDistance2(ox,oy,this.x,this.y,p.x,p.y)<(this.radius+p.radius)**2){if(this.castTimer<=0)this.castTimer=.3;p.hurt(this.guardian?N.FinalGuardian.damage(this,1,.42):this.damage);}
     }
     hit(damage,crit=false,vx=0,vy=0,source='bolt'){
       if(!this.alive||this.spawnDelay>0)return;
@@ -244,13 +245,13 @@
       c.save();c.fillStyle='#080e1066';c.beginPath();c.ellipse(this.x,this.y+2,this.radius+3,this.radius*.4,0,0,Math.PI*2);c.fill();
       if(this.elite||this.boss){c.strokeStyle=this.boss?'#cda57888':'#b8a17488';c.lineWidth=1.5;c.beginPath();c.ellipse(this.x,this.y+2,this.radius+5,this.radius*.5,0,0,Math.PI*2);c.stroke();}
       const s=this.scale,bob=this.game.reducedMotion?0:Math.sin(this.phase)*1.3;
-      c.save();c.translate(this.x,this.y);const squash=this.game.reducedMotion?0:Math.sin(this.hitSquash/.12*Math.PI)*.09;
+      c.save();const pose=N.EnemyMotion.pose(this);c.translate(this.x,this.y-pose.lift);c.rotate(pose.lean);c.scale(1+pose.stretch,1-pose.stretch);const squash=this.game.reducedMotion?0:Math.sin(this.hitSquash/.12*Math.PI)*.09;
       c.scale(1+squash,1-squash);
       if(this.flash>0&&!this.game.reducedMotion)c.filter='brightness(2.1)';else if(this.frozen>0)c.filter='brightness(1.25) sepia(.3) hue-rotate(145deg)';
       if(!window.NOCTURNE_ENEMY_ATLAS?.rows&&this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
       N.drawEnemy(c,this.game.images,this,-40*s,-99*s+bob,80*s,107*s);
       c.restore();
-      N.FinalGuardian.draw(this.game,this,c);
+      N.EnemyMotion.accents(c,this);N.FinalGuardian.draw(this.game,this,c);
       if(this.castTimer>0){c.globalCompositeOperation='lighter';c.strokeStyle='#d3b3d288';c.beginPath();c.arc(this.x,this.y-35*s,12+this.castTimer*30,0,Math.PI*2);c.stroke();c.globalCompositeOperation='source-over';}
       if(this.hp<this.maxHp&&!this.boss){
         c.fillStyle='#101617';c.fillRect(this.x-15,this.y-75*s,30,3);c.fillStyle=this.elite?'#d7b579':'#b8a293';c.fillRect(this.x-15,this.y-75*s,30*Math.max(0,this.hp/this.maxHp),3);

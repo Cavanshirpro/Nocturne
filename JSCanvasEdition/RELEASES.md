@@ -2,6 +2,48 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.1.2 — Balance of Power
+
+Release package prepared: **2026-10-23**. This package does not imply that a GitHub release or tag has been published.
+
+### Whole-build encounter balance
+
+- New `systems/difficulty.js` evaluates permanent merchant stats, learned spells, mastery, evolution relics, talents, vitality, armor, regeneration and mobility alongside level. Buying power without leveling now affects encounter pressure.
+- Spawn pacing, level bands, tier mix and living-enemy budgets adapt gradually. Pressure moves by at most 0.25 every six simulation seconds and only affects new spawns. Most mature encounters remain weaker fodder, even for heavily upgraded builds. Ordinary population is capped at 200.
+- **POWER** and **THREAT W** expose the build rating and effective spawn wave. The actual wave counter still advances once per completed guardian encounter.
+- Survival duration accounts for build pressure at wave start and stays fixed during that attempt: 30–67 seconds. Overlord invasion chance is now 4–42%, from wave 3, with a three-wave minimum gap and at most one invasion per wave. A live boss cannot be duplicated.
+- The wave plan, invasion roll and refresh clock persist in saves. Retry keeps the same plan and random decision. Gold, wounds, Aegis charge, banked essence and active Demon bonuses do not inflate permanent pressure.
+
+### Final Sovereign rebalance and powers
+
+- The final boss now budgets vitality from estimated sustained **whole-build** damage. Projectile spread and single-target spell coverage are included. The earlier fivefold vitality floor and small multiplier ceiling are removed: weak characters face smaller health budgets, while high shop builds produce much stronger guardians.
+- Boss level also uses effective build strength. Attack budgets account for vitality and armor, with individual attack ceilings that prevent full-health single-hit kills on weak builds. Player armor and Aegis still apply. The reference attack stat remains at least 5× an equivalent ordinary Overlord's value.
+- Boss stats lock on encounter entry; upgrades never heal or continuously inflate a fighting guardian. Ordinary pressure caps do not cap guardian damage-output scaling.
+- **Soul Constellation:** radial shots with a gap along the locked aim, with more orbs when enraged.
+- **Rift Step:** a clearly marked, locked destination inside the sanctum; the boss teleports there after its warning.
+- **Triune Lances:** three warned rays with space to move between them, also countered by Aegis.
+- The existing salvo, meteors, reaping arc and ward remain. The opening rotation shows all seven powers. Later choices react to distant/nearby players; enraged recovery and pressure add pace.
+- A fighting v5.1.1 guardian migrates once, preserving identity, health/ward percentages and attack clocks. New saves preserve all seven powers, including teleport destinations. Reloading an updated guardian never repeats its stat adjustment.
+
+### Enemy motion
+
+- Independently articulated wings, robes, arms and tails, slime deformation, and clearer attack anticipation/strike poses across the nine enemy families.
+- Boss strafing, floating and orbiting motes; optional adjacent-frame blending for prominent or uncrowded actors. Guardian warnings drive attack animation.
+- Low quality uses one atlas draw per actor; reduced motion and freezing suppress added movement. Cosmetic motion consumes no encounter randomness. Existing atlas dimensions/frame counts remain unchanged.
+- Asset checks caught and corrected slime/death-pose clipping; all enemy frames remain inside their cells. Procedural sources and animated previews are included.
+
+### Compatibility and validation
+
+- v5.1.1 Aegis, same-wave half-gold death recovery, manual banked Demon Essence, health feedback, sanctums and minimap behavior are retained. Existing supported saves migrate without removing upgrades.
+- **193 logic/integration test groups passed**, covering whole-build balance, bounded adaptation, invasion persistence, all seven guardian powers, damage ceilings, migration, exact saves, shields and retries.
+- **16 asset tests passed**, including all 48 embedded PNGs, directional poses, cell boundaries and deterministic regeneration.
+- Native Canvas decoded all 48 assets and rendered **six scene images**, including new powers, shield/telegraphs, reduced motion and a narrow viewport; all nine families and six animation states also rendered. This does not certify browser DOM/CSS layout or physical input/audio. Real-browser checks were not run.
+- Added reproducible `balance-probe.mjs` and [BALANCE.md](BALANCE.md), including same-level fixtures from starter through extreme merchant scaling and the limits of this calibration.
+
+### Update
+
+Export a backup, replace the complete `JSCanvasEdition` folder, and use the same browser/profile and game address. Open `index.html`. The archive contains only `JSCanvasEdition/`, including README, release notes, license, source and existing credits.
+
 ## v5.1.1 — Sovereign Reckoning
 
 Release package prepared: **2026-10-23**.

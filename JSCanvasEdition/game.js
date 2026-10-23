@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.1.1';
+  N.VERSION = '5.1.2';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -210,14 +210,14 @@
       this.selectedCoven=N.COVENS[coven]?coven:'ash';
       this.player = new N.Player(this,this.selectedCoven); this.enemies.length = this.loot.length = 0;
       this.combat.clear(); this.hash.clear(); this.input.clear();
-      this.wave = 0; this.time = 0;this.worldOrigin={x:0,y:0}; this.camera.x = this.camera.y = 0;
+      this.difficulty=null;this.wave = 0; this.time = 0;this.worldOrigin={x:0,y:0}; this.camera.x = this.camera.y = 0;
       this.stats=this.freshStats();this.shake = this.hitStop = this.impactCooldown = 0; this.ui.resetShop();this.abilities.cancel(); this.startWave();
     }
     startWave(resuming=false) {
       if(!resuming){this.wave++;this.player.progress.activeOath=this.player.progress.preparedOath;this.player.progress.preparedOath=null;this.player.progress.shield=this.player.progress.activeOath==='stone'?35:0;}
       this.waveTime = 0; this.spawnClock = .15;this.threatClock=8;this.autosaveClock=0;
       this.boss=null;this.bossSpawned=false;this.bossDefeated=false;this.sanctum=null;this.overlordSpawned=false;this.waveKills=0;this.waveDamage=0;
-      this.waveDuration = 30 + Math.min(this.wave - 1, 6) * 5;
+      N.Difficulty.start(this,resuming);
       if(!resuming)this.player.heal(this.player.maxHp*.12);
       this.player.invulnerable = 1;
       this.hurtFlash=0;
@@ -236,7 +236,7 @@
         player.hp=player.maxHp;player.x=player.y=0;
         Object.assign(player.progress,{demonTime:0,specialRemaining:0,aegis:0,aegisMax:0,aegisTime:0,aegisRemaining:0,shield:player.progress.activeOath==='stone'?35:0});
       }
-      this.save.data.checkpoint={schema:2,phase,coven:this.player.coven,wave:this.wave,time:this.time,player,
+      this.save.data.checkpoint={schema:2,phase,difficulty:N.Difficulty.capture(this,recovery),coven:this.player.coven,wave:this.wave,time:this.time,player,
         world:phase==='wave'&&!recovery?N.captureWorld(this):undefined,
         stats:JSON.parse(JSON.stringify(this.stats)),rolls:this.ui.rolls,slots:this.ui.slots.map(s=>({id:s.item?.id||null,locked:s.locked,price:s.price,sold:s.sold===true}))};
       return this.save.write();
@@ -250,6 +250,7 @@
       this.player.weapons={...this.player.weapons,...c.player.weapons};this.player.relics={...this.player.relics,...c.player.relics};
       this.player.progress=c.player.progress?JSON.parse(JSON.stringify(c.player.progress)):N.newProgression(this.player);N.mergeProgression(this.player);this.player.upgrades=[...c.player.upgrades];
       this.player.evolutions=new Set(Object.keys(this.player.weapons).filter(id=>this.player.evolved(id)));
+      this.difficulty=c.difficulty?JSON.parse(JSON.stringify(c.difficulty)):null;
       this.selectedCoven=c.coven;this.wave=c.wave;this.time=c.time;this.stats=JSON.parse(JSON.stringify(c.stats));this.stats.weapons={...Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),...this.stats.weapons};
       this.camera.x=this.player.x;this.camera.y=this.player.y;this.shake=this.hitStop=this.impactCooldown=0;this.boss=null;this.sanctum=null;
       this.player.healthTrail=this.player.hp;
@@ -278,7 +279,7 @@
     spawnBoss(overlord=this.wave%10===0,required=true){
       const angle=N.rand(0,Math.PI*2);
       const r=700;
-      this.boss=new N.Enemy(this,overlord?'overlord':'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:Math.max(this.player.level+3,Math.ceil(this.player.level*(overlord?1.18:1.08))),tier:overlord?'overlord':'warden',trait:'none'});
+      this.boss=new N.Enemy(this,overlord?'overlord':'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:Math.max(this.player.level+3,Math.ceil(N.Difficulty.current(this).effectiveLevel*(overlord?1.18:1.08))),tier:overlord?'overlord':'warden',trait:'none'});
       this.boss.spawnDelay=this.visible(this.boss.x,this.boss.y,60)?1.2:0;
       this.enemies.push(this.boss);if(required)this.bossSpawned=true;else this.overlordSpawned=true;this.ui.banner(overlord?'THE ASH OVERLORD':'THE HOLLOW WARDEN',overlord?'BREAK THE SOVEREIGN CROWN':'BREAK THE SEAL');
       this.combat.sound('boss');
@@ -337,7 +338,7 @@
       if (this.hitStop > 0) { this.hitStop -= dt; return; }
       this.time += dt; this.waveTime += dt;
       this.hurtFlash=Math.max(0,this.hurtFlash-dt);
-      this.abilities.update(dt);this.player.update(dt);this.rebaseWorld();
+      this.abilities.update(dt);this.player.update(dt);this.rebaseWorld();N.Difficulty.update(this,dt);
       this.zoomFactor+=(this.targetZoom-this.zoomFactor)*(1-Math.exp(-9*dt));this.applyZoom();
       this.threatClock-=dt;
       if(this.wave>=3&&this.threatClock<=0){
@@ -346,11 +347,13 @@
         this.combat.sound('warning');
         if(this.wave===3&&this.waveTime<10)this.ui.banner('HOLLOW CURSE','LEAVE THE MARKED CIRCLE BEFORE IT IGNITES');
       }
-      if(this.wave>=7&&this.wave%7===0&&this.wave%5!==0&&!this.overlordSpawned&&this.waveTime>=this.waveDuration*.52)this.spawnBoss(true,false);
+      const plan=N.Difficulty.current(this);
+      if(plan.invades&&!this.overlordSpawned&&!this.boss?.alive&&this.waveTime>=this.waveDuration*.52&&this.waveTime<this.waveDuration){this.spawnBoss(true,false);this.difficulty.lastInvasionWave=this.wave;}
       N.Sanctum.update(this);
       this.spawnClock -= dt;
-      const interval = Math.max(.09, .63 / (1 + .21 * (this.wave - 1)))*(this.wave%5===0?1.5:1);
-      while (this.spawnClock <= 0 && this.waveTime<this.waveDuration) { this.spawn(); this.spawnClock += interval; }
+      const interval = Math.max(.09,.63/(1+.21*(plan.effectiveWave-1))/plan.spawnMultiplier);
+      let living=this.enemies.filter(e=>e.alive&&!e.boss).length;
+      while (this.spawnClock <= 0 && this.waveTime<this.waveDuration) {if(living<plan.aliveBudget){this.spawn();living++;}this.spawnClock+=interval;}
       const recallRange=Math.max(2200,N.boltRange(this.player)*2);
       for(const e of this.enemies)if(e.alive){
         if(N.dist2(e,this.player)>recallRange**2&&this.sanctum?.bossId!==e.id){

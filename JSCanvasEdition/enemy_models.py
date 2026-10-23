@@ -24,14 +24,17 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
     d = ImageDraw.Draw(im)
     a = math.radians(angle)
     front = math.cos(a)
+    cycle = phase if phase is not None else progress*math.tau
+    pulse = math.sin(cycle)
     gait = math.sin(phase) if phase is not None else 0
     if action == 'fear':
         gait = math.sin(progress*math.tau)*1.25
-    attack = math.sin(progress*math.pi) if action == 'attack' else 0
+    strike = (progress/.42)*.25 if progress<.42 else .25+math.sin((progress-.42)/.58*math.pi)*.75
+    attack = strike if action == 'attack' else 0
     hurt = math.sin(progress*math.pi*1.5) if action == 'hurt' else 0
     death = progress if action == 'death' else 0
     breath = math.sin(progress*math.tau+.4)*.7 if action == 'idle' else 0
-    bob = abs(gait)*1.7+breath
+    bob = abs(gait)*1.7+breath+(math.sin(cycle*.8)*1.5 if kind in ('wraith','overlord') and action!='death' else 0)
     palette = {
         'slime': ('#244d46', '#699780', '#bdd9a8'),
         'skeleton': ('#64605b', '#d1c5a7', '#8bd7c6'),
@@ -47,16 +50,17 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
 
     def project(x, y, z):
         if z > 15:
+            x += math.sin(cycle+z/32)*min(z/90,1)*(1.2 if kind in ('warden','overlord') else .65)
             y += attack*min(z/70, 1)*7-hurt*5
             if action == 'fear':
                 y -= min(z/80, 1)*8
         if death:
-            x += z*death*.10
+            x += z*death*.03
             z *= 1-death*.80
             y += death*4
         xx = x*math.cos(a)-y*math.sin(a)
         yy = x*math.sin(a)+y*math.cos(a)
-        return ((48+xx)*scale, (116-death*9+yy*.46-z*.89-bob*(1-death))*scale)
+        return ((48+xx)*scale, (116-(3 if kind=='slime' else 0)-death*9+yy*.46-z*.89-bob*(1-death))*scale)
 
     def poly(points, color):
         d.polygon([project(*v) for v in points], fill=color)
@@ -81,8 +85,8 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             t, u = i*math.tau/12, (i+1)*math.tau/12
             shade = int(37+13*math.cos(t+a-.8))
             color = (shade, shade-1, shade+12, 255)
-            pts = [(hem*math.cos(t)+gait*1.7, 13*math.sin(t), 7+gait*math.cos(t)*2),
-                   (hem*math.cos(u)+gait*1.7, 13*math.sin(u), 7+gait*math.cos(u)*2),
+            pts = [(hem*math.cos(t)+gait*1.7, 13*math.sin(t), 7+gait*math.cos(t)*2+math.sin(cycle+t)*1.6),
+                   (hem*math.cos(u)+gait*1.7, 13*math.sin(u), 7+gait*math.cos(u)*2+math.sin(cycle+u)*1.6),
                    (12*math.cos(u), 8*math.sin(u), height), (12*math.cos(t), 8*math.sin(t), height)]
             faces.append((math.sin((t+u)/2+a), pts, color))
         for _, pts, color in sorted(faces):
@@ -127,7 +131,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         oval(-3, 0, 24+attack*8, radius*.82, 21, light)
         for i in range(8):
             t=i*math.tau/8
-            oval(math.cos(t)*20, math.sin(t)*13, 5+gait*math.cos(t), 8, 5, dark)
+            oval(math.cos(t)*20, math.sin(t)*13, 5+math.sin(cycle+t)*2, 8, 5+math.sin(cycle+t)*.8, dark)
         oval(-5, 1, 27, 9, 11, '#4c7265')
         if front > -.2:
             for side in (-1, 1):
@@ -135,7 +139,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
                 oval(side*7, 17, 29+attack*7, 1, 2, '#e8f4d9')
             line([(-5, 18, 18), (0, 19, 15), (6, 18, 19)], dark, 1.3)
         for x, y, z, r in [(-11, 6, 40, 4), (8, 4, 43, 2), (12, 11, 19, 2), (-17, 1, 24, 2)]:
-            oval(x, y, z, r, r*.65, '#b4c9af')
+            oval(x+pulse*.8, y, z+math.sin(cycle+x)*1.5, r, r*.65, '#b4c9af')
         return im.resize((96, 128), Image.Resampling.LANCZOS)
 
     if kind == 'hound':
@@ -156,7 +160,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
                 line([(side*10, y, 43), (side*14, y-2, 35), (side*13, y+2, 30)], dark, 1)
         for y in (-15, -8, 0, 8):
             poly([(-5, y, 40), (0, y-3, 54), (6, y, 39)], dark)
-        line([(0, -17, 35), (5+gait*3, -29, 43), (10, -34, 55)], light, 4)
+        line([(0, -17, 35), (5+math.sin(cycle)*5, -29, 43), (10+math.sin(cycle+.8)*5, -34, 55)], light, 4)
         oval(0, 19, 47+attack*2, 12, 12, dark)
         poly([(-10, 19, 50), (-12, 17, 68), (-3, 20, 56)], light)
         poly([(10, 19, 50), (12, 17, 68), (3, 20, 56)], light)
@@ -170,7 +174,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
 
     # Rear wings are drawn before the body. Each membrane has its own ribs.
     if kind in ('gargoyle', 'overlord'):
-        wing = gait*5+attack*13
+        wing = math.sin(cycle*1.3)*7+gait*3+attack*12
         for side in (-1, 1):
             pts=[(side*9, -4, 68), (side*35, -7, 91+wing), (side*41, -4, 55+wing*.4), (side*30, -2, 60), (side*22, -1, 44), (side*13, 0, 56)]
             poly(pts, dark)
@@ -205,7 +209,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             line([(-8, 6, 64), (-3, 9, 61), (-5, 9, 57)], '#c2adb8', .7)
 
     for side in (-1, 1):
-        hand_z=43+attack*(27 if side==1 else 16)+(6 if action=='fear' else 0)
+        hand_z=43+gait*side*3+attack*(27 if side==1 else 16)+(6 if action=='fear' else 0)
         hand_y=7+gait*side*5+attack*12
         limb([(side*12, 0, 65), (side*(20+attack*4), 2, 51+attack*10), (side*21, hand_y, hand_z)], 3 if skeletal else 5)
         oval(side*21, hand_y, hand_z, 3, 3.5, light)
@@ -250,7 +254,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             poly([(x-2, 1, 95), (x, 1, 114-abs(x)*.7), (x+2, 1, 95)], '#cfac93')
         oval(0, 10, 59, 5, 7, glow)
         for side in (-1, 1):
-            line([(side*15, 5, 67), (side*9, 9, 56), (0, 10, 53)], '#b69a80', 1)
+            line([(side*15, 5, 67), (side*9, 9, 56), (math.sin(cycle+side)*3, 10, 53)], '#b69a80', 1)
     if action=='fear':
         for side in (-1, 1):
             line([(side*12, 3, 99), (side*16, 3, 105), (side*18, 3, 102)], '#ecb9dc', 1)

@@ -54,7 +54,7 @@
     g.autosaveClock=0;Object.assign(g.player,w.player);g.player.facing=w.facing;
     g.enemies=w.enemies.map(data=>{const e=new N.Enemy(g,data.type,data.x,data.y,data.id,data.elite);Object.assign(e,data);return e;});
     g.boss=g.enemies.find(e=>e.boss)||null;
-    if(g.sanctum?.phase==='fighting'&&g.boss?.id===g.sanctum.bossId&&!g.boss.guardian)N.FinalGuardian.promote(g,g.boss,true);
+    if(g.sanctum?.phase==='fighting'&&g.boss?.id===g.sanctum.bossId)N.FinalGuardian.promote(g,g.boss,true);
     g.loot=w.loot.map(data=>Object.assign(new N.Loot(g,data.type,data.x,data.y,data.value),data));
     for(const data of w.projectiles){const b=g.combat.projectiles.acquire();b.reset(data.x,data.y,data.vx,data.vy,data.damage,data.crit,data.pierce,data.evolved);b.life=data.life;b.radius=data.radius;for(const k of ['source','color','blast','freeze','expose'])if(data[k]!==undefined)b[k]=data[k];for(const id of data.hitIds)b.hitIds.add(id);}
     for(const [name,entries] of [['hostile',w.hostile],['hazards',w.hazards]])for(const data of entries)Object.assign(g.combat[name].acquire(),data);

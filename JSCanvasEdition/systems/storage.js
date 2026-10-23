@@ -79,6 +79,7 @@
     validCheckpoint(c){
       if(!c||c.schema!==2||!['wave','shop'].includes(c.phase)||!['ash','moon','storm'].includes(c.coven))return false;
       if(!Number.isSafeInteger(c.wave)||c.wave<1||!Number.isFinite(c.time)||c.time<0)return false;
+      if(c.difficulty!==undefined&&(!N.Difficulty.valid(c.difficulty)||c.difficulty.plan.wave!==c.wave))return false;
       const p=c.player;
       if(!p||!N.PLAYER_FIELDS.every(k=>Number.isFinite(p[k])))return false;
       if(p.hp<=0||p.maxHp<1||p.hp>p.maxHp||p.speed<1||p.damage<1||p.attackInterval<=0)return false;
