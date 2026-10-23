@@ -28,3 +28,69 @@
 @media(max-width:700px){.audio-settings{gap:10px;margin:17px auto}.audio-settings label{width:100%;max-width:300px}.audio-settings .secondary{padding:11px 15px;font-size:9px}.wave-banner small{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.card-icon{transition:none}.choice:hover .card-icon{transform:none}}
 body.reduce-motion .card-icon,body.reduce-motion .choice:hover .card-icon{transform:none;transition:none}
+
+/* 3.0 · Arcane Horizons: moonlit chapters, readable camera tools and richer art. */
+:root{--ink:#111b20;--panel:#1b282b;--ivory:#f1e8d4;--muted:#a6b2ab;--gold:#d6bc83;--purple:#c5b5df}
+#game{image-rendering:auto}
+.overlay{background:linear-gradient(115deg,#08151ae8,#122326d9 52%,#121a24ec);backdrop-filter:blur(5px)}
+.menu{scrollbar-gutter:stable;padding:20px 12px}
+.menu[data-screen="title"]{max-width:960px}
+.title-crest{display:flex;align-items:center;justify-content:center;gap:40px;position:relative;margin:0 auto 20px;min-height:224px}
+.title-crest h1{margin:4px 0 6px;font-size:clamp(58px,7vw,86px);text-shadow:0 3px 45px #c2a87915}
+.title-crest .eyebrow{font-size:9px;letter-spacing:3.6px;margin:6px 0 15px}
+.title-crest .subtitle-name{margin:8px 0 19px;letter-spacing:6px}
+.title-crest .title-sub{margin:0!important;font:14px/1.7 Georgia,serif;color:#b1bfb6}
+.title-art{position:relative;width:180px;height:224px;background:radial-gradient(ellipse at 50% 70%,#b7a2dc23,transparent 65%)}
+.title-art:before{content:"";position:absolute;left:7%;right:7%;bottom:2px;border:1px solid #c9b88066;height:28px;border-radius:50%;box-shadow:0 0 30px #c5b0d222,inset 0 0 20px #cfb87d15}
+.title-art>span{position:absolute;left:19px;top:-16px;font:160px Georgia;color:#d5bd8240;transform:rotate(-15deg)}
+.title-art>img{position:absolute;left:10px;bottom:0;width:168px;height:224px;object-fit:contain;filter:drop-shadow(0 4px 10px #040a0c)}
+.active-save{display:flex;justify-content:space-between;align-items:center;gap:18px;width:min(790px,100%);margin:0 auto 18px;padding:13px 18px;border:1px solid #ceb68066;background:linear-gradient(100deg,#d3b78113,#bdafd30a);text-align:left;transition:border-color .2s}
+.active-save:hover{border-color:var(--gold)}
+.active-save>span{font:17px Georgia,serif;color:var(--gold);overflow-wrap:anywhere}
+.active-save small{font-size:8px;letter-spacing:1.4px;color:#bcc4b5}
+.coven-choice{background:linear-gradient(135deg,#30404377,#172528a8);border-color:#7e9a8d55;min-height:118px}
+.coven-choice.chosen{box-shadow:inset 0 1px #e4c59033,0 0 25px #c2b38609;background:linear-gradient(135deg,#bba37b25,#203034b0)}
+.coven-choice small{color:#aebdb2}
+.primary{background:linear-gradient(115deg,#e1c58b,#bca36d);border-color:#f1dca6aa;color:#172326;box-shadow:0 3px 18px #0003}
+.primary:hover{background:linear-gradient(115deg,#f4dfad,#d4b67b)}
+.card{background:linear-gradient(145deg,#304044e6,#19282aee);border-color:#8c9f8559}
+.card-icon{filter:drop-shadow(0 0 10px #c9b27e35)}
+.card p{color:#b0c0b6}
+.save-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:28px 0;text-align:left}
+.save-card{border:1px solid #7e9a8d55;background:linear-gradient(135deg,#28383cc9,#18262bed);padding:20px;position:relative;min-width:0}
+.save-card.active{border-color:#d5bd83bb;box-shadow:inset 3px 0 #d5bd83}
+.save-heading{display:flex;justify-content:space-between;gap:8px;font-size:8px;letter-spacing:1.5px;color:var(--gold)}
+.save-heading small{color:#99b0a5;font-size:8px;letter-spacing:.6px}
+.save-card h3{font:27px Georgia,serif;color:#eee2c9;font-weight:400;margin:15px 0 8px;overflow-wrap:anywhere}
+.save-preview{display:flex;align-items:center;gap:14px;min-height:115px}
+.save-preview img{width:74px;height:99px;object-fit:contain;filter:drop-shadow(0 4px 8px #0006);background:radial-gradient(ellipse,#c7b8df15,transparent 70%)}
+.save-preview p{font:12px/1.6 Georgia,serif;color:#a8c3ba;margin:0}
+.save-preview strong{display:block;color:#e3d6b8;font:17px/1.6 Georgia,serif;margin:5px 0}
+.save-preview small{font:9px/1.6 Arial,sans-serif;color:#a5b0ac}
+.save-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+.save-actions .primary,.save-actions .secondary{padding:11px 14px;font-size:9px;letter-spacing:1px;min-height:40px}
+.save-actions .text-button{font-size:8px;padding:8px}
+.danger{color:#d9a799!important}
+.delete-confirm{margin-top:16px;padding:12px;background:#bc766a13;border:1px solid #cb9b8a55}
+.delete-confirm p{font-size:11px;line-height:1.6}
+.rename-row{margin-top:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rename-row label{font-size:8px;letter-spacing:1px;width:100%;color:var(--gold)}
+.rename-row input{min-width:0;flex:1;width:100%;background:#111c22;color:var(--ivory);border:1px solid #82978999;padding:11px;font:14px Georgia,serif}
+input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#zoom-hud{position:fixed;right:36px;bottom:124px;display:flex;gap:2px;background:#111f25bf;border:1px solid #a5b19a55;backdrop-filter:blur(5px)}
+#zoom-hud button{min-width:38px;height:36px;border:0;background:transparent;color:#dfcda7;font:20px Georgia,serif}
+#zoom-hud #zoom-reset{font:10px monospace;min-width:56px;letter-spacing:1px}
+#zoom-hud button:hover{background:#c1ac7a22}
+#save-label{font:9px Georgia,serif;letter-spacing:1px;color:#c5b990}
+.zoom-settings{max-width:390px;margin:20px auto;padding:16px 20px;background:#93a8880d;border:1px solid #94a58933;text-align:left}
+.zoom-settings label{font-size:9px;letter-spacing:2px;color:var(--muted)}
+.zoom-settings strong{float:right;color:var(--gold);font:11px monospace}
+.zoom-settings input{width:100%;accent-color:var(--gold);margin:16px 0 12px;cursor:pointer}
+.zoom-settings small{display:block;font-size:9px;line-height:1.7;color:var(--muted)}
+#toast{z-index:5;text-align:center}
+@media(max-width:700px){
+  .title-crest{gap:12px;min-height:160px;margin-bottom:16px}.title-art{width:108px;height:160px;flex-shrink:0}.title-art>img{width:116px;height:155px;left:-2px}.title-art>span{font-size:108px;top:-4px;left:3px}.title-crest h1{font-size:48px}.title-crest .eyebrow{font-size:7px;letter-spacing:1.5px}.title-crest .subtitle-name{font-size:9px;letter-spacing:3px;margin-bottom:13px}.title-crest .title-sub{font-size:12px}.active-save{padding:11px;gap:9px}.active-save small{font-size:7px;letter-spacing:.5px;text-align:right}.active-save>span{font-size:15px}.save-grid{grid-template-columns:1fr}.save-card{padding:17px}.save-preview{min-height:99px}.menu{padding:12px 3px}.coven-choice{min-height:153px}.coven-choice strong{font-size:15px}.coven-choice small{font-size:9px}#zoom-hud{right:18px;bottom:112px}#zoom-hud button{height:34px;min-width:32px}#zoom-hud #zoom-reset{min-width:45px;font-size:9px}#save-label{font-size:8px}
+}
+@media(pointer:coarse){#zoom-hud{bottom:225px;right:24px}}
+@media(max-height:700px) and (min-width:701px){.title-crest{min-height:160px;margin-bottom:12px;gap:25px}.title-art{height:156px;width:130px}.title-art>img{height:160px;width:120px}.title-art>span{font-size:112px;top:-7px}.title-crest h1{font-size:57px}.title-crest .eyebrow{margin:2px 0 8px}.title-crest .subtitle-name{margin-bottom:12px}.title-crest .title-sub{font-size:12px}.active-save{padding:10px 15px;margin-bottom:12px}.menu[data-screen="title"] .hint{margin-top:13px}}
+.menu[data-screen="saves"]>.shop-actions{position:sticky;bottom:-1px;z-index:2;padding:16px 10px;margin-top:16px;background:#142328f2;border-top:1px solid #c6b48155;box-shadow:0 -10px 25px #102024cc}

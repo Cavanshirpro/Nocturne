@@ -8,8 +8,8 @@
     storm:{name:'The Stormcaller',icon:'ϟ',color:'#9ecbd4',text:'85 vitality · 14 damage. Starts with Chain Lightning.',apply:p=>{p.maxHp=p.hp=85;p.damage=14;p.weapons.lightning=1;p.attackInterval=.66;}}
   });
   N.drawWitch=(c,images,facing,frame,x,y,w=80,h=107)=>{
-    const sheet=images['witch_walk_'+facing];
-    if(frame>=0&&sheet)c.drawImage(sheet,frame*96,0,96,128,x,y,w,h);
+    const atlas=window.NOCTURNE_ATLAS,sheet=images['witch_atlas_'+facing];
+    if(sheet){const index=frame>=0?atlas.clips.walk.start+frame:atlas.clips.idle.start;c.drawImage(sheet,index*atlas.width,0,atlas.width,atlas.height,x,y,w,h);}
     else c.drawImage(images['witch_'+facing],x,y,w,h);
   };
   class Player {
@@ -18,6 +18,7 @@
       this.upgrades=[];this.coven=COVENS[coven]?coven:'ash';
       this.weapons={bolt:1,orbit:0,lightning:0,nova:0};
       this.relics={cinder:false,conductor:false,permafrost:false,mirror:false};this.evolutions=new Set();
+      this.animator=new N.SpriteAnimator();
       this.stepDistance=0;this.ghostClock=0;this.castTimer=0;
       COVENS[this.coven].apply(this);
     }
@@ -34,10 +35,14 @@
       const v=this.game.input.vector(),len=Math.hypot(v.x,v.y);
       this.dashX=len>.05?v.x/len:this.lastX;this.dashY=len>.05?v.y/len:this.lastY;
       this.dashTimer=.2;this.dashRemaining=this.dashCooldown;this.invulnerable=Math.max(this.invulnerable,.28);
-      this.ghostClock=0;
+      this.ghostClock=0;this.animator.play('dash',{restart:true});
       this.game.stats.dashes++;this.game.combat.burst(this.x,this.y-10,10,COVENS[this.coven].color);this.game.combat.sound('dash');return true;
     }
     get walkFrame(){return this.moving&&!this.game.reducedMotion?Math.floor(this.walk/(Math.PI*2)*8)%8:-1;}
+    cast(target=null){
+      if(target&&!this.moving)this.facing=DIRECTIONS[(Math.round(Math.atan2(target.y-this.y,target.x-this.x)/(Math.PI/4))+8)%8];
+      this.castTimer=.28;this.animator.play('cast',{restart:true});
+    }
     update(dt){
       this.castTimer=Math.max(0,this.castTimer-dt);
       const {x,y}=this.game.input.vector();this.moving=Math.hypot(x,y)>.05;
@@ -56,6 +61,9 @@
           if(this.stepDistance>=44){this.stepDistance%=44;this.game.combat.sound('step');this.game.combat.dust(this.x,this.y+3);}
         }else this.stepDistance=0;
       }
+      this.animator.update(dt,this.moving,this.dashTimer>0,this.game.reducedMotion);
+      // Match the locomotion clip to actual distance, rather than frame rate.
+      if(this.animator.state==='walk')this.animator.time=this.walk/(Math.PI*2)*window.NOCTURNE_ATLAS.clips.walk.duration;
       this.dashRemaining=Math.max(0,this.dashRemaining-dt);this.invulnerable=Math.max(0,this.invulnerable-dt);
       this.hp=Math.min(this.maxHp,this.hp+this.regen*dt);
     }
@@ -64,6 +72,7 @@
       const damage=Math.max(1,amount*(1-this.armor)),actual=Math.min(this.hp,damage);
       this.hp=Math.max(0,this.hp-damage);this.invulnerable=.85;
       this.game.stats.damageTaken+=actual;this.game.waveDamage+=actual;
+      this.animator.play('hurt',{restart:true});
       this.game.hurtFlash=.25;
       this.game.shake=Math.max(this.game.shake,4);
       this.game.combat.burst(this.x,this.y-12,10,'#d6a99b');
@@ -73,6 +82,11 @@
     draw(c){
       c.save();c.fillStyle='#080e1066';c.beginPath();c.ellipse(this.x,this.y+3,23,9,0,0,Math.PI*2);c.fill();
       c.strokeStyle=COVENS[this.coven].color+'77';c.lineWidth=1;c.beginPath();c.ellipse(this.x,this.y+2,23,11,0,0,Math.PI*2);c.stroke();
+      if(this.castTimer>0){
+        const t=1-this.castTimer/.28;c.save();c.globalCompositeOperation='lighter';c.strokeStyle=COVENS[this.coven].color+'77';c.lineWidth=1.2;
+        c.beginPath();c.ellipse(this.x,this.y,26+8*t,12+4*t,0,0,Math.PI*2);c.stroke();
+        for(let i=0;i<3;i++){const a=i*Math.PI*2/3+(this.game.reducedMotion?0:t*2);c.beginPath();c.arc(this.x+Math.cos(a)*30,this.y+Math.sin(a)*13,2,0,Math.PI*2);c.stroke();}c.restore();
+      }
       if(this.invulnerable>0)c.globalAlpha=this.game.reducedMotion?.75:Math.floor(this.invulnerable*16)%2===0?.5:1;
       c.save();c.translate(this.x,this.y);
       if(!this.game.reducedMotion){
@@ -80,7 +94,7 @@
         const recoil=Math.sin(Math.min(1,this.castTimer/.15)*Math.PI)*.018;
         c.scale(1+recoil,1+breath-recoil*.4);
       }
-      N.drawWitch(c,this.game.images,this.facing,this.walkFrame,-40,-99);c.restore();c.restore();
+      this.animator.draw(c,this.game.images,this.facing,-40,-99);c.restore();c.restore();
     }
   }
   const TYPES=Object.freeze({
@@ -94,12 +108,13 @@
   class Enemy {
     constructor(game,type,x,y,id,elite=false){
       const t=TYPES[type],wave=game.wave-1;
-      Object.assign(this,{game,type,id,x,y,maxHp:t.hp*(1+.2*wave),speed:t.speed*(1+.025*wave),damage:t.damage*(1+.1*wave),radius:t.radius,scale:t.scale,xp:t.xp,gold:t.gold,alive:true,flash:0,knockX:0,knockY:0,phase:N.fxRand(0,Math.PI*2),gait:0,hitSquash:0,castTimer:0,elite,boss:type==='warden',slow:0,frozen:0,burn:0,burnTick:0,burnDamage:0,attackTimer:N.rand(1.5,3),windup:0,charge:0,chargeX:0,chargeY:0,attackCount:0});
+      Object.assign(this,{game,type,id,x,y,maxHp:t.hp*(1+.24*wave+.006*wave*wave),speed:t.speed*(1+Math.min(.65,.024*wave)),damage:t.damage*(1+.1*wave),radius:t.radius,scale:t.scale,xp:t.xp,gold:t.gold,alive:true,flash:0,knockX:0,knockY:0,phase:N.fxRand(0,Math.PI*2),gait:0,hitSquash:0,castTimer:0,elite,boss:type==='warden',slow:0,frozen:0,burn:0,burnTick:0,burnDamage:0,attackTimer:N.rand(1.5,3),windup:0,charge:0,chargeX:0,chargeY:0,attackCount:0,spawnDelay:0});
       if(elite){this.maxHp*=2.4;this.speed*=1.12;this.damage*=1.25;this.scale*=1.15;this.xp*=3;this.gold*=3;}
-      if(this.boss)this.maxHp=760*(1+.6*(game.wave/5-1));
+      if(this.boss)this.maxHp=850*(1+.8*(game.wave/5-1));
       this.hp=this.maxHp;
     }
     update(dt){
+      if(this.spawnDelay>0){this.spawnDelay=Math.max(0,this.spawnDelay-dt);return;}
       this.flash=Math.max(0,this.flash-dt);this.hitSquash=Math.max(0,this.hitSquash-dt);this.castTimer=Math.max(0,this.castTimer-dt);
       if(this.frozen<=0)this.phase+=dt*5;
       this.slow=Math.max(0,this.slow-dt);this.frozen=Math.max(0,this.frozen-dt);
@@ -144,7 +159,7 @@
       if(N.segmentDistance2(ox,oy,this.x,this.y,p.x,p.y)<(this.radius+p.radius)**2)p.hurt(this.damage);
     }
     hit(damage,crit=false,vx=0,vy=0,source='bolt'){
-      if(!this.alive)return;
+      if(!this.alive||this.spawnDelay>0)return;
       const dealt=Math.min(this.hp,damage);this.game.stats.damage+=dealt;
       this.game.stats.weapons[source]=(this.game.stats.weapons[source]||0)+dealt;
       this.hp-=damage;this.flash=.1;this.hitSquash=.12;this.knockX+=vx*(this.boss?12:85);this.knockY+=vy*(this.boss?12:85);
@@ -168,6 +183,11 @@
       }else if(Math.random()<.018)g.loot.push(new Loot(g,'heal',this.x,this.y,8));
     }
     draw(c){
+      if(this.spawnDelay>0){
+        c.save();c.strokeStyle=this.boss?'#e8b891aa':'#c3b2e699';c.fillStyle='#b4a3e612';c.lineWidth=2;
+        const r=this.radius+16,t=N.clamp(1-this.spawnDelay/1.3,.05,1);c.beginPath();c.ellipse(this.x,this.y,r,r*.55,0,0,Math.PI*2);c.fill();c.stroke();
+        c.beginPath();c.ellipse(this.x,this.y,r*t,r*.55*t,0,0,Math.PI*2);c.stroke();c.restore();return;
+      }
       c.save();c.fillStyle='#080e1066';c.beginPath();c.ellipse(this.x,this.y+2,this.radius+3,this.radius*.4,0,0,Math.PI*2);c.fill();
       if(this.elite||this.boss){c.strokeStyle=this.boss?'#cda57888':'#b8a17488';c.lineWidth=1.5;c.beginPath();c.ellipse(this.x,this.y+2,this.radius+5,this.radius*.5,0,0,Math.PI*2);c.stroke();}
       const s=this.scale,bob=this.game.reducedMotion?0:Math.sin(this.phase)*1.3;

@@ -4,11 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14191a">
-  <meta name="description" content="Nocturne 2.1: animated eight-directional walking, layered spell and impact sounds, dash echoes, spell evolutions and Hollow Wardens. Fully offline Canvas survival.">
-  <title>Nocturne — Motion &amp; Echoes</title>
+  <meta name="description" content="Nocturne 3.0: independent save slots, exact world snapshots, animated spellcasting, camera zoom and a rebalanced dark-fantasy survival arena. Fully offline Canvas survival.">
+  <title>Nocturne — Arcane Horizons</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="assets.js"></script>
   <script defer src="game.js"></script>
+  <script defer src="systems/balance.js"></script>
+  <script defer src="systems/animation.js"></script>
+  <script defer src="systems/snapshots.js"></script>
+  <script defer src="systems/storage.js"></script>
+  <script defer src="systems/audio.js"></script>
   <script defer src="entities.js"></script>
   <script defer src="combat.js"></script>
   <script defer src="ui.js"></script>
@@ -23,13 +28,14 @@
     <div class="wave-progress"><i id="wave-fill"></i></div>
   </header>
   <aside id="boss-hud" hidden aria-label="Hollow Warden health"><div><span id="boss-phase">HOLLOW WARDEN</span><span id="boss-hp"></span></div><div class="bar"><i id="boss-fill"></i></div></aside>
-  <aside id="ritual-hud"><span id="biome-name"></span><div id="spell-belt" aria-label="Spell ranks"></div><small id="performance"></small></aside>
+  <aside id="ritual-hud"><span id="biome-name"></span><div id="spell-belt" aria-label="Spell ranks"></div><small id="performance"></small><small id="save-label"></small></aside>
   <footer id="bottom-hud" hidden>
     <div class="vital"><span class="eyebrow">VITALITY</span><div class="bar health"><i id="health-fill"></i></div><span id="health-text">100 / 100</span></div>
     <div class="dash-meter"><span class="eyebrow">VEILSTEP</span><div class="bar"><i id="dash-fill"></i></div><span id="dash-text">READY · SPACE</span></div>
     <div class="experience"><div><span class="eyebrow" id="level-label">LEVEL 01</span><span id="xp-text">0 / 8 XP</span></div><div class="bar xp"><i id="xp-fill"></i></div></div>
     <div class="kills"><span class="eyebrow">SOULS BANISHED</span><strong id="kills">0</strong></div>
   </footer>
+  <nav id="zoom-hud" aria-label="Camera zoom" hidden><button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-reset" aria-label="Reset camera zoom"><span id="zoom-value">100%</span></button><button id="zoom-in" aria-label="Zoom in">＋</button></nav>
   <div id="wave-banner" class="wave-banner" aria-live="polite"></div>
   <div id="toast" role="status"></div>
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="menu-title">

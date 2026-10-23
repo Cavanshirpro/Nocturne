@@ -26,7 +26,7 @@ def png(key):
 
 class AssetTests(unittest.TestCase):
     def test_all_embedded_images_are_valid(self):
-        self.assertEqual(len(data()),30)
+        self.assertEqual(len(data()),33)
         for key in data():
             im=png(key)
             self.assertGreater(im.width,0)
@@ -39,21 +39,21 @@ class AssetTests(unittest.TestCase):
 
     def test_eight_distinct_walk_frames_per_facing(self):
         for direction in DIRS:
-            sheet=png("witch_walk_"+direction)
-            self.assertEqual(sheet.size,(768,128))
-            poses=[sheet.crop((i*96,0,(i+1)*96,128)) for i in range(8)]
+            sheet=png("witch_atlas_"+direction)
+            self.assertEqual(sheet.size,(2304,128))
+            poses=[sheet.crop(((i+4)*96,0,(i+5)*96,128)) for i in range(8)]
             self.assertEqual(len({im.tobytes() for im in poses}),8,direction)
 
     def test_boots_move_independently(self):
         for direction in DIRS:
-            sheet=png("witch_walk_"+direction)
-            feet=[sheet.crop((i*96,105,(i+1)*96,128)).tobytes() for i in range(8)]
+            sheet=png("witch_atlas_"+direction)
+            feet=[sheet.crop(((i+4)*96,105,(i+5)*96,128)).tobytes() for i in range(8)]
             self.assertGreaterEqual(len(set(feet)),4,direction)
 
     def test_witch_hat_and_boots_stay_inside_the_frame(self):
         for direction in DIRS:
-            sheet=png("witch_walk_"+direction)
-            for i in range(8):
+            sheet=png("witch_atlas_"+direction)
+            for i in range(24):
                 alpha=sheet.crop((i*96,0,(i+1)*96,128)).getchannel("A").point(lambda value:255 if value>64 else 0)
                 box=alpha.getbbox()
                 self.assertGreater(box[0],0,(direction,i))
@@ -68,6 +68,21 @@ class AssetTests(unittest.TestCase):
             frames=[sheet.crop((i*80,0,(i+1)*80,88)).tobytes() for i in range(4)]
             self.assertGreaterEqual(len(set(frames)),3,kind)
 
+    def test_spellcasting_changes_hands_not_just_the_whole_bitmap(self):
+        for direction in DIRS:
+            sheet=png("witch_atlas_"+direction)
+            frames=[sheet.crop(((12+i)*96,0,(13+i)*96,128)) for i in range(6)]
+            self.assertGreaterEqual(len({frame.tobytes() for frame in frames}),4,direction)
+            hands=[frame.crop((12,35,88,100)).tobytes() for frame in frames]
+            self.assertGreaterEqual(len(set(hands)),4,direction)
+
+    def test_new_landmarks_have_transparent_backgrounds(self):
+        for kind in ("tree","arch","tomb"):
+            im=png("prop_"+kind)
+            self.assertEqual(im.size,(160,200))
+            self.assertEqual(im.getpixel((0,0))[3],0)
+            self.assertGreater(im.getchannel("A").getbbox()[3],170)
+
     def test_preview_loops(self):
         with Image.open(ROOT/"walking-preview.gif") as gif:
             self.assertEqual(gif.n_frames,8)
@@ -76,7 +91,7 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(gif.info["duration"],90)
 
     def test_generation_is_deterministic(self):
-        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif"]
+        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif"]
         before=[hashlib.sha256(p.read_bytes()).digest() for p in paths]
         subprocess.run([sys.executable,str(ROOT/"generate_assets.py")],check=True,stdout=subprocess.DEVNULL)
         self.assertEqual(before,[hashlib.sha256(p.read_bytes()).digest() for p in paths])

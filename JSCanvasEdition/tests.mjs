@@ -17,17 +17,17 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
 let passed=0;
 function test(name,fn){memory.clear();seed=271828;fn();passed++;console.log(`PASS ${name}`);}
 
-test('all 30 procedural PNG assets are real, encoded images',()=>{
-  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,30);
+test('all 33 procedural PNG assets are real, encoded images',()=>{
+  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,33);
   for(const src of Object.values(sandbox.NOCTURNE_ASSETS))assert.equal(Buffer.from(src.split(',')[1],'base64').subarray(1,4).toString(),'PNG');
-  assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_walk_')).map(([,v])=>v)).size,8);
+  assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_atlas_')).map(([,v])=>v)).size,8);
 });
 test('normalized diagonal movement and all eight facings',()=>{
   const g=create(),p=g.player;
@@ -66,11 +66,14 @@ test('particle burst expires in 300ms and projectile trails retain 5 positions',
   for(let i=0;i<20;i++)g.combat.update(1/60);
   assert.equal(g.combat.particles.active.length,0);assert.equal(b.trailCount,5);assert.ok(b.trailX[0]>b.trailX[4]);
 });
-test('spawns remain beyond every camera edge, including narrow screens',()=>{
-  const g=create();g.reset();g.camera={x:1100,y:-440};
-  for(let i=0;i<300;i++){
-    g.spawn();const e=g.enemies.at(-1);
-    assert.ok(Math.abs(e.x-g.camera.x)>g.viewWidth/2||Math.abs(e.y-g.camera.y)>g.viewHeight/2);
+test('spawn approach radius is fixed in world units and visible arrivals are telegraphed',()=>{
+  const g=create();g.reset();g.player.x=1100;g.player.y=-440;g.camera={x:1100,y:-440};
+  for(const zoom of [.65,1,1.55]){
+    g.setZoom(zoom);g.zoomFactor=zoom;g.applyZoom();
+    for(let i=0;i<70;i++){
+      g.spawn();const e=g.enemies.at(-1),distance=Math.sqrt(N.dist2(e,g.player));
+      assert.ok(distance>=660-1e-8&&distance<=760+1e-8);if(g.visible(e.x,e.y,60))assert.ok(e.spawnDelay>0);
+    }
   }
 });
 test('level up pauses time, offers 3 distinct gifts and applies one',()=>{
@@ -133,7 +136,10 @@ test('five-wave fixed-step integration stays finite, defeats Warden and respects
       shops++;if(shops===5)break;
       if(g.player.gold>=g.ui.slots[0].price)g.ui.buy(0);g.startWave();continue;
     }
-    const theta=g.time*.13;g.input.x=Math.cos(theta);g.input.y=Math.sin(theta);
+    if(g.boss?.alive){
+      const dx=g.boss.x-g.player.x,dy=g.boss.y-g.player.y,d=Math.hypot(dx,dy)||1,inward=N.clamp((d-300)/70,-1,1);
+      g.input.x=dx/d*inward-dy/d*.65;g.input.y=dy/d*inward+dx/d*.65;
+    }else{const theta=g.time*.13;g.input.x=Math.cos(theta);g.input.y=Math.sin(theta);}
     g.update(1/60);steps++;
     if(steps%90===0)g.draw();
     assert.equal(g.state==='dead',false);assert.ok(Number.isFinite(g.player.x));assert.ok(g.enemies.length<=320);
@@ -179,7 +185,7 @@ test('nova slows nearby foes, freezes only when evolved and excludes distant foe
   g.enemies=[new N.Enemy(g,'gargoyle',40,0,1),new N.Enemy(g,'gargoyle',500,0,2)];
   for(const e of g.enemies)g.hash.insert(e);g.combat.nova();
   assert.ok(g.enemies[0].slow>0);assert.equal(g.enemies[0].frozen,0);assert.equal(g.enemies[1].hp,g.enemies[1].maxHp);
-  p.relics.permafrost=true;g.combat.nova();assert.equal(g.enemies[0].frozen,.8);
+  p.relics.permafrost=true;g.combat.nova();assert.equal(g.enemies[0].frozen,.5);
 });
 test('orbit hit cooldown bounds damage; evolved wisps add burn damage',()=>{
   const g=create();g.reset('moon');g.player.critChance=0;g.player.weapons.orbit=4;g.player.relics.cinder=true;
@@ -228,7 +234,7 @@ test('Warden spawns once, alternates attacks and gates fifth-wave completion',()
 test('wave checkpoint resumes exact stats without healing or multiplying gold',()=>{
   const g=create();g.reset('storm');g.player.gold=77;g.player.hp=50;g.player.weapons.nova=2;g.player.relics.mirror=true;
   g.stats.damage=123;g.stats.weapons.nova=123;g.wave=3;g.time=63;g.checkpoint('wave');
-  const saved=JSON.parse(memory.get(g.save.key));assert.equal(g.save.validCheckpoint(saved.checkpoint),true);
+  const saved=JSON.parse(memory.get(g.save.key));assert.equal(g.save.validCheckpoint(saved.slots[0].checkpoint),true);
   const loaded=create();assert.equal(loaded.continueRun(),true);assert.equal(loaded.wave,3);assert.equal(loaded.player.hp,50);assert.equal(loaded.player.gold,77);
   assert.equal(loaded.player.weapons.nova,2);assert.equal(loaded.player.relics.mirror,true);assert.equal(loaded.stats.weapons.nova,123);assert.equal(loaded.time,63);assert.equal(loaded.waveTime,0);
   loaded.continueRun();assert.equal(loaded.player.hp,50);assert.equal(loaded.player.gold,77);
@@ -316,17 +322,13 @@ test('critical hit-stop has a cooldown instead of freezing on every chained hit'
   e.hit(1,true);assert.equal(g.hitStop,.025);g.hitStop=0;e.hit(1,true);assert.equal(g.hitStop,0);assert.ok(g.impactCooldown>0);
 });
 
-test('Warden always spawns outside square, portrait and landscape camera views',()=>{
-  const g=create();g.reset();g.wave=5;
+test('Warden approach remains at 700 units with a warning when visible',()=>{
+  const g=create();g.reset();g.wave=5;g.player.x=-120;g.player.y=470;g.camera={x:-120,y:470};
   for(const [w,h] of [[1000,1000],[500,1100],[1500,600]]){
-    g.viewWidth=w;g.viewHeight=h;g.camera={x:-120,y:470};
-    for(let i=0;i<80;i++){
-      g.enemies.length=0;g.spawnBoss();const e=g.boss;
-      assert.ok(Math.abs(e.x-g.camera.x)>w/2||Math.abs(e.y-g.camera.y)>h/2);
-    }
+    g.viewWidth=w;g.viewHeight=h;
+    for(let i=0;i<30;i++){g.enemies.length=0;g.spawnBoss();assert.ok(Math.abs(Math.sqrt(N.dist2(g.boss,g.player))-700)<1e-7);if(g.visible(g.boss.x,g.boss.y,60))assert.ok(g.boss.spawnDelay>0);}
   }
 });
-
 
 class FakeParam {
   constructor(){this.value=0;this.events=[];}
@@ -350,9 +352,9 @@ class FakeAudioContext {
   resume(){this.state='running';return Promise.resolve();}
 }
 
-test('eight walk sheets have eight frames and six enemy sheets have four frames',()=>{
+test('packed witch atlases have 24 frames in five clips and enemies have four frames',()=>{
   const dimensions=key=>{const png=Buffer.from(sandbox.NOCTURNE_ASSETS[key].split(',')[1],'base64');return [png.readUInt32BE(16),png.readUInt32BE(20)];};
-  for(const dir of ['N','NE','E','SE','S','SW','W','NW'])assert.deepEqual(dimensions('witch_walk_'+dir),[768,128]);
+  for(const dir of ['N','NE','E','SE','S','SW','W','NW'])assert.deepEqual(dimensions('witch_atlas_'+dir),[2304,128]);
   for(const type of Object.keys(N.ENEMY_TYPES))assert.deepEqual(dimensions('enemy_walk_'+type),[320,88]);
   assert.equal(sandbox.NOCTURNE_ANIMATIONS.witch.frames,8);assert.equal(sandbox.NOCTURNE_ANIMATIONS.enemy.frames,4);
 });
@@ -367,7 +369,7 @@ test('walk phase is distance based, diagonal safe and independent of update rate
 test('walk drawing crops the correct facing sheet and frame',()=>{
   const g=create();g.reset();g.input.x=1;g.player.update(.1);const calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);
   try{g.player.draw(context);}finally{context.drawImage=old;}
-  const call=calls.find(args=>args[0]===g.images.witch_walk_E);assert.ok(call);assert.equal(call.length,9);assert.equal(call[1],g.player.walkFrame*96);assert.equal(call[3],96);assert.equal(call[4],128);
+  const call=calls.find(args=>args[0]===g.images.witch_atlas_E);assert.ok(call);assert.equal(call.length,9);assert.equal(call[1],(sandbox.NOCTURNE_ATLAS.clips.walk.start+g.player.walkFrame)*96);assert.equal(call[3],96);assert.equal(call[4],128);
 });
 test('footsteps require actual normal walking; dash leaves bounded fading echoes',()=>{
   const g=create();g.reset();const events=[];g.combat.sound=kind=>events.push(kind);g.input.x=1;g.player.update(44/g.player.speed);
@@ -396,9 +398,9 @@ test('cosmetic draw frequency and extra particles do not change gameplay randomn
   }
   assert.equal(simulate(false),simulate(true));
 });
-test('all 24 sound recipes schedule finite, bounded voices and clean up their nodes',()=>{
+test('all 25 sound recipes schedule finite, bounded voices and clean up their nodes',()=>{
   const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;engine.attach(a);engine.setEnabled(true);
-  assert.equal(Object.keys(N.AudioEngine.SOUNDS).length,24);
+  assert.equal(Object.keys(N.AudioEngine.SOUNDS).length,25);
   for(const kind of Object.keys(N.AudioEngine.SOUNDS)){engine.play(kind);assert.ok(engine.voices.size<=28);}
   assert.ok(engine.voices.size>0);engine.stopVoices();assert.equal(engine.voices.size,0);
   engine.dispose();assert.equal(engine.ambientSources.length,0);
@@ -430,4 +432,121 @@ test('unavailable Web Audio and missing stereo panning fail gracefully',()=>{
   const a=new FakeAudioContext();a.createStereoPanner=undefined;g.combat.audioEngine.attach(a);g.combat.soundEnabled=true;
   assert.equal(g.combat.sound('fire'),true);g.combat.audioEngine.dispose();
 });
+
+test('legacy single save migrates once into Save 1, preserving the original bytes',()=>{
+  const g=create();g.reset('moon');g.player.gold=87;g.checkpoint('wave');
+  const legacy={schema:2,profile:{runs:4,bestWave:8,bestKills:213,bestTime:430,bosses:2,achievements:['warden']},settings:{sound:false,quality:'low'},checkpoint:g.save.data.checkpoint};
+  const bytes=JSON.stringify(legacy);memory.clear();memory.set(g.save.legacyKey,bytes);
+  const migrated=create();assert.equal(migrated.save.migrated,true);assert.equal(migrated.save.active.name,'Save 1');assert.equal(migrated.save.data.slots.length,1);
+  assert.equal(migrated.save.data.profile.bestWave,8);assert.equal(migrated.save.data.checkpoint.player.gold,87);assert.equal(memory.get(g.save.legacyKey),bytes);
+  const again=create();assert.equal(again.save.migrated,false);assert.equal(again.save.data.slots.length,1);assert.equal(again.continueRun(),true);assert.equal(again.player.coven,'moon');
+});
+test('failed migration write retains the old save and retries on the next launch',()=>{
+  const key='nocturne.coven.v2',bytes=JSON.stringify({schema:2,profile:{runs:3,bestWave:7},settings:{},checkpoint:null});memory.set(key,bytes);
+  const prior=sandbox.localStorage;sandbox.localStorage={getItem:prior.getItem,setItem(){throw new Error('quota');}};
+  try{const s=new N.SaveStore();assert.equal(s.available,false);assert.equal(s.data.profile.runs,3);assert.equal(memory.get(key),bytes);}finally{sandbox.localStorage=prior;}
+  const s=new N.SaveStore();assert.equal(s.available,true);assert.equal(s.data.profile.bestWave,7);assert.ok(memory.has(s.key));
+});
+test('new ritual allocates a new slot; switching restores independent witches and gold',()=>{
+  const g=create();g.reset('storm');g.player.gold=77;g.checkpoint('wave');const first=g.save.active.id;
+  g.selectedCoven='moon';g.newRitual();assert.notEqual(g.save.active.id,first);assert.equal(g.player.coven,'moon');assert.equal(g.player.gold,0);
+  g.player.gold=19;g.checkpoint('wave');const second=g.save.active.id;
+  g.save.select(first);g.continueRun();assert.equal(g.player.coven,'storm');assert.equal(g.player.gold,77);
+  g.save.select(second);g.continueRun();assert.equal(g.player.coven,'moon');assert.equal(g.player.gold,19);
+});
+test('slot names persist, removals leave other slots intact and ids are never reused',()=>{
+  const s=new N.SaveStore();const a=s.active.id;s.rename(a,'My moon');const b=s.createSlot().id;
+  const again=new N.SaveStore();assert.equal(again.data.slots[0].name,'My moon');assert.equal(again.active.id,b);
+  again.remove(a);assert.equal(again.data.slots.length,1);assert.equal(again.remove(b),false);assert.ok(again.createSlot().id>b);assert.equal(again.select(999),false);
+});
+test('24-slot limit cannot silently overwrite a ritual',()=>{
+  const s=new N.SaveStore();for(let i=1;i<24;i++)assert.ok(s.createSlot());const before=s.exportData();assert.equal(s.createSlot(),null);assert.equal(s.exportData(),before);
+});
+test('backup import adds slots and invalid backup changes nothing',()=>{
+  const g=create();g.reset();g.player.gold=43;g.checkpoint('wave');const backup=g.save.exportData(),first=g.save.active.id;
+  assert.equal(g.save.importData(backup),1);assert.notEqual(g.save.active.id,first);assert.equal(g.save.data.checkpoint.player.gold,43);
+  const before=g.save.exportData();assert.throws(()=>g.save.importData('{bad'));assert.equal(g.save.exportData(),before);
+  const bad=JSON.parse(backup);bad.slots[0].checkpoint.player.hp=-9;assert.throws(()=>g.save.importData(JSON.stringify(bad)));assert.equal(g.save.exportData(),before);
+});
+test('exact snapshot retains world clocks, unique enemies, loot, hazards and shots',()=>{
+  const g=create();g.reset();g.nextId=2;g.waveTime=17.2;g.spawnClock=.31;g.threatClock=4.2;
+  const a=new N.Enemy(g,'cultist',110,90,1),b=new N.Enemy(g,'hound',220,-50,2,true);a.hp=12;b.windup=.42;g.enemies=[a,b];
+  g.loot=[new N.Loot(g,'gold',12,48,3)];g.loot[0].magnet=true;g.loot[0].age=1.5;
+  const shot=g.combat.projectiles.acquire();shot.reset(3,5,100,10,9,true,1,true);shot.hitIds.add(1);shot.life=.42;
+  g.combat.enemyShot(60,40,0,0,175,14);g.combat.hazard(80,50,65,1.35,35,1.15);g.combat.hazards.active[0].age=.6;
+  g.combat.cooldown=.18;g.combat.wispHits.set(1,19);g.stats.damage=200;
+  g.ui.pause();const saved=g.save.data.checkpoint;assert.ok(g.save.validCheckpoint(saved));
+  const restored=create();assert.ok(restored.continueRun());assert.equal(restored.waveTime,17.2);assert.equal(restored.threatClock,4.2);
+  assert.equal(restored.enemies.length,2);assert.equal(restored.enemies[0].hp,12);assert.equal(restored.enemies[1].windup,.42);assert.equal(restored.enemies[1].elite,true);
+  assert.equal(restored.loot[0].age,1.5);assert.equal(restored.loot[0].magnet,true);assert.equal(restored.combat.hazards.active[0].age,.6);
+  assert.equal(restored.combat.projectiles.active[0].life,.42);assert.ok(restored.combat.projectiles.active[0].hitIds.has(1));assert.equal(restored.combat.hostile.active.length,1);
+  assert.equal(restored.combat.cooldown,.18);assert.equal(restored.combat.wispHits.get(1),19);assert.equal(restored.stats.damage,200);
+  restored.continueRun();assert.equal(restored.enemies.length,2);assert.equal(restored.loot.length,1);assert.equal(restored.stats.damage,200);
+});
+test('invalid world snapshot and duplicate entity ids are rejected before load',()=>{
+  const g=create();g.reset();g.nextId=1;g.enemies=[new N.Enemy(g,'slime',50,50,1)];g.checkpoint('wave');
+  const good=JSON.stringify(g.save.data.checkpoint);assert.ok(g.save.validCheckpoint(JSON.parse(good)));
+  for(const mutate of [c=>c.world.enemies.push({...c.world.enemies[0]}),c=>c.world.enemies[0].type='dragon',c=>c.world.hazards.push({}),c=>c.world.player.invulnerable=NaN,c=>c.world.nextId=-1]){
+    const candidate=JSON.parse(good);mutate(candidate);assert.equal(g.save.validCheckpoint(candidate),false);
+  }
+});
+test('autosave runs at ten simulation seconds and pause saves exact progress',()=>{
+  const g=create();g.reset();g.spawnClock=100;for(let i=0;i<605;i++)g.update(1/60);
+  const saved=new N.SaveStore().data.checkpoint;assert.ok(saved.world.waveTime>=10&&saved.world.waveTime<10.1);
+  g.waveTime=12.3;g.ui.pause();assert.equal(new N.SaveStore().data.checkpoint.world.waveTime,12.3);
+});
+test('slot chronicles and death affect only the active chapter',()=>{
+  const g=create();g.reset();g.unlock('warden');const first=g.save.active.id;g.newRitual();g.die();
+  assert.equal(g.save.data.profile.runs,1);assert.equal(g.save.data.profile.achievements.length,0);
+  g.save.select(first);assert.equal(g.save.data.profile.runs,0);assert.ok(g.save.data.profile.achievements.includes('warden'));assert.ok(g.save.data.checkpoint);
+});
+test('camera zoom clamps, persists and does not change movement or spell targeting',()=>{
+  const g=create();g.reset();const p=g.player;g.enemies=[new N.Enemy(g,'slime',420,0,1),new N.Enemy(g,'slime',440,0,2)];
+  for(const zoom of [.2,.65,1,1.55,8]){g.setZoom(zoom);assert.equal(g.combat.nearest(),g.enemies[0]);assert.equal(p.speed,195);assert.ok(g.userZoom>=.65&&g.userZoom<=1.55);}
+  assert.equal(new N.SaveStore().data.settings.zoom,1.55);g.enemies.shift();assert.equal(g.combat.nearest(),null);
+});
+test('projectile speed buffs never extend an arcane orb past 490 world units',()=>{
+  const g=create();g.reset();const e=new N.Enemy(g,'warden',400,0,1);
+  for(const speed of [510,700,850]){g.combat.clear();g.player.projectileSpeed=speed;g.combat.fire(e);const b=g.combat.projectiles.active[0];assert.ok(Math.abs(Math.hypot(b.vx,b.vy)*b.life-490)<1e-7);g.combat.cooldown=99;for(let i=0;i<65;i++)g.combat.update(.017);assert.ok(Math.abs(Math.hypot(b.x,b.y+18)-490)<1e-6);}
+});
+test('multicast grows volley damage by square root instead of sevenfold',()=>{
+  const g=create();g.reset();g.player.critChance=0;const e=new N.Enemy(g,'slime',100,0,1);
+  g.combat.fire(e);const single=g.combat.projectiles.active[0].damage;g.combat.clear();g.player.projectileCount=7;g.combat.fire(e);
+  const total=g.combat.projectiles.active.reduce((sum,b)=>sum+b.damage,0);assert.ok(Math.abs(total/single-Math.sqrt(7))<1e-8);
+});
+test('permanent stat upgrades respect every cap and legacy stats are normalized on load',()=>{
+  const g=create();g.reset();Object.assign(g.player,{damage:400,speed:900,projectileSpeed:8000,pickupRadius:20000,attackInterval:.12,armor:.6,critChance:.75,regen:9,dashCooldown:.7,maxHp:1000,hp:800});
+  g.checkpoint('wave');assert.ok(g.continueRun());const p=g.player,b=N.BALANCE;
+  assert.equal(p.damage,b.maxDamage);assert.equal(p.speed,b.maxSpeed);assert.equal(p.hp,320);assert.equal(p.regen,b.maxRegen);assert.equal(p.attackInterval,.24);assert.equal(p.armor,.45);assert.equal(p.critChance,.45);assert.equal(p.dashCooldown,1.25);
+  for(const upgrade of N.UPGRADES)if(upgrade.valid&&!upgrade.weapon&&upgrade.id!=='orb'&&upgrade.id!=='pierce')assert.equal(upgrade.valid(p),false,upgrade.id);
+});
+test('cast and hurt clips use priority, complete and return to locomotion',()=>{
+  const g=create();g.reset();const p=g.player;p.cast({x:-100,y:100});assert.equal(p.facing,'SW');assert.equal(p.animator.state,'cast');p.update(.08);assert.ok(p.animator.frame>=12&&p.animator.frame<18);
+  p.invulnerable=0;p.hurt(1);assert.equal(p.animator.state,'hurt');p.cast();assert.equal(p.animator.state,'hurt');p.update(.3);assert.equal(p.animator.state,'idle');
+  g.input.x=1;p.update(.1);assert.equal(p.animator.state,'walk');p.dash();assert.equal(p.animator.state,'dash');
+});
+test('spawn portals block attacks and damage until their warning expires',()=>{
+  const g=create();g.reset();const e=new N.Enemy(g,'slime',0,0,1);e.spawnDelay=.85;g.enemies=[e];g.player.invulnerable=0;const hp=g.player.hp;
+  e.hit(1000);assert.equal(e.alive,true);assert.equal(g.combat.nearest(),null);e.update(.4);assert.equal(g.player.hp,hp);
+  e.update(.5);assert.equal(e.spawnDelay,0);assert.equal(g.combat.nearest(),e);e.update(.01);assert.ok(g.player.hp<hp);
+});
+test('all capped builds still get three usable level-up gifts and a safe shop',()=>{
+  const g=create();g.reset();Object.assign(g.player,{damage:95,speed:300,projectileSpeed:850,pickupRadius:190,attackInterval:.24,armor:.45,critChance:.45,regen:1.2,dashCooldown:1.25,maxHp:320,hp:320,projectileCount:7,pierce:2});g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};
+  g.player.pendingLevels=1;g.ui.levelUp();assert.equal(g.ui.choices.length,3);assert.equal(new Set(g.ui.choices.map(c=>c.id)).size,3);g.ui.chooseLevel(0);g.ui.openShop();assert.equal(g.ui.slots.length,4);
+});
+test('late-game maxed build cannot survive by standing still, while moving avoids curses',()=>{
+  function run(moving){
+    seed=9981;const g=create();g.reset();g.wave=24;g.startWave(true);
+    Object.assign(g.player,{damage:95,speed:300,projectileSpeed:850,pickupRadius:190,attackInterval:.24,armor:.45,critChance:.45,regen:1.2,dashCooldown:1.25,maxHp:320,hp:320,projectileCount:7,pierce:2});g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};
+    for(let i=0;i<5000&&g.state!=='dead'&&g.state!=='shop';i++){
+      if(g.state==='levelup'){g.ui.chooseLevel(0);continue;}
+      if(moving){g.input.x=Math.cos(g.time*.35);g.input.y=Math.sin(g.time*.35);}
+      g.update(1/60);
+    }
+    return {state:g.state,hp:g.player.hp,lost:g.stats.damageTaken,time:g.waveTime};
+  }
+  const still=run(false),moving=run(true);console.log('  late-wave balance:',JSON.stringify({still,moving}));
+  assert.equal(still.state,'dead');assert.notEqual(moving.state,'dead');assert.ok(moving.time>=60);assert.ok(moving.lost<still.lost);
+});
+
 console.log(`\n${passed} test groups passed.`);
