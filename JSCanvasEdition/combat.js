@@ -328,7 +328,7 @@
         }else{c.beginPath();c.arc(part.x,part.y,part.radius*t,0,Math.PI*2);c.fill();}
       }
       c.restore();c.save();c.textAlign='center';
-      for(const n of this.numbers.active){c.globalAlpha=Math.min(1,n.life/.25);c.fillStyle=n.color;c.font=n.crit?'bold 17px Georgia':'12px Arial';c.fillText(n.text,n.x,n.y);}c.restore();
+      for(const n of this.numbers.active){c.globalAlpha=Math.min(1,n.life/.25);c.fillStyle=n.color;c.font=n.crit?'bold 18px Georgia':'bold 13px Arial';c.strokeStyle='#0c1419';c.lineWidth=3;c.strokeText(n.text,n.x,n.y);c.fillText(n.text,n.x,n.y);}c.restore();
     }
   }
   N.Pool=Pool;N.Projectile=Projectile;N.Combat=Combat;N.WEAPONS=WEAPONS;

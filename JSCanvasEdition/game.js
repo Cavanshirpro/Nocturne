@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.0.0';
+  N.VERSION = '5.1.0';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -83,6 +83,7 @@
         if (e.code === 'Escape' || e.code === 'KeyP') game.ui?.togglePause();
         if(e.code==='KeyQ'){game.abilities?.begin();game.abilities?.release();}
         if(e.code==='KeyZ')game.abilities?.cycle();
+        if(e.code==='KeyF')game.abilities?.transform();
         if (e.code === 'KeyI') game.ui?.toggleGrimoire();
         if (/^Digit[123]$/.test(e.code) && game.state === 'levelup') game.ui.chooseLevel(Number(e.code.slice(-1)) - 1);
       });
@@ -96,6 +97,7 @@
       document.getElementById('special-button')?.addEventListener('pointerup',e=>{e.preventDefault();game.abilities?.release();});
       document.getElementById('special-button')?.addEventListener('pointercancel',()=>game.abilities?.cancel());
       document.getElementById('cycle-special')?.addEventListener('click',()=>game.abilities?.cycle());
+      document.getElementById('demon-button')?.addEventListener('click',()=>game.abilities?.transform());
       game.canvas.addEventListener?.('wheel',e=>{if(game.state!=='playing')return;e.preventDefault();game.setZoom(game.userZoom-Math.sign(e.deltaY)*.08);},{passive:false});
       window.addEventListener('keyup', e => this.keys.delete(e.code));
       window.addEventListener('blur', () => { this.clear();game.combat?.audioEngine.setForeground(false); if (game.state === 'playing') game.ui.pause(); });
@@ -151,7 +153,7 @@
       this.state = 'title'; this.time = 0; this.wave = 0; this.waveTime = 0;
       this.waveDuration = 30; this.spawnClock = 0;
       this.enemies = []; this.loot = []; this.renderList = []; this.nextId = 0;
-      this.boss=null;this.bossSpawned=false;this.bossDefeated=false;
+      this.boss=null;this.bossSpawned=false;this.bossDefeated=false;this.sanctum=null;
       this.waveKills=0;this.waveDamage=0;this.stats=this.freshStats();this.fps=60;
       this.hash = new SpatialHash(); this.camera = {x:0, y:0};
       this.shake = 0; this.hitStop = 0;this.impactCooldown=0; this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -198,6 +200,7 @@
         item.x-=ox;item.y-=oy;if(item.kind!=='slash'&&Number.isFinite(item.x2))item.x2-=ox;if(item.kind!=='slash'&&Number.isFinite(item.y2))item.y2-=oy;
         if(item.trailX)for(let i=0;i<5;i++){item.trailX[i]-=ox;item.trailY[i]-=oy;}
       }
+      if(this.sanctum){this.sanctum.x-=ox;this.sanctum.y-=oy;}
       this.landmarks.clear();
     }
     freshStats(){return {damage:0,damageTaken:0,goldEarned:0,elites:0,bosses:0,dashes:0,weapons:Object.fromEntries(N.SPELL_IDS.map(id=>[id,0]))};}
@@ -211,14 +214,14 @@
     startWave(resuming=false) {
       if(!resuming){this.wave++;this.player.progress.activeOath=this.player.progress.preparedOath;this.player.progress.preparedOath=null;this.player.progress.shield=this.player.progress.activeOath==='stone'?35:0;}
       this.waveTime = 0; this.spawnClock = .15;this.threatClock=8;this.autosaveClock=0;
-      this.boss=null;this.bossSpawned=false;this.bossDefeated=false;this.overlordSpawned=false;this.waveKills=0;this.waveDamage=0;
+      this.boss=null;this.bossSpawned=false;this.bossDefeated=false;this.sanctum=null;this.overlordSpawned=false;this.waveKills=0;this.waveDamage=0;
       this.waveDuration = 30 + Math.min(this.wave - 1, 6) * 5;
-      if(!resuming)this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * .12);
+      if(!resuming)this.player.heal(this.player.maxHp*.12);
       this.player.invulnerable = 1;
       this.hurtFlash=0;
       this.player.dashTimer=0;this.player.dashRemaining=0;this.combat.clear();this.combat.cooldown = .1;
       this.state = 'playing'; this.input.clear(); this.ui.hide();
-      this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%10===0?'AN OVERLORD APPROACHES':this.wave%5===0?'A WARDEN APPROACHES':this.wave === 1 ? 'THE HOLLOW AWAKENS' : this.biome().name.toUpperCase());
+      this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%5===0?'SURVIVE, THEN SEEK THE OVERLORD SANCTUM':this.wave === 1 ? 'SURVIVE, THEN FOLLOW THE SANCTUM' : this.biome().name.toUpperCase());
       this.checkpoint('wave');
       this.combat.sound('wave');
     }
@@ -242,7 +245,8 @@
       this.player.progress=c.player.progress?JSON.parse(JSON.stringify(c.player.progress)):N.newProgression(this.player);N.mergeProgression(this.player);this.player.upgrades=[...c.player.upgrades];
       this.player.evolutions=new Set(Object.keys(this.player.weapons).filter(id=>this.player.evolved(id)));
       this.selectedCoven=c.coven;this.wave=c.wave;this.time=c.time;this.stats=JSON.parse(JSON.stringify(c.stats));this.stats.weapons={...Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),...this.stats.weapons};
-      this.camera.x=this.player.x;this.camera.y=this.player.y;this.shake=this.hitStop=this.impactCooldown=0;this.boss=null;
+      this.camera.x=this.player.x;this.camera.y=this.player.y;this.shake=this.hitStop=this.impactCooldown=0;this.boss=null;this.sanctum=null;
+      this.player.healthTrail=this.player.hp;
       this.ui.rolls=c.rolls;
       this.ui.slots=c.slots.map(s=>({item:N.ITEMS.find(item=>item.id===s.id)||null,locked:s.locked,price:s.price,sold:s.sold??(s.id===null&&s.price>0)}));
       if(c.phase==='shop'){for(const slot of this.ui.slots)if(!slot.item&&!slot.sold)this.ui.rollSlot(slot);this.waveTime=this.waveDuration=30+Math.min(this.wave-1,6)*5;this.state='shop';this.ui.renderShop();}
@@ -269,6 +273,7 @@
       const r=700;
       this.boss=new N.Enemy(this,overlord?'overlord':'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:Math.max(this.player.level+3,Math.ceil(this.player.level*(overlord?1.18:1.08))),tier:overlord?'overlord':'warden',trait:'none'});
       this.boss.spawnDelay=this.visible(this.boss.x,this.boss.y,60)?1.2:0;
+      if(this.sanctum?.phase==='waiting'&&this.wave<5){this.boss.maxHp*=.38+.1*this.wave;this.boss.hp=this.boss.maxHp;}
       this.enemies.push(this.boss);if(required)this.bossSpawned=true;else this.overlordSpawned=true;this.ui.banner(overlord?'THE ASH OVERLORD':'THE HOLLOW WARDEN',overlord?'BREAK THE SOVEREIGN CROWN':'BREAK THE SEAL');
       this.combat.sound('boss');
     }
@@ -295,7 +300,7 @@
       // Bank uncollected drops before the shop; no loot can be lost to transition.
       for (const drop of this.loot) {
         if (drop.type === 'gold') this.earnGold(drop.value);
-        else if(drop.type==='heal')this.player.hp=Math.min(this.player.maxHp,this.player.hp+drop.value);
+        else if(drop.type==='heal')this.player.heal(drop.value);
         else if(drop.type==='jewel')this.abilities.jewel(drop.value);else this.addXP(drop.value);
       }
       this.loot.length = 0;
@@ -332,17 +337,17 @@
         if(this.wave===3&&this.waveTime<10)this.ui.banner('HOLLOW CURSE','LEAVE THE MARKED CIRCLE BEFORE IT IGNITES');
       }
       if(this.wave>=7&&this.wave%7===0&&this.wave%5!==0&&!this.overlordSpawned&&this.waveTime>=this.waveDuration*.52)this.spawnBoss(true,false);
-      if(this.wave%5===0&&!this.bossSpawned&&this.waveTime>=3)this.spawnBoss();
+      N.Sanctum.update(this);
       this.spawnClock -= dt;
       const interval = Math.max(.09, .63 / (1 + .21 * (this.wave - 1)))*(this.wave%5===0?1.5:1);
-      while (this.spawnClock <= 0) { this.spawn(); this.spawnClock += interval; }
+      while (this.spawnClock <= 0 && this.waveTime<this.waveDuration) { this.spawn(); this.spawnClock += interval; }
       const recallRange=Math.max(2200,N.boltRange(this.player)*2);
       for(const e of this.enemies)if(e.alive){
-        if(N.dist2(e,this.player)>recallRange**2){
+        if(N.dist2(e,this.player)>recallRange**2&&this.sanctum?.bossId!==e.id){
           if(!e.boss){e.alive=false;continue;}
           const angle=N.rand(0,Math.PI*2);e.x=this.player.x+Math.cos(angle)*700;e.y=this.player.y+Math.sin(angle)*700;e.spawnDelay=1.2;e.charge=e.windup=e.knockX=e.knockY=0;
         }
-        e.update(dt);
+        e.update(dt);N.Sanctum.leash(this,e);
       }
       if (this.state !== 'playing') return;
       this.hash.clear();
@@ -359,7 +364,7 @@
       this.camera.x += (this.player.x - this.camera.x) * (1 - Math.exp(-7 * dt));
       this.camera.y += (this.player.y - this.camera.y) * (1 - Math.exp(-7 * dt));
       this.shake = Math.max(0, this.shake - dt * 22);
-      if (this.waveTime >= this.waveDuration && (!this.boss||!this.boss.alive)) { this.finishWave(); return; }
+      if (this.waveTime >= this.waveDuration && this.sanctum?.phase==='cleared') { this.finishWave(); return; }
       this.autosaveClock+=dt;
       if(this.autosaveClock>=10&&this.player.pendingLevels===0){this.autosaveClock=0;this.checkpoint('wave');}
       if (this.player.pendingLevels > 0) { this.ui.afterLevel = 'playing'; this.ui.levelUp(); }
@@ -425,6 +430,7 @@
           prop={x,y,draw:c=>{const scale=kind==='tree'?1.12:.8,near=Math.abs(this.player.x-x)<85*scale&&this.player.y>y-165*scale&&this.player.y<y+15;c.save();if(near)c.globalAlpha=.32;c.drawImage(this.images['prop_'+kind],x-80*scale,y-187*scale,160*scale,200*scale);c.restore();}};
           this.landmarks.set(key,prop);
         }
+        if(this.sanctum&&N.dist2(prop,this.sanctum)<(this.sanctum.radius+100)**2)continue;
         if(this.visible(prop.x,prop.y,180))list.push(prop);
       }
       for(const key of this.landmarks.keys())if(!used.has(key))this.landmarks.delete(key);
@@ -438,13 +444,13 @@
       c.translate(-this.camera.x+N.fxRand(-amount,amount),-this.camera.y+N.fxRand(-amount,amount));
       this.drawGround(c);
       c.fillStyle=this.biome().color;c.fillRect(this.camera.x-this.viewWidth/2-20,this.camera.y-this.viewHeight/2-20,this.viewWidth+40,this.viewHeight+40);
-      this.combat.drawGround(c);this.abilities.draw(c);
+      N.Sanctum.draw(this,c);this.combat.drawGround(c);this.abilities.draw(c);
       for(const drop of this.loot) if(this.visible(drop.x,drop.y,30)) drop.draw(c);
       const list=this.renderList;list.length=0;
       for(const e of this.enemies) if(e.alive && this.visible(e.x,e.y)) list.push(e);
       this.gatherLandmarks(list);list.push(this.player);list.sort((a,b)=>a.y-b.y);
       for(const entity of list) entity.draw(c);
-      this.combat.draw(c);
+      this.combat.draw(c);N.drawVitality(this.player,c);
       if(!this.reducedMotion&&this.quality!=='low'){
         c.save();c.globalCompositeOperation='lighter';c.fillStyle='#c9c5b833';
         for(let i=0;i<20;i++){
@@ -461,8 +467,10 @@
         const fog=c.createRadialGradient(this.width/2,this.height/2,70,this.width/2,this.height/2,Math.max(this.width,this.height)*.7);
         fog.addColorStop(0,'#75847c00');fog.addColorStop(1,'#080e114f');c.fillStyle=fog;c.fillRect(0,0,this.width,this.height);
       }
-      if(this.boss?.alive&&!this.visible(this.boss.x,this.boss.y,0)){
-        const a=Math.atan2(this.boss.y-this.camera.y,this.boss.x-this.camera.x);
+      N.drawLowHealth(this,c);N.drawRadar(this,c);
+      const objective=this.sanctum?.phase==='waiting'?this.sanctum:this.boss?.alive?this.boss:null;
+      if(objective&&!this.visible(objective.x,objective.y,0)){
+        const a=Math.atan2(objective.y-this.camera.y,objective.x-this.camera.x);
         const r=Math.min(this.width,this.height)*.37;
         c.save();c.translate(this.width/2+Math.cos(a)*r,this.height/2+Math.sin(a)*r);c.rotate(a);
         c.fillStyle='#d5a28d';c.beginPath();c.moveTo(10,0);c.lineTo(-6,-5);c.lineTo(-6,5);c.fill();c.restore();

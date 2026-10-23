@@ -9,7 +9,7 @@
 <main>
 <h1>Nocturne · Browser verification</h1>
 <p>Real Canvas, decoded animation strips, DOM buttons, keyboard events and offline audio rendering. Fixtures reset only their separate verification save store.</p>
-<div class="actions"><button id="run" disabled>RUN BROWSER CHECKS</button><button data-scene="boss" disabled>PREVIEW WARDEN</button><button data-scene="shop" disabled>PREVIEW MERCHANT</button><button data-scene="level" disabled>PREVIEW AWAKENING</button><button data-scene="evolved" disabled>PREVIEW EVOLUTIONS</button><button data-scene="enemies" disabled>PREVIEW ENEMY TRAITS</button><button data-scene="spells" disabled>PREVIEW NEW SPELLS</button><button data-scene="demon" disabled>PREVIEW DEMON & FEAR</button><button data-scene="overlord" disabled>PREVIEW OVERLORD</button><button data-scene="directions" disabled>PREVIEW ENEMY FACINGS</button><a href="index.html">OPEN GAME</a><button id="mobile-view">MOBILE VIEW · 390px</button><button id="desktop-view">DESKTOP VIEW</button></div>
+<div class="actions"><button id="run" disabled>RUN BROWSER CHECKS</button><button data-scene="vitality" disabled>PREVIEW VITALITY</button><button data-scene="sanctum" disabled>PREVIEW FINAL SANCTUM</button><button data-scene="boss" disabled>PREVIEW WARDEN</button><button data-scene="shop" disabled>PREVIEW MERCHANT</button><button data-scene="level" disabled>PREVIEW AWAKENING</button><button data-scene="evolved" disabled>PREVIEW EVOLUTIONS</button><button data-scene="enemies" disabled>PREVIEW ENEMY TRAITS</button><button data-scene="spells" disabled>PREVIEW NEW SPELLS</button><button data-scene="demon" disabled>PREVIEW DEMON & FEAR</button><button data-scene="overlord" disabled>PREVIEW OVERLORD</button><button data-scene="directions" disabled>PREVIEW ENEMY FACINGS</button><a href="index.html">OPEN GAME</a><button id="mobile-view">MOBILE VIEW · 390px</button><button id="desktop-view">DESKTOP VIEW</button></div>
 <p id="status" role="status">Loading the game…</p>
 <iframe id="arena" src="index.html#verification" title="Nocturne game verification frame"></iframe>
 <pre id="results" aria-live="polite">Serve this folder over HTTP for frame access: python -m http.server 8000</pre>
@@ -53,6 +53,8 @@ function present(scene){
     if(scene==='evolved'){g.combat.lightning();g.combat.nova();g.combat.updateWisps();}
     g.state='paused';g.ui.hide();
   }
+  if(scene==='vitality'){g.state='playing';g.player.hp=40;g.player.maxHp=110;g.player.invulnerable=0;g.player.hurt(25);g.player.heal(5);g.state='paused';}
+  if(scene==='sanctum'){g.state='playing';g.sanctum=null;g.boss=null;g.enemies=[];g.waveTime=g.waveDuration;N.Sanctum.create(g);g.player.x=g.sanctum.x-160;g.player.y=g.sanctum.y;N.Sanctum.update(g);g.boss.spawnDelay=0;g.camera.x=g.player.x;g.camera.y=g.player.y;g.state='paused';}
   g.needsDraw=true;g.draw();g.ui.hudFrame=3;g.ui.updateHUD();
   status.textContent=`Preview: ${scene}. Frozen fixtures keep the scene visible.`;
 }
@@ -191,6 +193,14 @@ run.onclick=async()=>{
     const context=new win.OfflineAudioContext(2,11025,22050),engine=new N.AudioEngine(g);engine.setEnabled(true);engine.attach(context);engine.setAmbience(false);engine.transport(true);
     check(engine.ambientSources.every(node=>!node.loop),'Looping noise exists');const buffer=await context.startRendering();check(buffer.getChannelData(0).every(value=>Math.abs(value)<1e-8),'Idle audio contains noise');engine.dispose();
   });
+  test('5.1 jewels bank without auto-transforming',()=>{g.reset();g.abilities.jewel(425);check(g.player.progress.essence===425&&g.player.progress.demonTime===0,'Banking failed');g.ui.hudFrame=3;g.ui.updateHUD();check(doc.querySelector('#form-text').textContent.includes('4 CHARGES'),'Stack counter missing');});
+  test('5.1 real F key spends complete charges and applies stacked form',()=>{key('KeyF');key('KeyF','keyup');check(g.player.progress.essence===25&&g.player.progress.demonDuration===36&&g.player.progress.demonPower===2.4,'Manual form failed');});
+  test('5.1 real UNLEASH button activates without auto-spending',()=>{g.reset();g.abilities.jewel(200);g.ui.hudFrame=3;g.ui.updateHUD();doc.querySelector('#demon-button').click();check(g.player.progress.demonTime===20&&g.player.progress.essence===0,'Unleash click failed');});
+  test('5.1 health feedback stays readable in reduced motion and low quality',()=>{present('vitality');g.quality='low';g.reducedMotion=true;g.draw();check(g.player.healthEvents.some(e=>e.kind==='hurt')&&g.player.healthEvents.some(e=>e.kind==='heal'),'Missing health cues');g.ui.hudFrame=3;g.ui.updateHUD();check(doc.querySelector('#health-text').style.color!=='','Low health HUD missing');});
+  test('5.1 timer creates sanctum and cannot open merchant early',()=>{g.reset();g.waveTime=g.waveDuration;g.update(.01);check(g.sanctum?.phase==='waiting'&&g.state==='playing'&&!g.boss,'Timer skipped hunt');g.draw();g.ui.hudFrame=3;g.ui.updateHUD();check(doc.querySelector('#timer').textContent==='SEEK SEAL','Objective missing');});
+  test('5.1 entering sanctum summons one guardian; defeat opens merchant',()=>{g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);check(g.sanctum.phase==='fighting'&&g.enemies.filter(e=>e.boss).length===1,'Guardian missing or duplicated');g.boss.spawnDelay=0;g.boss.hit(1e9);g.update(.01);check(['shop','levelup'].includes(g.state),'Guardian did not finish wave');});
+  test('5.1 sanctum and stacked form survive local save reconstruction',()=>{g.reset();g.abilities.jewel(425);g.abilities.transform();g.waveTime=g.waveDuration;g.update(.01);const x=g.sanctum.x;g.checkpoint('wave');check(g.continueRun()&&g.sanctum.x===x&&g.player.progress.demonDuration===36&&g.player.progress.essence===25,'World/form restore failed');});
+  test('5.1 sanctum marker fits inside minimap and draws at both zoom extremes',()=>{for(const zoom of [.65,1.55]){g.setZoom(zoom);g.zoomFactor=zoom;g.applyZoom();const r=N.radarLayout(g),px=r.size/2+(g.sanctum.x-g.player.x)*r.scale,py=r.size/2+(g.sanctum.y-g.player.y)*r.scale;check(px>6&&px<r.size-6&&py>6&&py<r.size-6,'Objective clipped');g.draw();}});
   await testAsync('all 38 sound recipes render distinct, non-silent finite waveforms',async()=>{
     check(win.OfflineAudioContext,'Offline Web Audio unavailable');const signatures=new Set();
     for(const kind of Object.keys(N.AudioEngine.SOUNDS)){

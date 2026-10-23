@@ -10,7 +10,7 @@
   const take=(object,keys)=>Object.fromEntries(keys.map(k=>[k,object[k]??0]));
   const finite=(object,keys)=>object&&keys.every(k=>Number.isFinite(object[k]));
   N.captureWorld=g=>({
-    schema:1,worldOrigin:{...g.worldOrigin},waveTime:g.waveTime,spawnClock:g.spawnClock,threatClock:g.threatClock,autosaveClock:0,nextId:g.nextId,
+    schema:1,sanctum:g.sanctum?{...g.sanctum}:null,worldOrigin:{...g.worldOrigin},waveTime:g.waveTime,spawnClock:g.spawnClock,threatClock:g.threatClock,autosaveClock:0,nextId:g.nextId,
     overlordSpawned:!!g.overlordSpawned,bossSpawned:g.bossSpawned,bossDefeated:g.bossDefeated,waveKills:g.waveKills,waveDamage:g.waveDamage,
     player:take(g.player,PLAYER_TRANSIENT),facing:g.player.facing,
     enemies:g.enemies.filter(e=>e.alive).map(e=>({...take(e,[...ENEMY_FIELDS,...EXTRA_ENEMY_FIELDS]),type:e.type,elite:e.elite,tier:e.tier,trait:e.trait,burnSource:e.burnSource,facing:e.facing,summonTimer:e.summonTimer})),
@@ -23,6 +23,12 @@
     if(w?.schema!==1||!finite(w,['waveTime','spawnClock','threatClock','nextId','waveKills','waveDamage','cooldown'])||w.waveTime<0||!Number.isInteger(w.nextId)||w.nextId<0)return false;
     if(typeof w.bossSpawned!=='boolean'||typeof w.bossDefeated!=='boolean'||!finite(w.player,PLAYER_TRANSIENT)||!['N','NE','E','SE','S','SW','W','NW'].includes(w.facing))return false;
     if(w.player.invulnerable<0||w.player.invulnerable>2||w.player.dashTimer<0||w.player.dashTimer>.25||w.player.dashRemaining<0||['lastX','lastY','dashX','dashY'].some(k=>Math.abs(w.player[k])>1.001))return false;
+    if(w.sanctum!==undefined&&w.sanctum!==null){
+      const s=w.sanctum;if(!finite(s,['x','y','radius'])||s.radius!==330||!['waiting','fighting','cleared'].includes(s.phase))return false;
+      if(s.phase==='waiting'?s.bossId!==null:!Number.isSafeInteger(s.bossId)||s.bossId<=0)return false;
+      if(s.phase==='fighting'&&(!Array.isArray(w.enemies)||!w.enemies.some(e=>e?.id===s.bossId&&['warden','overlord'].includes(e.type))))return false;
+      if(s.phase==='cleared'&&!w.bossDefeated)return false;
+    }
     if(w.worldOrigin!==undefined&&!finite(w.worldOrigin,['x','y']))return false;
     if(!finite(w.spellTimers,['lightning','nova']))return false;
     if(!Array.isArray(w.enemies)||w.enemies.length>320||!w.enemies.every(e=>finite(e,ENEMY_FIELDS)&&['slime','skeleton','gargoyle','hound','cultist','warden','wraith','reaper','overlord'].includes(e.type)&&typeof e.elite==='boolean'&&e.hp>0&&e.hp<=e.maxHp&&e.radius>0&&e.damage>=0&&e.speed>=0&&Number.isSafeInteger(e.id)&&e.id>0&&e.id<=w.nextId))return false;
@@ -41,6 +47,7 @@
   };
   N.restoreWorld=(g,w)=>{
     for(const k of ['waveTime','spawnClock','threatClock','nextId','bossSpawned','bossDefeated','waveKills','waveDamage'])g[k]=w[k];
+    g.sanctum=w.sanctum?{...w.sanctum}:null;
     g.overlordSpawned=w.overlordSpawned??false;g.worldOrigin=w.worldOrigin?{...w.worldOrigin}:{x:0,y:0};
     g.autosaveClock=0;Object.assign(g.player,w.player);g.player.facing=w.facing;
     g.enemies=w.enemies.map(data=>{const e=new N.Enemy(g,data.type,data.x,data.y,data.id,data.elite);Object.assign(e,data);return e;});

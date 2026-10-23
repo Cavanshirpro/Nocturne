@@ -32,7 +32,7 @@
     pilgrim:{name:'Pilgrim oath',icon:'»',text:'+8% movement speed for the next wave.'},
     fortune:{name:'Fortune oath',icon:'◈',text:'+20% earned gold for the next wave.'}
   });
-  N.newProgression=p=>({equipped:N.SPELL_IDS.filter(id=>(p.weapons[id]||0)>0),talents:Object.fromEntries(Object.keys(N.TALENTS).map(id=>[id,0])),mastery:Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),arsenal:{slash:1,frostfall:1,soulstorm:1},special:'slash',essence:0,demonTime:0,specialRemaining:0,preparedOath:null,activeOath:null,shield:0,xpCarry:0,goldCarry:0});
+  N.newProgression=p=>({equipped:N.SPELL_IDS.filter(id=>(p.weapons[id]||0)>0),talents:Object.fromEntries(Object.keys(N.TALENTS).map(id=>[id,0])),mastery:Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),arsenal:{slash:1,frostfall:1,soulstorm:1},special:'slash',essence:0,demonTime:0,demonDuration:12,demonPower:1.8,demonSpeed:1.45,specialRemaining:0,preparedOath:null,activeOath:null,shield:0,xpCarry:0,goldCarry:0});
   N.validProgression=(q,p)=>{
     if(!q||!Array.isArray(q.equipped)||q.equipped.length<1||q.equipped.length>N.SPELL_IDS.length||new Set(q.equipped).size!==q.equipped.length||!q.equipped.every(id=>N.SPELL_IDS.includes(id)&&(p.weapons[id]||0)>0))return false;
     if(!q.talents||!Object.keys(N.TALENTS).every(id=>Number.isInteger(q.talents[id])&&q.talents[id]>=0&&Number.isSafeInteger(q.talents[id])))return false;
@@ -41,12 +41,14 @@
     if(q.arsenal!==undefined&&(!q.arsenal||!Object.keys(N.SPECIALS).every(id=>Number.isSafeInteger(q.arsenal[id])&&q.arsenal[id]>=1)))return false;
     if(q.special!==undefined&&!Object.hasOwn(N.SPECIALS,q.special))return false;
     if(['essence','demonTime','specialRemaining'].some(k=>q[k]!==undefined&&(!Number.isFinite(q[k])||q[k]<0)))return false;
-    if(q.essence!==undefined&&q.essence>100||q.demonTime!==undefined&&q.demonTime>3600)return false;
+    if(q.essence!==undefined&&q.essence>Number.MAX_SAFE_INTEGER)return false;
+    if(['demonDuration','demonPower','demonSpeed'].some(k=>q[k]!==undefined&&(!Number.isFinite(q[k])||q[k]<=0)))return false;
+    if(q.demonDuration!==undefined&&q.demonTime>q.demonDuration)return false;
     return Number.isFinite(q.shield)&&q.shield>=0&&q.shield<=35&&['xpCarry','goldCarry'].every(k=>Number.isFinite(q[k])&&q[k]>=0&&q[k]<1);
   };
   N.outgoingMultiplier=(p,e,source)=>{
     const q=p.progress;
-    return (q.activeOath==='ember'?1.1:1)*(q.demonTime>0?1.8:1)*(1+(q.mastery[source]||0)*.06)*(e.level>=p.level?1+q.talents.focus*.03:1)*
+    return (q.activeOath==='ember'?1.1:1)*(q.demonTime>0?(q.demonPower??1.8):1)*(1+(q.mastery[source]||0)*.06)*(e.level>=p.level?1+q.talents.focus*.03:1)*
       (e.slow>0||e.frozen>0?1+q.talents.frostbite*.05:1)*(e.exposed>0?1.12:1);
   };
   N.applyBurn=(e,seconds,damage,source)=>{e.burn=Math.max(e.burn,seconds);if(damage>=e.burnDamage||e.burnTick<=0){e.burnDamage=damage;e.burnSource=source;}e.burnTick=Math.max(.1,e.burnTick);};

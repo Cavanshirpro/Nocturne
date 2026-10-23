@@ -39,9 +39,27 @@
       }
       g.stats.specials=(g.stats.specials||0)+1;g.combat.sound(id);return true;
     }
-    jewel(value=34){const p=this.game.player,q=p.progress;if(q.demonTime>0){q.essence=Math.min(100,q.essence+value*.5);return;}q.essence=Math.min(100,q.essence+value);if(q.essence>=100)this.transform();}
-    transform(){const g=this.game,p=g.player,q=p.progress;if(q.demonTime>0||q.essence<100)return false;q.essence=0;q.demonTime=12;g.stats.transformations=(g.stats.transformations||0)+1;g.ui.banner('DEMON WITCH','THE HOLLOW LEARNS TO FEAR');g.combat.effect('ring',p.x,p.y,0,0,360,'#e9a0c9',.8);g.combat.sound('transform');return true;}
-    update(dt){const q=this.game.player.progress;q.specialRemaining=Math.max(0,q.specialRemaining-dt);if(this.charging)this.charge=Math.min(1.2,this.charge+dt);if(q.demonTime>0){q.demonTime=Math.max(0,q.demonTime-dt);if(q.demonTime===0&&q.essence>=100)this.transform();}}
+    jewel(value=34){
+      if(!Number.isFinite(value)||value<=0)return;
+      const q=this.game.player.progress;q.essence=Math.min(Number.MAX_SAFE_INTEGER,q.essence+value);
+    }
+    preview(){
+      const charges=Math.floor(this.game.player.progress.essence/100),bonus=charges>0?Math.log2(charges):0;
+      return {charges,cost:charges*100,duration:12+8*Math.max(0,charges-1),power:1.8+.3*bonus,speed:1.45+.1*bonus};
+    }
+    transform(){
+      const g=this.game,p=g.player,q=p.progress,boost=this.preview();
+      if(g.state!=='playing'||q.demonTime>0||boost.charges<1)return false;
+      q.essence-=boost.cost;q.demonTime=q.demonDuration=boost.duration;q.demonPower=boost.power;q.demonSpeed=boost.speed;
+      g.stats.transformations=(g.stats.transformations||0)+1;
+      g.ui.banner('DEMON WITCH',boost.charges+' ESSENCE CHARGE'+(boost.charges===1?'':'S')+' · '+N.fmt(boost.duration)+' SECONDS');
+      g.combat.effect('ring',p.x,p.y,0,0,360,'#e9a0c9',.8);g.combat.sound('transform');return true;
+    }
+    update(dt){
+      const q=this.game.player.progress;q.specialRemaining=Math.max(0,q.specialRemaining-dt);
+      if(this.charging)this.charge=Math.min(1.2,this.charge+dt);
+      q.demonTime=Math.max(0,q.demonTime-dt);
+    }
     draw(c){const g=this.game,p=g.player,q=p.progress;if(g.state!=='playing'&&g.state!=='paused')return;
       if(q.demonTime>0){c.save();c.strokeStyle='#e5a6ce66';c.lineWidth=1.5;c.setLineDash([6,12]);c.beginPath();c.ellipse(p.x,p.y,360,280,0,0,Math.PI*2);c.stroke();c.restore();}
       if(!this.charging)return;const a=this.aim(),angle=Math.atan2(a.y-p.y,a.x-p.x),t=this.charge/1.2,id=q.special,r=170+q.arsenal[id]*10+t*110;

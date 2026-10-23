@@ -127,3 +127,12 @@ input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @media(max-height:600px) and (min-width:701px){#power-hud{bottom:125px;width:190px;padding:9px}}
 
 .special-row button:hover{background:#49364e;border-color:#ecc6dc}.special-row button:focus-visible{outline:2px solid #edc4dd;outline-offset:3px}body.reduce-motion #form-fill{transition:none}
+
+/* 5.1.0 · Vitality feedback and banked essence. */
+#demon-button{width:100%;margin-top:10px;padding:10px 5px;border:1px solid #f1a5d188;background:#633a5b;color:#ffe7f4;font:bold 9px Arial;letter-spacing:.8px;min-height:36px}
+#demon-button:not(:disabled):hover{background:#864a75}#demon-button:disabled{background:#263239;color:#a8b7b6}
+#demon-preview{line-height:1.5;min-height:27px}#power-hud{bottom:154px}
+@media(max-width:700px){#power-hud{bottom:170px;width:180px}#power-hud>small{font-size:8px}#boss-hud{top:125px}#demon-button{font-size:8px;padding:8px 3px}.title-bottom a{font-size:8px}}
+@media(max-height:600px){#power-hud{bottom:94px;padding:8px;width:180px}#power-hud>small{margin-top:5px}#power-hud .special-row{margin-top:6px}#demon-button{min-height:28px;padding:6px;margin-top:6px}}
+
+@media(max-height:600px) and (min-width:701px){#power-hud{right:auto;left:24px}#ritual-hud{display:none}#boss-hud{top:120px;width:240px;right:230px;left:auto;transform:none}}

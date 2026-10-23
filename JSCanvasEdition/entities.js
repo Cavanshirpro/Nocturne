@@ -20,7 +20,8 @@
       this.relics={cinder:false,conductor:false,permafrost:false,mirror:false,sunstone:false,soulchain:false,thornheart:false,voidglass:false,quicksilver:false,ironstar:false,bloodruby:false,iceheart:false};this.evolutions=new Set();
       this.animator=new N.SpriteAnimator();
       this.stepDistance=0;this.ghostClock=0;this.castTimer=0;
-      COVENS[this.coven].apply(this);this.progress=N.newProgression(this);
+      this.healthEvents=[];this.healthVisible=0;this.healthTrail=100;this.regenPending=0;this.regenClock=0;
+      COVENS[this.coven].apply(this);this.healthTrail=this.hp;this.progress=N.newProgression(this);
     }
     evolved(id){return (this.weapons[id]||0)>=4&&this.relics[N.WEAPONS[id]?.relic];}
     checkEvolutions(){
@@ -46,7 +47,7 @@
     }
     update(dt){
       this.castTimer=Math.max(0,this.castTimer-dt);
-      const {x,y}=this.game.input.vector(),speed=this.speed*(this.progress.demonTime>0?1.45:1)*(this.progress.activeOath==='pilgrim'?1.08:1);this.moving=Math.hypot(x,y)>.05;
+      const {x,y}=this.game.input.vector(),speed=this.speed*(this.progress.demonTime>0?(this.progress.demonSpeed??1.45):1)*(this.progress.activeOath==='pilgrim'?1.08:1);this.moving=Math.hypot(x,y)>.05;
       if(this.moving){
         this.facing=DIRECTIONS[(Math.round(Math.atan2(y,x)/(Math.PI/4))+8)%8];
         const len=Math.hypot(x,y)||1;this.lastX=x/len;this.lastY=y/len;
@@ -66,7 +67,14 @@
       // Match the locomotion clip to actual distance, rather than frame rate.
       if(this.animator.state==='walk')this.animator.time=this.walk/(Math.PI*2)*window.NOCTURNE_ATLAS.clips.walk.duration;
       this.dashRemaining=Math.max(0,this.dashRemaining-dt);this.invulnerable=Math.max(0,this.invulnerable-dt);
-      this.hp=Math.min(this.maxHp,this.hp+this.regen*dt);
+      const restored=this.heal(this.regen*dt,false);this.regenPending+=restored;this.regenClock+=dt;
+      if(this.regenClock>=.75){if(this.regenPending>0)N.healthEvent(this,this.regenPending);this.regenPending=0;this.regenClock=0;}
+      N.updateVitality(this,dt);
+    }
+    heal(amount,feedback=true){
+      if(!Number.isFinite(amount)||amount<=0||this.hp<=0)return 0;
+      const actual=Math.max(0,Math.min(this.maxHp-this.hp,amount));this.hp+=actual;
+      if(feedback&&actual>0)N.healthEvent(this,actual);return actual;
     }
     hurt(amount){
       if(this.invulnerable>0||this.game.state!=='playing')return;
@@ -76,12 +84,13 @@
       if(damage<=0){this.invulnerable=.4;this.game.combat.number(this.x,this.y-45,'BLOCK','#c7daee');this.game.combat.sound('lock');return;}
       const actual=Math.min(this.hp,damage);
       this.hp=Math.max(0,this.hp-damage);this.invulnerable=.85;
+      N.healthEvent(this,-actual);
       this.game.stats.damageTaken+=actual;this.game.waveDamage+=actual;
       this.animator.play('hurt',{restart:true});
       this.game.hurtFlash=.25;
       this.game.shake=Math.max(this.game.shake,4);
       this.game.combat.burst(this.x,this.y-12,10,'#d6a99b');
-      this.game.combat.number(this.x,this.y-49,`−${Math.ceil(damage)}`,'#e4ac9f');this.game.combat.sound('hurt');
+      this.game.combat.sound('hurt');
       if(this.hp<=0)this.game.die();
     }
     draw(c){
@@ -205,7 +214,7 @@
       this.alive=false;g.player.kills++;g.waveKills++;
       const talents=g.player.progress.talents;
       if(talents.scavenger&&g.player.kills%10===0)g.earnGold(talents.scavenger);
-      if(talents.bloodledger&&g.player.kills%20===0)g.player.hp=Math.min(g.player.maxHp,g.player.hp+2*talents.bloodledger);
+      if(talents.bloodledger&&g.player.kills%20===0)g.player.heal(2*talents.bloodledger);
       if(this.trait==='volatile')g.combat.hazard(this.x,this.y,52,.9,this.damage*.7,.3);
       g.combat.remains(this);g.combat.sound(this.boss?'victory':'death',this.x);
       g.loot.push(new Loot(g,'xp',this.x+N.rand(-8,8),this.y+N.rand(-8,8),this.xp));
@@ -214,6 +223,7 @@
       if(this.elite){g.stats.elites++;g.loot.push(new Loot(g,'heal',this.x,this.y,12));g.unlock('elite');}
       if(this.boss||this.elite||Math.random()<.016)g.loot.push(new Loot(g,'jewel',this.x,this.y,this.boss?100:this.elite?50:34));
       if(this.boss){
+        if(g.sanctum?.bossId===this.id)g.sanctum.phase='cleared';
         g.bossDefeated=true;g.stats.bosses++;g.save.data.profile.bosses++;g.unlock('warden');
         g.loot.push(new Loot(g,'heal',this.x,this.y,30));g.ui.banner('THE SEAL IS BROKEN',this.type==='overlord'?'OVERLORD BANISHED':'WARDEN BANISHED');
         g.shake=Math.max(g.shake,8);g.combat.burst(this.x,this.y-30,40,'#e7c990');
@@ -259,7 +269,7 @@
       if(!this.alive)return;this.alive=false;
       if(this.type==='xp')this.game.addXP(this.value);
       else if(this.type==='gold')this.game.earnGold(this.value);
-      else if(this.type==='jewel')this.game.abilities.jewel(this.value);else this.game.player.hp=Math.min(this.game.player.maxHp,this.game.player.hp+this.value);
+      else if(this.type==='jewel')this.game.abilities.jewel(this.value);else this.game.player.heal(this.value);
       if(this.game.visible(this.x,this.y,30)){
         this.game.combat.sound(this.type==='xp'?'xp':this.type==='gold'?'gold':this.type==='jewel'?'jewel':'heal',this.x);
         this.game.combat.effect('pickup',this.x,this.y-5,this.game.player.x,this.game.player.y-20,this.type==='heal'?24:12,this.type==='xp'?'#d4bceb':this.type==='gold'?'#d4bc8b':this.type==='jewel'?'#f1a5d1':'#d9aaa0',.25);

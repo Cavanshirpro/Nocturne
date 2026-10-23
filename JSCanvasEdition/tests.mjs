@@ -17,7 +17,7 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/abilities.js','systems/director.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/abilities.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
@@ -136,7 +136,9 @@ test('five-wave fixed-step integration stays finite, defeats Warden and respects
       shops++;if(shops===5)break;
       if(g.player.gold>=g.ui.slots[0].price)g.ui.buy(0);g.startWave();continue;
     }
-    if(g.boss?.alive){
+    if(g.sanctum?.phase==='waiting'){
+      const dx=g.sanctum.x-g.player.x,dy=g.sanctum.y-g.player.y,d=Math.hypot(dx,dy)||1;g.input.x=dx/d;g.input.y=dy/d;
+    }else if(g.boss?.alive){
       const dx=g.boss.x-g.player.x,dy=g.boss.y-g.player.y,d=Math.hypot(dx,dy)||1,inward=N.clamp((d-300)/70,-1,1);
       g.input.x=dx/d*inward-dy/d*.65;g.input.y=dy/d*inward+dx/d*.65;
     }else{const theta=g.time*.13;g.input.x=Math.cos(theta);g.input.y=Math.sin(theta);}
@@ -146,7 +148,7 @@ test('five-wave fixed-step integration stays finite, defeats Warden and respects
     assert.ok(g.combat.particles.active.length<=650);assert.ok(g.combat.projectiles.active.length<=240);
   }
   assert.equal(shops,5);assert.ok(g.player.kills>20);assert.ok(g.player.level>2);
-  assert.equal(g.stats.bosses,1);assert.equal(g.bossDefeated,true);
+  assert.equal(g.stats.bosses,5);assert.equal(g.bossDefeated,true);
   console.log(`  ${steps} fixed updates; ${g.player.kills} kills; level ${g.player.level}`);
 });
 
@@ -220,11 +222,11 @@ test('hound advertises a fixed charge line and cultist fires at range',()=>{
   g.player.y=160;h.update(.4);assert.ok(h.charge>0);h.update(.1);assert.ok(h.x<x-20);assert.equal(h.chargeX,heading);
   const c=new N.Enemy(g,'cultist',300,0,2);c.attackTimer=.5;c.update(.01);assert.ok(c.windup>0);c.update(.6);assert.equal(g.combat.hostile.active.length,1);
 });
-test('Warden spawns once, alternates attacks and gates fifth-wave completion',()=>{
+test('final guardian spawns once, alternates attacks and gates fifth-wave completion',()=>{
   const g=create();g.reset();g.wave=5;g.startWave(true);g.player.hp=g.player.maxHp=10000;
-  g.waveTime=2.99;g.update(.02);assert.equal(g.bossSpawned,true);const boss=g.boss;
+  g.waveTime=g.waveDuration;g.update(.02);assert.equal(g.sanctum.phase,'waiting');g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.02);assert.equal(g.bossSpawned,true);const boss=g.boss;boss.spawnDelay=0;
   g.update(.02);assert.equal(g.enemies.filter(e=>e.boss).length,1);
-  boss.x=100;boss.y=0;boss.attackTimer=0;boss.update(.01);assert.equal(g.combat.hazards.active.length,1);
+  boss.x=g.player.x+100;boss.y=g.player.y;boss.attackTimer=0;boss.update(.01);assert.equal(g.combat.hazards.active.length,1);
   boss.attackTimer=0;boss.update(.01);assert.equal(g.combat.hostile.active.length,7);
   boss.hp=boss.maxHp*.4;boss.attackTimer=0;boss.update(.01);assert.ok(g.combat.hazards.active.length>=3);
   g.waveTime=g.waveDuration;g.update(.01);assert.equal(g.state,'playing');
@@ -687,8 +689,8 @@ test('Winter Dominion freezes ordinary foes while bosses resist',()=>{
 test('Soulstorm launches a full ring of piercing, attributed projectiles',()=>{
  const g=create();g.reset();g.player.level=16;g.abilities.select('soulstorm');g.abilities.begin();g.abilities.release();assert.ok(g.combat.projectiles.active.length>=12);assert.ok(g.combat.projectiles.active.every(b=>b.source==='soulstorm'&&b.pierce>=3));assert.ok(g.combat.projectiles.active.some(b=>b.vx<0)&&g.combat.projectiles.active.some(b=>b.vx>0));
 });
-test('three jewels transform once, increase movement and damage, and expire',()=>{
- const g=create();g.reset();for(let i=0;i<3;i++)g.abilities.jewel(34);assert.equal(g.player.progress.demonTime,12);assert.equal(g.stats.transformations,1);assert.equal(g.player.progress.essence,0);const e=new N.Enemy(g,'gargoyle',100,0,1);assert.ok(Math.abs(N.outgoingMultiplier(g.player,e,'bolt')-1.8)<1e-10);g.input.x=1;g.player.update(1);assert.ok(Math.abs(g.player.x-g.player.speed*1.45)<1e-8);g.abilities.jewel(34);assert.equal(g.player.progress.essence,17);g.abilities.update(12);assert.equal(g.player.progress.demonTime,0);assert.equal(g.player.speed,195);
+test('three jewels bank essence; manual transformation buffs movement and damage and expires',()=>{
+ const g=create();g.reset();for(let i=0;i<3;i++)g.abilities.jewel(34);assert.equal(g.player.progress.demonTime,0);assert.equal(g.player.progress.essence,102);assert.equal(g.abilities.transform(),true);assert.equal(g.player.progress.demonTime,12);assert.equal(g.stats.transformations,1);assert.equal(g.player.progress.essence,2);const e=new N.Enemy(g,'gargoyle',100,0,1);assert.ok(Math.abs(N.outgoingMultiplier(g.player,e,'bolt')-1.8)<1e-10);g.input.x=1;g.player.update(1);assert.ok(Math.abs(g.player.x-g.player.speed*1.45)<1e-8);g.abilities.jewel(34);assert.equal(g.player.progress.essence,36);g.abilities.update(12);assert.equal(g.player.progress.demonTime,0);assert.equal(g.player.speed,195);
 });
 test('Demon fear reverses pursuit, cancels charge, and stops cultist attacks',()=>{
  const g=create();g.reset();g.player.progress.demonTime=8;const e=new N.Enemy(g,'hound',150,0,1);e.charge=.4;e.chargeX=-1;e.update(.1);assert.ok(e.terrified&&e.x>150);assert.equal(e.charge,0);const c=new N.Enemy(g,'cultist',150,0,2);c.attackTimer=0;c.update(.1);assert.equal(g.combat.hostile.active.length,0);g.player.progress.demonTime=0;e.update(.1);assert.equal(e.terrified,false);
@@ -697,7 +699,7 @@ test('bosses resist fear and Overlords summon smaller weaker minions',()=>{
  const g=create();g.reset();g.wave=10;g.player.level=100;g.player.progress.demonTime=8;g.spawnBoss();assert.equal(g.boss.type,'overlord');g.boss.spawnDelay=0;g.boss.summonTimer=.01;g.boss.x=150;g.boss.y=0;g.boss.update(.1);assert.equal(g.boss.terrified,false);const minions=g.enemies.filter(e=>e.tier==='minion');assert.equal(minions.length,3);assert.ok(minions.every(e=>e.level===45&&e.scale<.6&&e.spawnDelay>0));
 });
 test('seventh wave interlude Overlord must be defeated before merchant',()=>{
- const g=create();g.reset();g.wave=7;g.startWave(true);g.player.hp=g.player.maxHp=1e8;g.waveTime=g.waveDuration*.55;g.update(.01);assert.equal(g.boss.type,'overlord');g.waveTime=g.waveDuration+1;g.update(.01);assert.equal(g.state,'playing');g.boss.spawnDelay=0;g.boss.hit(1e12);g.player.pendingLevels=0;g.update(.01);assert.ok(['shop','levelup'].includes(g.state));
+ const g=create();g.reset();g.wave=7;g.startWave(true);g.player.hp=g.player.maxHp=1e8;g.waveTime=g.waveDuration*.55;g.update(.01);assert.equal(g.boss.type,'overlord');g.waveTime=g.waveDuration+1;g.update(.01);assert.equal(g.state,'playing');g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);g.boss.spawnDelay=0;g.boss.hit(1e12);g.player.pendingLevels=0;g.update(.01);assert.ok(['shop','levelup'].includes(g.state));
 });
 test('new automatic spells unlock at 3/6/9/12 and keep unlimited ranks',()=>{
  const g=create();g.reset();for(const [id,level]of [['rapid',3],['cannon',6],['burst',9],['glacier',12]]){g.player.level=level-1;assert.equal(g.player.upgradeWeapon(id),false);g.player.level=level;assert.ok(g.player.upgradeWeapon(id));g.player.weapons[id]=100;assert.ok(g.player.upgradeWeapon(id));assert.equal(g.player.weapons[id],101);}
@@ -725,4 +727,87 @@ test('enemy atlas has eight rows and correct facing for all six states',()=>{
 test('new snapshot validation rejects corrupted form and projectile content',()=>{
  const g=create();g.reset();g.checkpoint('wave');const c=JSON.parse(JSON.stringify(g.save.data.checkpoint));c.player.progress.demonTime=NaN;assert.equal(g.save.validCheckpoint(c),false);c.player.progress.demonTime=0;c.player.progress.arsenal.slash=-1;assert.equal(g.save.validCheckpoint(c),false);
 });
+
+test('essence banks above 100 without automatic activation, including during an active form',()=>{
+  const g=create();g.reset();g.abilities.jewel(100);g.abilities.update(3);assert.equal(g.player.progress.demonTime,0);g.abilities.jewel(275);assert.equal(g.player.progress.essence,375);
+  assert.ok(g.abilities.transform());assert.equal(g.player.progress.essence,75);g.abilities.jewel(125);assert.equal(g.player.progress.essence,200);const time=g.player.progress.demonTime;assert.equal(g.abilities.transform(),false);assert.equal(g.player.progress.demonTime,time);
+  g.abilities.update(time);assert.equal(g.player.progress.demonTime,0);assert.equal(g.player.progress.essence,200);
+});
+test('stacked manual form consumes complete charges and increases duration, damage and speed',()=>{
+  const g=create();g.reset();g.abilities.jewel(425);const preview=g.abilities.preview();assert.equal(preview.charges,4);assert.equal(preview.duration,36);assert.equal(preview.power,2.4);assert.equal(preview.speed,1.65);
+  assert.ok(g.abilities.transform());assert.equal(g.player.progress.essence,25);assert.equal(g.player.progress.demonDuration,36);assert.equal(g.player.progress.demonPower,2.4);g.input.x=1;g.player.update(1);assert.ok(Math.abs(g.player.x-g.player.speed*1.65)<1e-8);
+});
+test('manual activation is inert while paused, at the shop, dead, or below the cost',()=>{
+  const g=create();g.reset();g.abilities.jewel(99);assert.equal(g.abilities.transform(),false);g.abilities.jewel(101);
+  for(const state of ['paused','shop','dead','levelup','title']){g.state=state;assert.equal(g.abilities.transform(),false);assert.equal(g.player.progress.essence,200);}
+  g.state='playing';assert.equal(g.abilities.transform(),true);
+});
+test('banked essence and long boosted forms round-trip without spending or duration caps',()=>{
+  const g=create();g.reset();g.abilities.jewel(100025);g.abilities.transform();g.abilities.jewel(555);g.abilities.update(4.25);const before=JSON.stringify(g.player.progress);assert.ok(g.player.progress.demonTime>3600);g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));g.continueRun();assert.equal(JSON.stringify(g.player.progress),before);
+});
+test('legacy v5 active form receives base boost defaults and never auto-spends old essence',()=>{
+  const g=create();g.reset();g.player.progress.demonTime=7.5;g.player.progress.essence=100;g.checkpoint('wave');const c=g.save.data.checkpoint;
+  for(const k of ['demonDuration','demonPower','demonSpeed'])delete c.player.progress[k];delete c.world.sanctum;assert.ok(g.save.validCheckpoint(c));g.continueRun();assert.equal(g.player.progress.demonPower,1.8);assert.equal(g.player.progress.demonSpeed,1.45);assert.equal(g.player.progress.demonTime,7.5);g.abilities.update(7.5);assert.equal(g.player.progress.demonTime,0);assert.equal(g.player.progress.essence,100);
+});
+test('damage feedback uses actual vitality lost and is independent of a saturated number pool',()=>{
+  const g=create();g.reset();const p=g.player;p.invulnerable=0;p.armor=1;p.progress.shield=5;
+  while(g.combat.numbers.acquire()){}p.hurt(30);assert.equal(p.hp,100);assert.equal(p.healthEvents.length,1);assert.equal(p.healthEvents[0].kind,'hurt');assert.equal(p.healthEvents[0].amount,10);assert.equal(p.healthVisible,2.5);
+  const old=p.healthEvents[0].amount;p.hurt(30);assert.equal(p.healthEvents[0].amount,old);
+});
+test('healing pickup reports only restored vitality and never shows overheal',()=>{
+  const g=create();g.reset();g.player.hp=103;new N.Loot(g,'heal',0,0,30).collect();assert.equal(g.player.hp,110);assert.equal(g.player.healthEvents.at(-1).amount,7);assert.equal(g.player.healthEvents.at(-1).kind,'heal');g.player.healthEvents=[];assert.equal(g.player.heal(30),0);assert.equal(g.player.healthEvents.length,0);
+});
+test('regeneration coalesces feedback, does not flood events, and stops at maximum vitality',()=>{
+  const g=create();g.reset();g.player.hp=10;g.player.regen=4;
+  for(let i=0;i<120;i++)g.player.update(1/60);assert.ok(Math.abs(g.player.hp-18)<1e-8);assert.ok(g.player.healthEvents.length<=2);assert.ok(g.player.healthEvents.every(e=>e.kind==='heal'&&e.amount>0));
+});
+test('player feedback freezes with the world and renders outlined damage and healing in low quality',()=>{
+  const g=create();g.reset();g.quality='low';g.reducedMotion=true;g.player.hp=30;g.player.invulnerable=0;g.player.hurt(10);g.player.heal(3);const before=JSON.stringify(g.player.healthEvents);g.state='paused';g.update(10);assert.equal(JSON.stringify(g.player.healthEvents),before);
+  const texts=[],fill=context.fillText;context.fillText=(text)=>texts.push(text);try{N.drawVitality(g.player,context);}finally{context.fillText=fill;}assert.ok(texts.includes('LOW VITALITY'));assert.ok(texts.some(t=>t.includes('−10')));assert.ok(texts.some(t=>t.includes('+3')));
+});
+test('low-health edges appear only below 30 percent and disappear on healing',()=>{
+  const g=create();g.reset();g.reducedMotion=true;g.quality='low';let count=0;const old=context.createRadialGradient;context.createRadialGradient=()=>{count++;return gradient;};
+  try{g.player.hp=g.player.maxHp*.1;N.drawLowHealth(g,context);assert.equal(count,1);g.player.heal(g.player.maxHp);N.drawLowHealth(g,context);assert.equal(count,1);g.state='title';g.player.hp=1;N.drawLowHealth(g,context);assert.equal(count,1);}finally{context.createRadialGradient=old;}
+});
+test('every ordinary wave creates a stable distant sanctum and cannot end on the timer',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration-.02;g.update(.01);assert.equal(g.sanctum,null);g.update(.02);assert.equal(g.state,'playing');assert.equal(g.sanctum.phase,'waiting');assert.ok(Math.abs(Math.sqrt(N.dist2(g.player,g.sanctum))-1050)<1e-6);const position=JSON.stringify(g.sanctum);g.update(.1);assert.equal(JSON.stringify(g.sanctum),position);assert.equal(g.boss,null);
+});
+test('sanctum approach summons exactly one guardian and only its death ends the wave',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);assert.equal(g.sanctum.phase,'fighting');assert.equal(g.boss.type,'warden');assert.equal(g.boss.spawnDelay,1.2-0.01);g.update(.01);assert.equal(g.enemies.filter(e=>e.boss).length,1);assert.equal(g.state,'playing');g.boss.spawnDelay=0;g.boss.hit(1e9);assert.equal(g.sanctum.phase,'cleared');g.update(.01);assert.ok(['shop','levelup'].includes(g.state));
+});
+test('every fifth sanctum is an Overlord and ordinary spawns stop during the final hunt',()=>{
+  const g=create();g.reset();g.wave=5;g.startWave(true);g.waveTime=g.waveDuration;g.spawnClock=-10;g.update(.01);assert.equal(g.enemies.length,0);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);assert.equal(g.boss.type,'overlord');assert.equal(g.enemies.length,1);
+});
+test('a surviving invasion becomes the final guardian without duplicate bosses',()=>{
+  const g=create();g.reset();g.wave=7;g.startWave(true);g.waveTime=g.waveDuration*.55;g.update(.01);const id=g.boss.id;g.waveTime=g.waveDuration;g.update(.01);assert.equal(g.sanctum.phase,'waiting');g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);assert.equal(g.sanctum.bossId,id);assert.equal(g.enemies.filter(e=>e.boss).length,1);assert.equal(g.boss.type,'overlord');
+});
+test('final guardian stays in its arena even when the player runs beyond recall distance',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);g.boss.spawnDelay=0;g.player.x+=5000;g.boss.x=g.sanctum.x+1000;g.update(.01);assert.ok(N.dist2(g.boss,g.sanctum)<=(g.sanctum.radius-45)**2+1e-6);assert.ok(N.dist2(g.boss,g.player)>2200**2);
+});
+test('waiting and fighting sanctums round-trip with exact location, boss HP and identity',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);const pos=JSON.stringify(g.sanctum);g.checkpoint('wave');g.continueRun();assert.equal(JSON.stringify(g.sanctum),pos);assert.equal(g.state,'playing');g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);g.boss.hp-=25;g.boss.spawnDelay=.8;const hp=g.boss.hp,id=g.boss.id;g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));g.continueRun();assert.equal(g.sanctum.bossId,id);assert.equal(g.boss.hp,hp);assert.equal(g.boss.spawnDelay,.8);g.update(.01);assert.equal(g.enemies.filter(e=>e.boss).length,1);
+});
+test('legacy elapsed waves still require a newly generated final sanctum',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration+1;g.checkpoint('wave');delete g.save.data.checkpoint.world.sanctum;assert.ok(g.continueRun());g.update(.01);assert.equal(g.sanctum.phase,'waiting');assert.equal(g.state,'playing');
+});
+test('corrupt sanctums and non-finite form boosts are rejected without throwing',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);g.checkpoint('wave');const copy=()=>JSON.parse(JSON.stringify(g.save.data.checkpoint));
+  for(const bad of [{phase:'fake'},{x:null},{radius:-1},{phase:'fighting',bossId:99},{phase:'cleared',bossId:1}]){const c=copy();Object.assign(c.world.sanctum,bad);assert.equal(g.save.validCheckpoint(c),false);}
+  const c=copy();c.world.sanctum.phase='fighting';c.world.sanctum.bossId=1;c.world.enemies={};assert.equal(g.save.validCheckpoint(c),false);
+  for(const bad of [-1,NaN,Infinity]){const d=copy();d.player.progress.demonPower=bad;assert.equal(g.save.validCheckpoint(d),false);}
+});
+test('floating origin rebases sanctum, guardian and radar objective together',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);const dx=g.sanctum.x-g.player.x,dy=g.sanctum.y-g.player.y;g.player.x+=1e6;g.sanctum.x+=1e6;g.boss.x+=1e6;g.rebaseWorld();assert.ok(Math.abs(g.sanctum.x-g.player.x-dx)<1e-6);assert.ok(Math.abs(g.sanctum.y-g.player.y-dy)<1e-6);assert.ok(N.dist2(g.boss,g.sanctum)<1);g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));
+});
+test('radar includes the sanctum on phone and desktop independently of camera zoom',()=>{
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);
+  for(const width of [390,844,1440]){g.width=width;for(const zoom of [.65,1.55]){g.setZoom(zoom);const r=N.radarLayout(g),px=r.size/2+(g.sanctum.x-g.player.x)*r.scale,py=r.size/2+(g.sanctum.y-g.player.y)*r.scale;assert.ok(px>=6&&px<=r.size-6&&py>=6&&py<=r.size-6);assert.ok(r.x>=0&&r.x+r.size<=width);N.drawRadar(g,context);}}
+});
+test('radar adapts its grid for distant objectives without an unbounded draw loop',()=>{
+  const g=create();g.reset();g.sanctum={x:1e12,y:-1e12,radius:330,phase:'waiting',bossId:null};let lines=0;const old=context.lineTo;context.lineTo=()=>lines++;try{N.drawRadar(g,context);}finally{context.lineTo=old;}assert.ok(lines<100);
+});
+test('Demon HUD shows real stacks, previews growth and keeps meter widths within bounds',()=>{
+  const g=create();g.reset();g.abilities.jewel(425);g.ui.hudFrame=3;g.ui.updateHUD();assert.ok(elements.get('form-text').textContent.includes('4 CHARGES'));assert.equal(elements.get('form-fill').style.width,'100%');assert.ok(elements.get('demon-preview').textContent.includes('36s'));assert.equal(elements.get('demon-button').disabled,false);g.abilities.transform();g.ui.hudFrame=3;g.ui.updateHUD();assert.equal(elements.get('form-fill').style.width,'100%');assert.equal(elements.get('demon-button').disabled,true);
+});
+
 console.log(`\n${passed} test groups passed.`);
