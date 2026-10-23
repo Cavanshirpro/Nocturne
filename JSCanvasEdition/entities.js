@@ -17,7 +17,7 @@
       Object.assign(this,{game,x:0,y:0,radius:13,facing:'S',hp:100,maxHp:100,speed:195,damage:16,attackInterval:.56,projectileSpeed:510,projectileCount:1,critChance:.1,critMultiplier:1.85,pickupRadius:82,armor:0,regen:0,gold:0,kills:0,xp:0,xpNeeded:8,level:1,pendingLevels:0,invulnerable:0,walk:0,moving:false,dashCooldown:3.2,dashRemaining:0,dashTimer:0,dashX:0,dashY:1,pierce:0,lastX:0,lastY:1});
       this.upgrades=[];this.coven=COVENS[coven]?coven:'ash';
       this.weapons=Object.fromEntries(N.SPELL_IDS.map(id=>[id,id==='bolt'?1:0]));
-      this.relics={cinder:false,conductor:false,permafrost:false,mirror:false,sunstone:false,soulchain:false,thornheart:false,voidglass:false};this.evolutions=new Set();
+      this.relics={cinder:false,conductor:false,permafrost:false,mirror:false,sunstone:false,soulchain:false,thornheart:false,voidglass:false,quicksilver:false,ironstar:false,bloodruby:false,iceheart:false};this.evolutions=new Set();
       this.animator=new N.SpriteAnimator();
       this.stepDistance=0;this.ghostClock=0;this.castTimer=0;
       COVENS[this.coven].apply(this);this.progress=N.newProgression(this);
@@ -46,7 +46,7 @@
     }
     update(dt){
       this.castTimer=Math.max(0,this.castTimer-dt);
-      const {x,y}=this.game.input.vector(),speed=this.speed*(this.progress.activeOath==='pilgrim'?1.08:1);this.moving=Math.hypot(x,y)>.05;
+      const {x,y}=this.game.input.vector(),speed=this.speed*(this.progress.demonTime>0?1.45:1)*(this.progress.activeOath==='pilgrim'?1.08:1);this.moving=Math.hypot(x,y)>.05;
       if(this.moving){
         this.facing=DIRECTIONS[(Math.round(Math.atan2(y,x)/(Math.PI/4))+8)%8];
         const len=Math.hypot(x,y)||1;this.lastX=x/len;this.lastY=y/len;
@@ -99,7 +99,14 @@
         const recoil=Math.sin(Math.min(1,this.castTimer/.15)*Math.PI)*.018;
         c.scale(1+recoil,1+breath-recoil*.4);
       }
-      this.animator.draw(c,this.game.images,this.facing,-40,-99);c.restore();c.restore();
+      if(this.progress.demonTime>0){
+        c.save();c.globalCompositeOperation='lighter';c.fillStyle='#df8dbc44';c.beginPath();c.ellipse(0,-33,32,47,0,0,Math.PI*2);c.fill();c.restore();
+        c.fillStyle='#4d274a';c.strokeStyle='#e7b0c4';c.lineWidth=1.5;const flap=this.game.reducedMotion?0:Math.sin(this.game.time*8)*7;
+        for(const side of [-1,1]){c.beginPath();c.moveTo(side*8,-65);c.bezierCurveTo(side*32,-91-flap,side*58,-76-flap,side*56,-38);c.lineTo(side*39,-51);c.lineTo(side*25,-39);c.closePath();c.fill();c.stroke();}
+        c.filter='sepia(.25) saturate(1.2) hue-rotate(280deg)';
+      }
+      this.animator.draw(c,this.game.images,this.facing,-40,-99);
+      if(this.progress.demonTime>0){c.filter='none';c.strokeStyle='#f1bfcb';c.lineWidth=3;for(const side of [-1,1]){c.beginPath();c.moveTo(side*9,-75);c.quadraticCurveTo(side*23,-92,side*14,-98);c.stroke();}}c.restore();c.restore();
     }
   }
   const TYPES=Object.freeze({
@@ -108,19 +115,19 @@
     gargoyle:{hp:85,speed:46,damage:22,radius:23,xp:3,gold:3,scale:1.05},
     hound:{hp:30,speed:95,damage:14,radius:15,xp:2,gold:2,scale:.84},
     cultist:{hp:42,speed:53,damage:13,radius:15,xp:2,gold:3,scale:.85},
+    wraith:{hp:48,speed:76,damage:15,radius:16,xp:2,gold:2,scale:.91},
+    reaper:{hp:105,speed:62,damage:23,radius:20,xp:4,gold:4,scale:1.06},
+    overlord:{hp:1600,speed:58,damage:32,radius:45,xp:45,gold:75,scale:2.05},
     warden:{hp:760,speed:70,damage:25,radius:38,xp:24,gold:45,scale:1.8}
   });
   class Enemy {
     constructor(game,type,x,y,id,elite=false,encounter=null){
       const t=TYPES[type],wave=Math.max(0,game.wave-1);
       const level=encounter?.level||1,tier=encounter?.tier||'regular',trait=encounter?.trait||'none';
-      Object.assign(this,{game,type,id,x,y,maxHp:t.hp*(1+.2*wave+.004*wave*wave)*(1+.07*(level-1)),speed:t.speed*(1+.024*wave+.004*(level-1)),damage:t.damage*(1+.075*wave+.025*(level-1)),radius:t.radius,scale:t.scale,xp:t.xp,gold:t.gold,alive:true,flash:0,knockX:0,knockY:0,phase:N.fxRand(0,Math.PI*2),gait:0,hitSquash:0,castTimer:0,elite,boss:type==='warden',slow:0,frozen:0,burn:0,burnTick:0,burnDamage:0,attackTimer:N.rand(1.5,3),windup:0,charge:0,chargeX:0,chargeY:0,attackCount:0,spawnDelay:0,level,tier,trait,exposed:0,lastHit:0,burnSource:'orbit'});
+      Object.assign(this,{game,type,id,x,y,maxHp:t.hp*(1+.055*(level-1)),speed:t.speed*(1+.035*Math.sqrt(level-1)),damage:t.damage*(1+.027*(level-1)),radius:t.radius,scale:t.scale,xp:t.xp,gold:t.gold,alive:true,flash:0,knockX:0,knockY:0,phase:N.fxRand(0,Math.PI*2),gait:0,hitSquash:0,castTimer:0,elite,boss:type==='warden'||type==='overlord',slow:0,frozen:0,burn:0,burnTick:0,burnDamage:0,attackTimer:N.rand(1.5,3),windup:0,charge:0,chargeX:0,chargeY:0,attackCount:0,spawnDelay:0,level,tier,trait,exposed:0,lastHit:0,burnSource:'orbit',facing:'S',terrified:false,summonTimer:5});
       if(elite){this.maxHp*=2.4;this.speed*=1.12;this.damage*=1.25;this.scale*=1.15;this.xp*=3;this.gold*=3;}
-      if(encounter){
-        const power=Math.max(1,game.player.damage/18)*Math.max(1,.56/game.player.attackInterval)*Math.max(1,Math.sqrt(game.player.projectileCount));
-        this.maxHp*=Math.pow(power,tier==='veteran'?.72:tier==='fodder'?.22:.42);
-      }
-      if(this.boss)this.maxHp=850*(1+.8*(Math.max(1,game.wave)/5-1))*(1+.035*(level-1))*Math.pow(Math.max(1,game.player.damage/18),.7);
+      if(tier==='fodder')this.maxHp*=.8;
+      if(this.boss)this.maxHp=t.hp*(1+.12*wave)*(1+.035*(level-1));
       if(trait==='swift'){this.speed*=1.18;this.maxHp*=.85;}if(trait==='armored')this.speed*=.9;
       if(tier==='veteran'){this.xp+=1;this.gold+=1;}
       if(encounter){this.xp=Math.max(1,Math.round(this.xp*(1+.035*(level-1))));this.gold=Math.max(1,Math.round(this.gold*(1+.025*(level-1))));}
@@ -138,20 +145,24 @@
         if(this.burnTick<=0){this.burnTick=.4;this.hit(this.burnDamage,false,0,0,this.burnSource);if(!this.alive)return;}
       }
       const p=this.game.player,dx=p.x-this.x,dy=p.y-this.y,len=Math.hypot(dx,dy)||1;
+      this.terrified=p.progress.demonTime>0&&!this.boss&&len<360;
+      if(this.terrified){this.windup=this.charge=0;this.attackTimer=Math.max(this.attackTimer,.75);}
       let movement=this.slow>0?.48:1;if(this.frozen>0)movement=0;
-      if(this.type==='cultist'&&this.frozen<=0){
+      if((this.type==='cultist'||this.type==='wraith')&&this.frozen<=0&&!this.terrified){
         if(len<210)movement*=-.5;else if(len<310)movement=0;
         this.attackTimer-=dt;
         if(this.attackTimer<.65&&len<600)this.windup=Math.max(this.windup,.01);
         if(this.attackTimer<=0&&len<600){this.game.combat.enemyShot(this.x,this.y-24,p.x,p.y-12,175,this.damage);this.attackTimer=2.7;this.windup=0;this.castTimer=.2;}
       }
-      if(this.type==='hound'&&this.frozen<=0){
+      if(this.type==='hound'&&this.frozen<=0&&!this.terrified){
         this.attackTimer-=dt;
         if(this.windup>0){this.windup-=dt;movement=0;if(this.windup<=0){this.charge=.44;this.game.combat.dust(this.x,this.y);}}
         else if(this.charge>0){this.x+=this.chargeX*(370+this.level*3)*dt;this.y+=this.chargeY*(370+this.level*3)*dt;this.charge-=dt;movement=0;}
         else if(this.attackTimer<=0&&len<330){this.windup=.72;this.chargeX=dx/len;this.chargeY=dy/len;this.attackTimer=3.8;}
       }
+      if(this.type==='reaper'&&!this.terrified&&this.frozen<=0){this.attackTimer-=dt;if(this.attackTimer<=0&&len<220){this.game.combat.hazard(p.x,p.y,66,.9,this.damage,.35);this.castTimer=.3;this.attackTimer=3.2;}}
       if(this.boss&&this.frozen<=0){
+        if(this.type==='overlord'){this.summonTimer-=dt;if(this.summonTimer<=0){this.summonTimer=6;this.game.summonMinions(this);this.castTimer=.4;}}
         this.attackTimer-=dt;
         if(this.attackTimer<=0){
           const angry=this.hp<this.maxHp*.45;
@@ -167,12 +178,14 @@
         }
         if(len<190)movement*=.3;
       }
+      if(this.terrified)movement=-Math.abs(movement)*1.15;else if(this.boss&&p.progress.demonTime>0&&len<360)movement*=.9;
+      const moveAngle=Math.atan2(dy*(this.terrified?-1:1),dx*(this.terrified?-1:1));this.facing=DIRECTIONS[(Math.round(moveAngle/(Math.PI/4))+8)%8];
       const ox=this.x,oy=this.y;
       this.x+=(dx/len*this.speed*movement+this.knockX)*dt;this.y+=(dy/len*this.speed*movement+this.knockY)*dt;
       this.moving=Math.hypot(this.x-ox,this.y-oy)>.01;
       if(this.frozen<=0)this.gait=(this.gait+Math.hypot(this.x-ox,this.y-oy)/76*Math.PI*2)%(Math.PI*2);
       this.knockX*=Math.exp(-10*dt);this.knockY*=Math.exp(-10*dt);
-      if(N.segmentDistance2(ox,oy,this.x,this.y,p.x,p.y)<(this.radius+p.radius)**2){if(this.castTimer<=0)this.castTimer=.3;p.hurt(this.damage);}
+      if(!this.terrified&&N.segmentDistance2(ox,oy,this.x,this.y,p.x,p.y)<(this.radius+p.radius)**2){if(this.castTimer<=0)this.castTimer=.3;p.hurt(this.damage);}
     }
     hit(damage,crit=false,vx=0,vy=0,source='bolt'){
       if(!this.alive||this.spawnDelay>0)return;
@@ -199,9 +212,10 @@
       g.loot.push(new Loot(g,'gold',this.x+N.rand(-14,14),this.y+N.rand(-14,14),this.gold));
       if(this.type==='gargoyle'){g.shake=Math.max(g.shake,5);g.combat.burst(this.x,this.y-10,18,'#bdb0cc');}
       if(this.elite){g.stats.elites++;g.loot.push(new Loot(g,'heal',this.x,this.y,12));g.unlock('elite');}
+      if(this.boss||this.elite||Math.random()<.016)g.loot.push(new Loot(g,'jewel',this.x,this.y,this.boss?100:this.elite?50:34));
       if(this.boss){
         g.bossDefeated=true;g.stats.bosses++;g.save.data.profile.bosses++;g.unlock('warden');
-        g.loot.push(new Loot(g,'heal',this.x,this.y,30));g.ui.banner('THE SEAL IS BROKEN','WARDEN BANISHED');
+        g.loot.push(new Loot(g,'heal',this.x,this.y,30));g.ui.banner('THE SEAL IS BROKEN',this.type==='overlord'?'OVERLORD BANISHED':'WARDEN BANISHED');
         g.shake=Math.max(g.shake,8);g.combat.burst(this.x,this.y-30,40,'#e7c990');
       }else if(Math.random()<.018)g.loot.push(new Loot(g,'heal',this.x,this.y,8));
     }
@@ -217,8 +231,8 @@
       c.save();c.translate(this.x,this.y);const squash=this.game.reducedMotion?0:Math.sin(this.hitSquash/.12*Math.PI)*.09;
       c.scale(1+squash,1-squash);
       if(this.flash>0&&!this.game.reducedMotion)c.filter='brightness(2.1)';else if(this.frozen>0)c.filter='brightness(1.25) sepia(.3) hue-rotate(145deg)';
-      if(this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
-      N.drawEnemy(c,this.game.images,this,-40*s,-79*s+bob,80*s,88*s);
+      if(!window.NOCTURNE_ENEMY_ATLAS?.rows&&this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
+      N.drawEnemy(c,this.game.images,this,-40*s,-99*s+bob,80*s,107*s);
       c.restore();
       if(this.castTimer>0){c.globalCompositeOperation='lighter';c.strokeStyle='#d3b3d288';c.beginPath();c.arc(this.x,this.y-35*s,12+this.castTimer*30,0,Math.PI*2);c.stroke();c.globalCompositeOperation='source-over';}
       if(this.hp<this.maxHp&&!this.boss){
@@ -227,6 +241,7 @@
       if(this.boss||this.elite||this.hp<this.maxHp||N.dist2(this,this.game.player)<430**2){
         const trait=N.ENEMY_TRAITS[this.trait];c.fillStyle=this.tier==='veteran'?'#ecd09e':this.tier==='fodder'?'#9ea99f':trait.color;c.textAlign='center';c.font='9px Arial';c.fillText(`L${N.fmt(this.level)}${trait.icon?' '+trait.icon:''}`,this.x,this.y-82*s);
       }
+      if(this.terrified){c.fillStyle='#e8b0d6';c.font='bold 13px Georgia';c.textAlign='center';c.fillText('FEAR',this.x,this.y-105*s);}
       if(this.slow>0){c.strokeStyle='#b4deeb99';c.beginPath();c.arc(this.x,this.y-20,21,0,Math.PI*2);c.stroke();}
       if(this.burn>0){c.fillStyle='#e7a377';c.beginPath();c.arc(this.x+9,this.y-38,3,0,Math.PI*2);c.fill();}
       if(this.windup>0){
@@ -244,10 +259,10 @@
       if(!this.alive)return;this.alive=false;
       if(this.type==='xp')this.game.addXP(this.value);
       else if(this.type==='gold')this.game.earnGold(this.value);
-      else this.game.player.hp=Math.min(this.game.player.maxHp,this.game.player.hp+this.value);
+      else if(this.type==='jewel')this.game.abilities.jewel(this.value);else this.game.player.hp=Math.min(this.game.player.maxHp,this.game.player.hp+this.value);
       if(this.game.visible(this.x,this.y,30)){
-        this.game.combat.sound(this.type==='xp'?'xp':this.type==='gold'?'gold':'heal',this.x);
-        this.game.combat.effect('pickup',this.x,this.y-5,this.game.player.x,this.game.player.y-20,this.type==='heal'?24:12,this.type==='xp'?'#d4bceb':this.type==='gold'?'#d4bc8b':'#d9aaa0',.25);
+        this.game.combat.sound(this.type==='xp'?'xp':this.type==='gold'?'gold':this.type==='jewel'?'jewel':'heal',this.x);
+        this.game.combat.effect('pickup',this.x,this.y-5,this.game.player.x,this.game.player.y-20,this.type==='heal'?24:12,this.type==='xp'?'#d4bceb':this.type==='gold'?'#d4bc8b':this.type==='jewel'?'#f1a5d1':'#d9aaa0',.25);
       }
     }
     update(dt){
@@ -257,11 +272,12 @@
       if(d2<22**2||this.age>75)this.collect();
     }
     draw(c){
-      const color=this.type==='xp'?'#bfb2da':this.type==='gold'?'#c9ad75':'#ba9f92';
+      const color=this.type==='xp'?'#bfb2da':this.type==='gold'?'#c9ad75':this.type==='jewel'?'#f1a5d1':'#ba9f92';
       const bob=this.game.reducedMotion?0:Math.sin(this.game.time*3+this.phase)*1.8;
       c.save();c.translate(this.x,this.y-4+bob);c.globalCompositeOperation='lighter';
       c.fillStyle=color+'22';c.beginPath();c.arc(0,0,10,0,Math.PI*2);c.fill();c.fillStyle=color;
-      if(this.type==='heal'){c.fillRect(-2,-6,4,12);c.fillRect(-6,-2,12,4);}
+      if(this.type==='jewel'){c.rotate(this.game.reducedMotion?0:this.age*.8);c.strokeStyle='#ffdfef';c.lineWidth=1.5;c.beginPath();c.moveTo(0,-10);c.lineTo(7,-3);c.lineTo(5,6);c.lineTo(0,11);c.lineTo(-5,6);c.lineTo(-7,-3);c.closePath();c.fill();c.stroke();}
+      else if(this.type==='heal'){c.fillRect(-2,-6,4,12);c.fillRect(-6,-2,12,4);}
       else{c.beginPath();c.moveTo(0,-5);c.lineTo(4,0);c.lineTo(0,5);c.lineTo(-4,0);c.closePath();c.fill();c.fillStyle='#f6efd9';c.fillRect(-1,-3,1,3);}
       c.restore();
     }

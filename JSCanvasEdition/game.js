@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '4.0.0';
+  N.VERSION = '5.0.0';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -69,7 +69,7 @@
 
   class Input {
     constructor(game) {
-      this.keys = new Set(); this.x = 0; this.y = 0; this.pointer = null;
+      this.game=game;this.keys = new Set(); this.x = 0; this.y = 0; this.pointer = null;this.aim={x:0,y:0,active:false};
       const prevent = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','Space']);
       window.addEventListener('keydown', e => {
         if (e.target?.matches?.('input, textarea, select, [contenteditable=true]')) return;
@@ -81,9 +81,21 @@
         if (e.repeat) return;
         if (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') game.player?.dash();
         if (e.code === 'Escape' || e.code === 'KeyP') game.ui?.togglePause();
+        if(e.code==='KeyQ'){game.abilities?.begin();game.abilities?.release();}
+        if(e.code==='KeyZ')game.abilities?.cycle();
         if (e.code === 'KeyI') game.ui?.toggleGrimoire();
         if (/^Digit[123]$/.test(e.code) && game.state === 'levelup') game.ui.chooseLevel(Number(e.code.slice(-1)) - 1);
       });
+      const aim=e=>{const r=game.canvas.getBoundingClientRect();this.aim={x:(e.clientX-r.left)*game.width/r.width,y:(e.clientY-r.top)*game.height/r.height,active:true};};
+      game.canvas.addEventListener?.('pointermove',aim);
+      game.canvas.addEventListener?.('pointerdown',e=>{aim(e);if(e.button===2){e.preventDefault();game.abilities?.begin();}});
+      window.addEventListener('pointerup',e=>{if(e.button===2)game.abilities?.release();});
+      window.addEventListener('pointercancel',()=>game.abilities?.cancel());
+      game.canvas.addEventListener?.('contextmenu',e=>e.preventDefault());
+      document.getElementById('special-button')?.addEventListener('pointerdown',e=>{e.preventDefault();e.currentTarget.setPointerCapture?.(e.pointerId);game.abilities?.begin();});
+      document.getElementById('special-button')?.addEventListener('pointerup',e=>{e.preventDefault();game.abilities?.release();});
+      document.getElementById('special-button')?.addEventListener('pointercancel',()=>game.abilities?.cancel());
+      document.getElementById('cycle-special')?.addEventListener('click',()=>game.abilities?.cycle());
       game.canvas.addEventListener?.('wheel',e=>{if(game.state!=='playing')return;e.preventDefault();game.setZoom(game.userZoom-Math.sign(e.deltaY)*.08);},{passive:false});
       window.addEventListener('keyup', e => this.keys.delete(e.code));
       window.addEventListener('blur', () => { this.clear();game.combat?.audioEngine.setForeground(false); if (game.state === 'playing') game.ui.pause(); });
@@ -117,7 +129,7 @@
       this.knob = knob;
       document.getElementById('dash-button').addEventListener('pointerdown',e=>{e.preventDefault();game.player.dash();});
     }
-    clear() { this.keys.clear(); this.x = this.y = 0; this.pointer = null; this.knob.style.transform = ''; }
+    clear() { this.game?.abilities?.cancel();this.keys.clear(); this.x = this.y = 0; this.pointer = null; this.knob.style.transform = ''; }
     vector() {
       const k = this.keys;
       let x = Number(k.has('KeyD') || k.has('ArrowRight')) - Number(k.has('KeyA') || k.has('ArrowLeft')) + this.x;
@@ -148,7 +160,7 @@
       document.body?.classList.toggle('reduce-motion',this.reducedMotion);
       this.groundPattern = this.ctx.createPattern(images.ground, 'repeat');
       this.input = new Input(this); this.player = new N.Player(this);
-      this.combat = new N.Combat(this);this.combat.soundEnabled=this.save.data.settings.sound;
+      this.abilities=new N.Abilities(this);this.combat = new N.Combat(this);this.combat.soundEnabled=this.save.data.settings.sound;
       this.ui = new N.UI(this);
       this.resize(); window.addEventListener('resize', () => this.resize());
       window.addEventListener('pagehide',()=>{if(['playing','paused'].includes(this.state))this.checkpoint('wave');});
@@ -183,7 +195,7 @@
       const ox=p.x,oy=p.y;this.worldOrigin.x+=ox;this.worldOrigin.y+=oy;p.x=p.y=0;this.camera.x=this.camera.y=0;
       const lists=[this.enemies,this.loot,...['projectiles','hostile','hazards','areas','effects','remnants','numbers'].map(key=>this.combat[key].active)];
       for(const list of lists)for(const item of list){
-        item.x-=ox;item.y-=oy;if(Number.isFinite(item.x2))item.x2-=ox;if(Number.isFinite(item.y2))item.y2-=oy;
+        item.x-=ox;item.y-=oy;if(item.kind!=='slash'&&Number.isFinite(item.x2))item.x2-=ox;if(item.kind!=='slash'&&Number.isFinite(item.y2))item.y2-=oy;
         if(item.trailX)for(let i=0;i<5;i++){item.trailX[i]-=ox;item.trailY[i]-=oy;}
       }
       this.landmarks.clear();
@@ -194,19 +206,19 @@
       this.player = new N.Player(this,this.selectedCoven); this.enemies.length = this.loot.length = 0;
       this.combat.clear(); this.hash.clear(); this.input.clear();
       this.wave = 0; this.time = 0;this.worldOrigin={x:0,y:0}; this.camera.x = this.camera.y = 0;
-      this.stats=this.freshStats();this.shake = this.hitStop = this.impactCooldown = 0; this.ui.resetShop(); this.startWave();
+      this.stats=this.freshStats();this.shake = this.hitStop = this.impactCooldown = 0; this.ui.resetShop();this.abilities.cancel(); this.startWave();
     }
     startWave(resuming=false) {
       if(!resuming){this.wave++;this.player.progress.activeOath=this.player.progress.preparedOath;this.player.progress.preparedOath=null;this.player.progress.shield=this.player.progress.activeOath==='stone'?35:0;}
       this.waveTime = 0; this.spawnClock = .15;this.threatClock=8;this.autosaveClock=0;
-      this.boss=null;this.bossSpawned=false;this.bossDefeated=false;this.waveKills=0;this.waveDamage=0;
+      this.boss=null;this.bossSpawned=false;this.bossDefeated=false;this.overlordSpawned=false;this.waveKills=0;this.waveDamage=0;
       this.waveDuration = 30 + Math.min(this.wave - 1, 6) * 5;
       if(!resuming)this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * .12);
       this.player.invulnerable = 1;
       this.hurtFlash=0;
       this.player.dashTimer=0;this.player.dashRemaining=0;this.combat.clear();this.combat.cooldown = .1;
       this.state = 'playing'; this.input.clear(); this.ui.hide();
-      this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%5===0?'A WARDEN APPROACHES':this.wave === 1 ? 'THE HOLLOW AWAKENS' : this.biome().name.toUpperCase());
+      this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%10===0?'AN OVERLORD APPROACHES':this.wave%5===0?'A WARDEN APPROACHES':this.wave === 1 ? 'THE HOLLOW AWAKENS' : this.biome().name.toUpperCase());
       this.checkpoint('wave');
       this.combat.sound('wave');
     }
@@ -214,7 +226,7 @@
     checkpoint(phase){
       if(this.player.pendingLevels>0||this.player.hp<=0)return false;
       const player={};for(const k of N.PLAYER_FIELDS)player[k]=this.player[k];
-      player.weapons={...this.player.weapons};player.relics={...this.player.relics};player.upgrades=[...this.player.upgrades];player.rules=4;player.progress=JSON.parse(JSON.stringify(this.player.progress));
+      player.weapons={...this.player.weapons};player.relics={...this.player.relics};player.upgrades=[...this.player.upgrades];player.rules=5;player.progress=JSON.parse(JSON.stringify(this.player.progress));
       this.save.data.checkpoint={schema:2,phase,coven:this.player.coven,wave:this.wave,time:this.time,player,
         world:phase==='wave'?N.captureWorld(this):undefined,
         stats:JSON.parse(JSON.stringify(this.stats)),rolls:this.ui.rolls,slots:this.ui.slots.map(s=>({id:s.item?.id||null,locked:s.locked,price:s.price,sold:s.sold===true}))};
@@ -224,10 +236,10 @@
       const c=this.save.data.checkpoint;if(!this.save.validCheckpoint(c))return false;
       this.enemies.length=this.loot.length=0;this.hash.clear();this.combat.clear();this.input.clear();
       this.player=new N.Player(this,c.coven);for(const k of N.PLAYER_FIELDS)this.player[k]=c.player[k];
-      if(c.player.rules!==4)this.player.armor=this.player.armor/(1-this.player.armor);
+      if(!(c.player.rules>=4))this.player.armor=this.player.armor/(1-this.player.armor);
       N.balancePlayer(this.player);
       this.player.weapons={...this.player.weapons,...c.player.weapons};this.player.relics={...this.player.relics,...c.player.relics};
-      this.player.progress=c.player.progress?JSON.parse(JSON.stringify(c.player.progress)):N.newProgression(this.player);this.player.upgrades=[...c.player.upgrades];
+      this.player.progress=c.player.progress?JSON.parse(JSON.stringify(c.player.progress)):N.newProgression(this.player);N.mergeProgression(this.player);this.player.upgrades=[...c.player.upgrades];
       this.player.evolutions=new Set(Object.keys(this.player.weapons).filter(id=>this.player.evolved(id)));
       this.selectedCoven=c.coven;this.wave=c.wave;this.time=c.time;this.stats=JSON.parse(JSON.stringify(c.stats));this.stats.weapons={...Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),...this.stats.weapons};
       this.camera.x=this.player.x;this.camera.y=this.player.y;this.shake=this.hitStop=this.impactCooldown=0;this.boss=null;
@@ -247,18 +259,21 @@
       const angle=N.rand(0,Math.PI*2),radius=N.rand(660,760);
       const x=this.player.x+Math.cos(angle)*radius,y=this.player.y+Math.sin(angle)*radius;
       const roll = Math.random();
-      const type = this.wave>=4&&roll<.13?'cultist':this.wave>=2&&roll<.27?'hound':this.wave>=3&&roll<.43?'gargoyle':roll<.68?'skeleton':'slime';
+      const type = this.wave>=8&&roll<.07?'reaper':this.wave>=6&&roll<.15?'wraith':this.wave>=4&&roll<.13?'cultist':this.wave>=2&&roll<.27?'hound':this.wave>=3&&roll<.43?'gargoyle':roll<.68?'skeleton':'slime';
       const encounter=N.EnemyDirector.roll(this,this.nextId);
       const enemy=new N.Enemy(this,type,x,y,++this.nextId,encounter.elite,encounter);
       enemy.spawnDelay=this.visible(x,y,60)?.85:0;this.enemies.push(enemy);
     }
-    spawnBoss(){
+    spawnBoss(overlord=this.wave%10===0,required=true){
       const angle=N.rand(0,Math.PI*2);
       const r=700;
-      this.boss=new N.Enemy(this,'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:N.EnemyDirector.target(this)+3,tier:'warden',trait:'none'});
+      this.boss=new N.Enemy(this,overlord?'overlord':'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:Math.max(this.player.level+3,Math.ceil(this.player.level*(overlord?1.18:1.08))),tier:overlord?'overlord':'warden',trait:'none'});
       this.boss.spawnDelay=this.visible(this.boss.x,this.boss.y,60)?1.2:0;
-      this.enemies.push(this.boss);this.bossSpawned=true;this.ui.banner('THE HOLLOW WARDEN','BREAK THE SEAL');
+      this.enemies.push(this.boss);if(required)this.bossSpawned=true;else this.overlordSpawned=true;this.ui.banner(overlord?'THE ASH OVERLORD':'THE HOLLOW WARDEN',overlord?'BREAK THE SOVEREIGN CROWN':'BREAK THE SEAL');
       this.combat.sound('boss');
+    }
+    summonMinions(owner){
+      const available=Math.max(0,320-this.enemies.length);for(let i=0;i<Math.min(3,available);i++){const a=i*Math.PI*2/3,e=new N.Enemy(this,'slime',owner.x+Math.cos(a)*75,owner.y+Math.sin(a)*75,++this.nextId,false,{level:Math.max(1,Math.floor(this.player.level*.45)),tier:'minion',trait:'none'});e.maxHp*=.35;e.hp=e.maxHp;e.scale*=.65;e.radius*=.65;e.spawnDelay=.85;this.enemies.push(e);}
     }
     earnGold(amount){const q=this.player.progress,scaled=amount*(q.activeOath==='fortune'?1.2:1)+q.goldCarry,value=Math.floor(scaled+1e-9);q.goldCarry=Math.max(0,scaled-value);this.player.gold+=value;this.stats.goldEarned+=value;}
     unlock(id){
@@ -281,7 +296,7 @@
       for (const drop of this.loot) {
         if (drop.type === 'gold') this.earnGold(drop.value);
         else if(drop.type==='heal')this.player.hp=Math.min(this.player.maxHp,this.player.hp+drop.value);
-        else this.addXP(drop.value);
+        else if(drop.type==='jewel')this.abilities.jewel(drop.value);else this.addXP(drop.value);
       }
       this.loot.length = 0;
       const clean=this.waveDamage===0;
@@ -307,7 +322,7 @@
       if (this.hitStop > 0) { this.hitStop -= dt; return; }
       this.time += dt; this.waveTime += dt;
       this.hurtFlash=Math.max(0,this.hurtFlash-dt);
-      this.player.update(dt);this.rebaseWorld();
+      this.abilities.update(dt);this.player.update(dt);this.rebaseWorld();
       this.zoomFactor+=(this.targetZoom-this.zoomFactor)*(1-Math.exp(-9*dt));this.applyZoom();
       this.threatClock-=dt;
       if(this.wave>=3&&this.threatClock<=0){
@@ -316,6 +331,7 @@
         this.combat.sound('warning');
         if(this.wave===3&&this.waveTime<10)this.ui.banner('HOLLOW CURSE','LEAVE THE MARKED CIRCLE BEFORE IT IGNITES');
       }
+      if(this.wave>=7&&this.wave%7===0&&this.wave%5!==0&&!this.overlordSpawned&&this.waveTime>=this.waveDuration*.52)this.spawnBoss(true,false);
       if(this.wave%5===0&&!this.bossSpawned&&this.waveTime>=3)this.spawnBoss();
       this.spawnClock -= dt;
       const interval = Math.max(.09, .63 / (1 + .21 * (this.wave - 1)))*(this.wave%5===0?1.5:1);
@@ -343,7 +359,7 @@
       this.camera.x += (this.player.x - this.camera.x) * (1 - Math.exp(-7 * dt));
       this.camera.y += (this.player.y - this.camera.y) * (1 - Math.exp(-7 * dt));
       this.shake = Math.max(0, this.shake - dt * 22);
-      if (this.waveTime >= this.waveDuration && (this.wave%5!==0||this.bossDefeated)) { this.finishWave(); return; }
+      if (this.waveTime >= this.waveDuration && (!this.boss||!this.boss.alive)) { this.finishWave(); return; }
       this.autosaveClock+=dt;
       if(this.autosaveClock>=10&&this.player.pendingLevels===0){this.autosaveClock=0;this.checkpoint('wave');}
       if (this.player.pendingLevels > 0) { this.ui.afterLevel = 'playing'; this.ui.levelUp(); }
@@ -422,7 +438,7 @@
       c.translate(-this.camera.x+N.fxRand(-amount,amount),-this.camera.y+N.fxRand(-amount,amount));
       this.drawGround(c);
       c.fillStyle=this.biome().color;c.fillRect(this.camera.x-this.viewWidth/2-20,this.camera.y-this.viewHeight/2-20,this.viewWidth+40,this.viewHeight+40);
-      this.combat.drawGround(c);
+      this.combat.drawGround(c);this.abilities.draw(c);
       for(const drop of this.loot) if(this.visible(drop.x,drop.y,30)) drop.draw(c);
       const list=this.renderList;list.length=0;
       for(const e of this.enemies) if(e.alive && this.visible(e.x,e.y)) list.push(e);

@@ -12,6 +12,7 @@ from pathlib import Path
 import random
 
 from PIL import Image, ImageDraw, ImageFilter
+from enemy_models import KINDS, DIRECTIONS, CLIPS, render_enemy
 
 ROOT = Path(__file__).resolve().parent
 S = 3
@@ -138,116 +139,8 @@ def witch(angle, phase=None, action="idle", progress=0):
     return im.resize((96, 128), Image.Resampling.LANCZOS)
 
 
-def enemy(kind, phase=None, action="walk", progress=0):
-    im = Image.new("RGBA", (80*S, 88*S))
-    raw=ImageDraw.Draw(im)
-    # Deform individual body/arm/head primitives before rasterization.
-    # Each state has genuinely different local poses, rather than translated PNGs.
-    def warp(point):
-        x,y=point[0]/S,point[1]/S
-        pulse=math.sin(progress*math.pi)
-        if action=="idle":y=79-(79-y)*(1+math.sin(progress*math.tau)*.014)
-        elif action=="attack":
-            x+=pulse*(4 if kind=="hound" else 1.5)*(79-y)/79
-            if kind in ("skeleton","cultist","warden") and (x>53 or x<26) and 22<y<69:
-                y-=pulse*(10 if x>53 else 6);x+=pulse*(progress*5+2)
-            elif kind=="gargoyle" and (x<25 or x>55):y-=pulse*9;x+=(x-40)*pulse*.08
-            elif kind=="slime":x=40+(x-40)*(1-pulse*.12);y=79-(79-y)*(1+pulse*.13)
-            elif kind=="hound" and x>44 and y<51:y+=pulse*(4 if progress>.5 else -3)
-        elif action=="hurt":
-            x+=math.sin(progress*math.pi*1.5)*4*(79-y)/79
-            if y>43:y=79-(79-y)*(1-pulse*.1)
-        elif action=="death":
-            x+=(79-y)*progress*.08-(x-40)*progress*.2;y=79-(79-y)*(1-progress*.73)
-        return (x*S,y*S)
-    class Painter:
-        def polygon(self,points,**kwargs):raw.polygon([warp(v) for v in points],**kwargs)
-        def line(self,points,**kwargs):raw.line([warp(v) for v in points],**kwargs)
-        def ellipse(self,box,**kwargs):
-            a,b=warp(box[:2]),warp(box[2:]);raw.ellipse((min(a[0],b[0]),min(a[1],b[1]),max(a[0],b[0]),max(a[1],b[1])),**kwargs)
-    d=Painter()
-    gait=math.sin(phase) if phase is not None else 0
-
-    def point(x,y):
-        if kind=="slime":
-            x=40+(x-40)*(1+gait*.055)
-            y=79+(y-79)*(1-gait*.085)-max(0,gait)*2
-        return (x*S,y*S)
-
-    def e(box, fill):
-        d.ellipse((*point(box[0],box[1]),*point(box[2],box[3])), fill=fill)
-
-    def line(points, fill, width):
-        d.line([point(x,y) for x,y in points],fill=fill,width=width*S,joint="curve")
-
-    if kind == "slime":
-        e((10, 31, 71, 79), "#223e36")
-        e((13, 30, 66, 72), "#4c7661")
-        e((18, 34, 56, 62), "#688874")
-        e((22, 35, 35, 42), "#9bb6a1")
-        for x in (31, 49):
-            e((x, 51, x+5, 59), "#dce4be")
-        line([(36, 66),(43, 67),(49, 64)], "#29463a", 2)
-    elif kind == "skeleton":
-        for x, sign in ((31,-1),(47,1)):
-            line([(x,51),(x+sign*4+gait*sign*3,65),(x+sign*8+gait*sign*6,79-abs(gait)*2)], "#b5b09c", 5)
-        line([(40,29),(40,58)], "#ded5b5", 5)
-        for y in (35,41,47):
-            line([(27,y-2),(32,y+3),(48,y+3),(53,y-2)], "#bcb8a1", 3)
-        line([(27,31),(19,42),(23,55)], "#c7c0a6", 4)
-        line([(53,31),(61,43),(57,55)], "#c7c0a6", 4)
-        e((26, 7, 55, 32), "#c9c1a5")
-        e((30, 15, 37, 23), "#2d3030")
-        e((44, 15, 51, 23), "#2d3030")
-        line([(35,28),(46,28)], "#5f5d52", 2)
-    elif kind == "hound":
-        e((13, 38, 66, 65), "#5d5154")
-        e((21, 33, 56, 55), "#817071")
-        for i,x in enumerate((19,33,49,60)):
-            stride=gait*(1 if i%2 else -1)*6
-            line([(x,55),(x-3+stride,72),(x+4+stride,75-abs(stride)*.3)],"#4b414b",5)
-        e((45, 27, 75, 50), "#a18b84")
-        d.polygon([(49*S,32*S),(46*S,15*S),(58*S,28*S)], fill="#7d6c6d")
-        d.polygon([(63*S,30*S),(69*S,17*S),(70*S,36*S)], fill="#7d6c6d")
-        e((62, 35, 68, 40), "#edd0a2")
-        line([(16,46),(7,34),(3,24)], "#786168", 5)
-    elif kind == "cultist":
-        d.polygon([(37*S,15*S),(56*S,28*S),((67+gait*2)*S,77*S),((14+gait*2)*S,77*S),(25*S,28*S)], fill="#473a4f")
-        d.polygon([(39*S,23*S),((53+gait*2)*S,76*S),((29+gait*2)*S,76*S)], fill="#675069")
-        e((27, 8, 55, 38), "#2a2736")
-        e((31, 13, 50, 33), "#141d23")
-        for x in (35,44):
-            e((x,21,x+3,24), "#d4a3b2")
-        line([(64,76),(64,18)], "#948278", 3)
-        e((58,8,70,23), "#bca0ca")
-        e((61,11,67,19), "#f7e2ed")
-    elif kind == "warden":
-        d.polygon([(27*S,28*S),(54*S,28*S),((68+gait*2)*S,80*S),((11+gait*2)*S,80*S)], fill="#353943")
-        d.polygon([(36*S,29*S),(48*S,29*S),((57+gait*2)*S,80*S),((23+gait*2)*S,80*S)], fill="#5c5964")
-        for x in (22,58):
-            e((x-9,27,x+9,45), "#736a68")
-        e((29,12,52,35), "#b9aa8f")
-        for x in (34,44):
-            e((x,20,x+5,25), "#171e24")
-        line([(30,19),(17,10),(13,1)], "#b6a38c", 3)
-        line([(50,19),(62,9),(67,1)], "#b6a38c", 3)
-        line([(18,11),(21,2)], "#b6a38c", 2)
-        line([(61,10),(59,2)], "#b6a38c", 2)
-        line([(61,76),(68,24)], "#98866a", 3)
-        e((62,15,75,28), "#d3b985")
-        e((66,18,72,24), "#fff0ce")
-    else:
-        d.polygon([(5*S,(13+gait*8)*S),(29*S,33*S),(24*S,60*S),(3*S,(45+gait*4)*S),(14*S,39*S)], fill="#494453")
-        d.polygon([(75*S,(13+gait*8)*S),(51*S,33*S),(56*S,60*S),(77*S,(45+gait*4)*S),(66*S,39*S)], fill="#625b6b")
-        e((24, 26, 58, 70), "#77717d")
-        e((28, 12, 54, 38), "#837a83")
-        d.polygon([(27*S,23*S),(24*S,4*S),(37*S,15*S)], fill="#a49997")
-        d.polygon([(46*S,15*S),(59*S,4*S),(54*S,26*S)], fill="#a49997")
-        for x in (32,46):
-            e((x,23,x+5,28), "#f3b5a1")
-        line([(30,62),(25,78),(15,80)], "#6b6571", 7)
-        line([(52,62),(57,78),(65,80)], "#817783", 7)
-    return im.resize((80,88), Image.Resampling.LANCZOS)
+def enemy(kind, phase=None, action="idle", progress=0, angle=0):
+    return render_enemy(kind, angle=angle, phase=phase, action=action, progress=progress)
 
 
 def ground():
@@ -318,7 +211,7 @@ def prop(kind):
 def main():
     dirs={"S":0,"SW":45,"W":90,"NW":135,"N":180,"NE":225,"E":270,"SE":315}
     assets={"witch_"+name:encode(witch(angle)) for name,angle in dirs.items()}
-    assets.update({name:encode(enemy(name)) for name in ("slime","skeleton","gargoyle","hound","cultist","warden")})
+    assets.update({name:encode(enemy(name)) for name in KINDS})
     assets.update(orb=encode(orb()),ground=encode(ground()))
     walk_frames={name:[witch(angle,i*math.tau/8) for i in range(8)] for name,angle in dirs.items()}
     clips={"idle":{"frames":4,"duration":1.8,"loop":True,"priority":0},
@@ -339,22 +232,24 @@ def main():
                 t=i/(clip["frames"]-1) if not clip["loop"] else i/clip["frames"]
                 frames.append(walk_frames[name][i] if state=="walk" else witch(angle,action=state,progress=t))
         assets["witch_atlas_"+name]=encode(sheet(frames))
-    for name in ("slime","skeleton","gargoyle","hound","cultist","warden"):
+    for name in KINDS:
         assets["enemy_walk_"+name]=encode(sheet([enemy(name,i*math.tau/4) for i in range(4)]))
-    enemy_clips={"idle":{"start":0,"frames":2,"duration":1.2},"walk":{"start":2,"frames":4,"duration":.7},"attack":{"start":6,"frames":6,"duration":.3},"hurt":{"start":12,"frames":3,"duration":.12},"death":{"start":15,"frames":6,"duration":.6}}
-    for name in ("slime","skeleton","gargoyle","hound","cultist","warden"):
-        frames=[]
-        for state,clip in enemy_clips.items():
-            for i in range(clip['frames']):
-                t=i/(clip['frames']-1) if state not in ('walk','idle') else (i+.25)/clip['frames'] if state=='idle' else i/clip['frames']
-                frames.append(enemy(name,i*math.tau/4) if state=='walk' else enemy(name,action=state,progress=t))
-        assets['enemy_atlas_'+name]=encode(sheet(frames))
+    enemy_clips=CLIPS
+    for name in KINDS:
+        atlas=Image.new('RGBA',(96*33,128*8))
+        for row,(direction,angle) in enumerate(DIRECTIONS.items()):
+            for state,clip in enemy_clips.items():
+                for i in range(clip['frames']):
+                    t=i/(clip['frames']-1) if state in ('attack','hurt','death') else (i+.17)/clip['frames']
+                    pose=enemy(name,t*math.tau if state=='walk' else None,action=state,progress=t,angle=angle)
+                    atlas.paste(pose,((clip['start']+i)*96,row*128))
+        assets['enemy_atlas_'+name]=encode(atlas)
     for name in ("tree","arch","tomb"):assets["prop_"+name]=encode(prop(name))
     output="// Generated by generate_assets.py; embedded PNGs, zero runtime requests.\n"
     output+="window.NOCTURNE_ASSETS = Object.freeze("+json.dumps(assets,indent=2)+");\n"
-    output+='window.NOCTURNE_ANIMATIONS = Object.freeze({witch:{frames:8,width:96,height:128},enemy:{frames:4,width:80,height:88}});\n'
+    output+='window.NOCTURNE_ANIMATIONS = Object.freeze({witch:{frames:8,width:96,height:128},enemy:{frames:8,width:96,height:128}});\n'
     output+='window.NOCTURNE_ATLAS = Object.freeze('+json.dumps({"version":1,"width":96,"height":128,"totalFrames":cursor,"clips":clips})+');\n'
-    output+='window.NOCTURNE_ENEMY_ATLAS = Object.freeze('+json.dumps({'width':80,'height':88,'totalFrames':21,'clips':enemy_clips})+');\n'
+    output+='window.NOCTURNE_ENEMY_ATLAS = Object.freeze('+json.dumps({'version':2,'width':96,'height':128,'rows':8,'directions':list(DIRECTIONS),'totalFrames':33,'clips':enemy_clips})+');\n'
     (ROOT/"assets.js").write_text(output,encoding="utf-8")
     previews=[]
     for i in range(8):
@@ -374,16 +269,26 @@ def main():
     cast_preview[0].save(ROOT/"animation-preview.gif",save_all=True,append_images=cast_preview[1:],duration=70,loop=0,optimize=False)
     enemy_preview=[]
     for i in range(12):
-        preview=Image.new('RGB',(640,624),'#182429');draw=ImageDraw.Draw(preview)
-        for row,name in enumerate(('slime','skeleton','gargoyle','hound','cultist','warden')):
-            draw.text((8,row*104+6),name.upper(),fill='#d8c49f')
+        preview=Image.new('RGB',(816,9*148),'#182429');draw=ImageDraw.Draw(preview)
+        for row,name in enumerate(KINDS):
+            draw.text((8,row*148+9),name.upper(),fill='#d8c49f')
             for col,state in enumerate(enemy_clips):
-                t=(i%6)/5 if state not in ('walk','idle') else i/12
-                pose=enemy(name,i*math.tau/8) if state=='walk' else enemy(name,action=state,progress=t)
-                preview.paste(pose,(col*116+54,row*104+12),pose)
-                if row==0:draw.text((col*116+70,0),state.upper(),fill='#b5bfc6')
+                t=(i%6)/5 if state in ('attack','hurt','death') else (i+.17)/12
+                pose=enemy(name,t*math.tau if state=='walk' else None,action=state,progress=t,angle=315)
+                preview.paste(pose,(col*120+72,row*148+14),pose)
+                if row==0:draw.text((col*120+75,0),state.upper(),fill='#b5bfc6')
         enemy_preview.append(preview)
-    enemy_preview[0].save(ROOT/'enemy-animation-preview.gif',save_all=True,append_images=enemy_preview[1:],duration=70,loop=0,optimize=False)
+    enemy_preview[0].save(ROOT/'enemy-animation-preview.gif',save_all=True,append_images=enemy_preview[1:],duration=80,loop=0,optimize=False)
+    facings=[]
+    for i in range(8):
+        preview=Image.new('RGB',(8*108,9*145),'#182429');draw=ImageDraw.Draw(preview)
+        for row,name in enumerate(KINDS):
+            for col,(direction,angle) in enumerate(DIRECTIONS.items()):
+                pose=enemy(name,i*math.tau/8,action='walk',angle=angle)
+                preview.paste(pose,(col*108+6,row*145+12),pose)
+                draw.text((col*108+32,row*145+1),direction,fill='#c9c8af')
+        facings.append(preview)
+    facings[0].save(ROOT/'enemy-directions-preview.gif',save_all=True,append_images=facings[1:],duration=90,loop=0,optimize=False)
     print(f"Generated {len(assets)} PNGs; {cursor} witch frames x 8 directions; {len(output):,} bytes")
 
 

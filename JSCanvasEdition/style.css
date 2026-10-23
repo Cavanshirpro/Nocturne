@@ -117,3 +117,13 @@ input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 #spell-belt{flex-wrap:wrap;max-width:180px}.belt-spell{flex-shrink:0}
 .belt-spell small{max-width:45px;white-space:nowrap}
 @media(max-width:700px){.talent-grid{grid-template-columns:1fr 1fr}.talent-grid article{padding:13px}.talent-grid strong{font-size:15px}.talent-grid p{font-size:10px}.bestiary-grid{grid-template-columns:repeat(3,1fr)}.trait-list{grid-template-columns:1fr}.section-title{font-size:23px}#spell-belt{max-width:135px}#performance{max-width:180px;line-height:1.8}.prepared-oath{font-size:10px;padding:10px 13px}}
+
+/* 5.0 · Demon Ascendant */
+#power-hud{position:fixed;right:24px;bottom:154px;width:225px;padding:13px 15px;background:#152428e8;border:1px solid #d6aac15c;z-index:5;pointer-events:auto;box-shadow:0 8px 25px #07121655}
+#power-hud[hidden]{display:none}.power-title{display:flex;justify-content:space-between;font:9px Arial;letter-spacing:1px;color:#dfb7cc;margin-bottom:9px}.power-title span{letter-spacing:0}
+#form-fill{background:linear-gradient(90deg,#8f668b,#e6b2d1);transition:width .15s}.special-row{display:flex;gap:6px;margin-top:12px}.special-row button{background:#26343a;border:1px solid #c9a7bc66;color:#f0d4e5;cursor:pointer;padding:10px 6px;font:9px Arial;letter-spacing:.6px;touch-action:none}.special-row #special-button{flex:1}#power-hud>small{display:block;font:9px Arial;color:#b8c4ba;margin-top:9px;letter-spacing:.6px}
+.bestiary-grid{grid-template-columns:repeat(3,1fr)}.bestiary-grid img{width:88px;height:118px}.bestiary-grid article{padding:14px}.bestiary-grid strong{margin-top:3px}
+@media(max-width:700px){#power-hud{width:180px;right:12px;bottom:170px;padding:10px}.power-title{font-size:8px}#power-hud>small{font-size:8px}.special-row button{font-size:8px;padding:10px 3px}.bestiary-grid{grid-template-columns:repeat(3,1fr)}.bestiary-grid img{width:70px;height:94px}.bestiary-grid article{padding:9px 3px}.bestiary-grid strong{font-size:13px}.bestiary-grid small{font-size:8px}#spell-belt{max-width:150px}}
+@media(max-height:600px) and (min-width:701px){#power-hud{bottom:125px;width:190px;padding:9px}}
+
+.special-row button:hover{background:#49364e;border-color:#ecc6dc}.special-row button:focus-visible{outline:2px solid #edc4dd;outline-offset:3px}body.reduce-motion #form-fill{transition:none}

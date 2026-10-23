@@ -7,26 +7,29 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+from functools import lru_cache
 
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parent
 DIRS=("N","NE","E","SE","S","SW","W","NW")
-TYPES=("slime","skeleton","gargoyle","hound","cultist","warden")
+TYPES=("slime","skeleton","gargoyle","hound","cultist","wraith","reaper","warden","overlord")
 
 
+@lru_cache(maxsize=1)
 def data():
     text=(ROOT/"assets.js").read_text(encoding="utf-8")
     return json.loads(text.split("Object.freeze(",1)[1].split(");",1)[0])
 
 
+@lru_cache(maxsize=64)
 def png(key):
     return Image.open(io.BytesIO(base64.b64decode(data()[key].split(",",1)[1]))).convert("RGBA")
 
 
 class AssetTests(unittest.TestCase):
     def test_all_embedded_images_are_valid(self):
-        self.assertEqual(len(data()),39)
+        self.assertEqual(len(data()),48)
         for key in data():
             im=png(key)
             self.assertGreater(im.width,0)
@@ -64,8 +67,8 @@ class AssetTests(unittest.TestCase):
     def test_enemy_animation_strips(self):
         for kind in TYPES:
             sheet=png("enemy_walk_"+kind)
-            self.assertEqual(sheet.size,(320,88))
-            frames=[sheet.crop((i*80,0,(i+1)*80,88)).tobytes() for i in range(4)]
+            self.assertEqual(sheet.size,(384,128))
+            frames=[sheet.crop((i*96,0,(i+1)*96,128)).tobytes() for i in range(4)]
             self.assertGreaterEqual(len(set(frames)),3,kind)
 
     def test_spellcasting_changes_hands_not_just_the_whole_bitmap(self):
@@ -86,23 +89,23 @@ class AssetTests(unittest.TestCase):
     def test_enemy_state_atlases_have_distinct_local_poses(self):
         for kind in TYPES:
             im=png('enemy_atlas_'+kind)
-            self.assertEqual(im.size,(1680,88))
-            for state,start,count in [('idle',0,2),('attack',6,6),('hurt',12,3),('death',15,6)]:
-                frames=[im.crop(((start+i)*80,0,(start+i+1)*80,88)).tobytes() for i in range(count)]
+            self.assertEqual(im.size,(3168,1024))
+            for state,start,count in [('idle',0,4),('walk',4,8),('attack',12,6),('hurt',18,3),('death',21,6),('fear',27,6)]:
+                frames=[im.crop(((start+i)*96,0,(start+i+1)*96,128)).tobytes() for i in range(count)]
                 self.assertGreaterEqual(len(set(frames)),2 if state=='idle' else 3,(kind,state))
 
     def test_enemy_death_silhouettes_collapse(self):
         for kind in TYPES:
             im=png('enemy_atlas_'+kind)
-            first=im.crop((15*80,0,16*80,88)).getchannel('A').getbbox()
-            last=im.crop((20*80,0,21*80,88)).getchannel('A').getbbox()
+            first=im.crop((21*96,0,22*96,128)).getchannel('A').getbbox()
+            last=im.crop((26*96,0,27*96,128)).getchannel('A').getbbox()
             self.assertLess(last[3]-last[1],(first[3]-first[1])*.6,kind)
 
     def test_enemy_animation_preview_loops(self):
         with Image.open(ROOT/'enemy-animation-preview.gif') as gif:
             self.assertEqual(gif.n_frames,12)
             self.assertEqual(gif.info['loop'],0)
-            self.assertEqual(gif.size,(640,624))
+            self.assertEqual(gif.size,(816,1332))
 
     def test_preview_loops(self):
         with Image.open(ROOT/"walking-preview.gif") as gif:
@@ -111,8 +114,33 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(gif.info["loop"],0)
             self.assertEqual(gif.info["duration"],90)
 
+    def test_each_enemy_has_eight_real_directional_models(self):
+        for kind in TYPES:
+            im=png('enemy_atlas_'+kind)
+            views=[im.crop((4*96,row*128,5*96,(row+1)*128)).tobytes() for row in range(8)]
+            self.assertEqual(len(set(views)),8,kind)
+
+    def test_all_enemy_frames_stay_within_their_cells(self):
+        for kind in TYPES:
+            im=png('enemy_atlas_'+kind)
+            for row in range(8):
+                for frame in range(33):
+                    alpha=im.crop((frame*96,row*128,(frame+1)*96,(row+1)*128)).getchannel('A').point(lambda v:255 if v>90 else 0)
+                    box=alpha.getbbox()
+                    self.assertIsNotNone(box,(kind,row,frame))
+                    self.assertGreater(box[0],0,(kind,row,frame,box))
+                    self.assertGreater(box[1],0,(kind,row,frame,box))
+                    self.assertLess(box[2],96,(kind,row,frame,box))
+                    self.assertLess(box[3],128,(kind,row,frame,box))
+
+    def test_direction_preview_has_all_families(self):
+        with Image.open(ROOT/'enemy-directions-preview.gif') as gif:
+            self.assertEqual(gif.n_frames,8)
+            self.assertEqual(gif.size,(864,1305))
+            self.assertEqual(gif.info['loop'],0)
+
     def test_generation_is_deterministic(self):
-        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif",ROOT/"enemy-animation-preview.gif"]
+        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif",ROOT/"enemy-animation-preview.gif",ROOT/"enemy-directions-preview.gif"]
         before=[hashlib.sha256(p.read_bytes()).digest() for p in paths]
         subprocess.run([sys.executable,str(ROOT/"generate_assets.py")],check=True,stdout=subprocess.DEVNULL)
         self.assertEqual(before,[hashlib.sha256(p.read_bytes()).digest() for p in paths])

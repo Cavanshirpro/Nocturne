@@ -13,7 +13,7 @@
   class Projectile {
     constructor(){this.trailX=new Float32Array(5);this.trailY=new Float32Array(5);this.hitIds=new Set();}
     reset(x,y,vx,vy,damage,crit,pierce=0,evolved=false){
-      Object.assign(this,{x,y,vx,vy,damage,crit,life:2.6,radius:6,trailCount:0,pierce,evolved});
+      Object.assign(this,{x,y,vx,vy,damage,crit,life:2.6,radius:6,trailCount:0,pierce,evolved,source:'bolt',color:'#e9e2ff',blast:0,freeze:0,expose:0});
       this.trailX.fill(x);this.trailY.fill(y);this.hitIds.clear();
     }
   }
@@ -23,12 +23,12 @@
       this.projectiles=new Pool(()=>new Projectile(),240);this.particles=new Pool(()=>({}),650);this.numbers=new Pool(()=>({}),55);
       this.hostile=new Pool(()=>({}),180);this.hazards=new Pool(()=>({}),24);this.effects=new Pool(()=>({}),80);
       this.remnants=new Pool(()=>({}),96);this.areas=new Pool(()=>({}),Infinity);
-      this.spellTimers={lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2};this.wispHits=new Map();this.mapClock=0;
+      this.spellTimers={lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2,rapid:.15,cannon:1.3,burst:.9,glacier:1.1};this.wispHits=new Map();this.mapClock=0;
       this.audioEngine=new N.AudioEngine(game);this.soundEnabled=false;
     }
     clear(){
       for(const pool of [this.projectiles,this.particles,this.numbers,this.hostile,this.hazards,this.effects,this.remnants,this.areas])pool.clear();
-      this.wispHits.clear();Object.assign(this.spellTimers,{lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2});this.mapClock=0;
+      this.wispHits.clear();Object.assign(this.spellTimers,{lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2,rapid:.15,cannon:1.3,burst:.9,glacier:1.1});this.mapClock=0;
     }
     get audio(){return this.audioEngine.context;}
     get soundEnabled(){return this.audioEngine.enabled;}
@@ -54,6 +54,27 @@
       }
       this.sound('fire');p.cast(target);this.effect('muzzle',ox,oy,0,0,21,p.evolved('bolt')?'#dfc2f4':'#e9e2ff',.18);
     }
+    launchVolley({angle,count,span,damage,speed,range,pierce=0,source,color,blast=0,freeze=0,expose=0,closed=false,weight=1}){
+      const p=this.game.player,visual=Math.min(count,this.game.quality==='low'?12:24),group=count/visual;
+      for(let i=0;i<visual;i++){
+        const roll=N.critRoll(p),power=p.damage*damage*roll.multiplier*weight*group,b=this.projectiles.acquire();
+        if(!b){const existing=this.projectiles.active.find(b=>b.source===source);if(existing)existing.damage+=power*(visual-i);else {const target=this.nearest(p,range);if(target)target.hit(power*(visual-i),roll.crit,0,0,source);}break;}
+        const theta=angle+(visual>1?(closed?i/visual:i/(visual-1)-.5)*span:0);
+        b.reset(p.x,p.y-18,Math.cos(theta)*speed,Math.sin(theta)*speed,power,roll.crit,pierce,false);
+        Object.assign(b,{life:range/speed,source,color,blast,freeze,expose,radius:source==='cannon'?10:source==='rapid'?3:6});
+      }
+    }
+    directedSpell(id,weight=1){
+      const p=this.game.player,target=this.nearest(p,id==='burst'?285:N.boltRange(p)),rank=p.weapons[id];if(!target)return;
+      const angle=Math.atan2(target.y-p.y,target.x-p.x),evolved=p.evolved(id),count=p.projectileCount;
+      const spec={
+        rapid:{count,span:Math.min(1,(count-1)*.07),damage:.26+.035*rank,speed:p.projectileSpeed*(evolved?1.5:1.2),range:N.boltTravel(p),pierce:p.pierce+(evolved?2:0)},
+        cannon:{count,span:Math.min(1.4,(count-1)*.1),damage:3.6+.6*rank,speed:p.projectileSpeed*.65,range:N.boltTravel(p)*1.15,pierce:p.pierce+2+rank,blast:evolved?65:0},
+        burst:{count:(4+rank)*count,span:1.05,damage:.55+.08*rank,speed:p.projectileSpeed*.9,range:280+rank*8,pierce:p.pierce+(evolved?1:0),expose:evolved?2:0},
+        glacier:{count,span:Math.min(1.2,(count-1)*.1),damage:.9+.16*rank,speed:p.projectileSpeed*.78,range:N.boltTravel(p),pierce:0,blast:70+rank*6,freeze:evolved?.6:0}
+      }[id];
+      this.launchVolley({angle,...spec,source:id,color:N.WEAPONS[id].color,weight});p.cast(target);this.sound(id);this.effect('muzzle',p.x,p.y-18,0,0,id==='cannon'?32:18,N.WEAPONS[id].color,.18);
+    }
     spellHit(enemy,multiplier,source){const p=this.game.player,roll=N.critRoll(p);enemy.hit(p.damage*multiplier*roll.multiplier,roll.crit,0,0,source);}
     effect(kind,x,y,x2,y2,radius,color,duration=.32){
       const e=this.effects.acquire();if(e)Object.assign(e,{kind,x,y,x2,y2,radius,color,life:duration,total:duration,seed:N.fxRand(0,Math.PI*2)});
@@ -71,7 +92,7 @@
     }
     remains(enemy){
       if(!this.game.visible(enemy.x,enemy.y,90))return;
-      const r=this.remnants.acquire();if(r)Object.assign(r,{kind:'corpse',x:enemy.x,y:enemy.y,type:enemy.type,scale:enemy.scale,life:this.game.reducedMotion?.25:.6,total:this.game.reducedMotion?.25:.6,vx:0,vy:0});
+      const r=this.remnants.acquire();if(r)Object.assign(r,{kind:'corpse',x:enemy.x,y:enemy.y,type:enemy.type,facing:enemy.facing,scale:enemy.scale,life:this.game.reducedMotion?.25:.6,total:this.game.reducedMotion?.25:.6,vx:0,vy:0});
       this.effect('ring',enemy.x,enemy.y-10,0,0,enemy.boss?110:enemy.radius*1.5,enemy.boss?'#e2bf8b':'#b6b0c5',enemy.boss?.8:.3);
     }
     lightning(weight=1){
@@ -164,12 +185,12 @@
       const p=this.game.player;
       this.cooldown-=dt;
       if(this.cooldown<=0){const target=this.nearest();if(target){const interval=N.castInterval(p),casts=Math.max(1,Math.floor(-this.cooldown/interval)+1);this.fire(target,casts);this.cooldown+=casts*interval;}else this.cooldown=0;}
-      for(const id of ['lightning','nova','meteor','lance','thorn','rift'])if((p.weapons[id]||0)>0){
+      for(const id of ['lightning','nova','meteor','lance','thorn','rift','rapid','cannon','burst','glacier'])if((p.weapons[id]||0)>0){
         this.spellTimers[id]-=dt;
         if(this.spellTimers[id]<=0){
-          const base={lightning:2.8,nova:5,meteor:3.6,lance:2.6,thorn:4.5,rift:6}[id];
+          const base={lightning:2.8,nova:5,meteor:3.6,lance:2.6,thorn:4.5,rift:6,rapid:.13,cannon:2.6,burst:1.9,glacier:3.7}[id];
           const interval=Math.max(Number.MIN_VALUE,base/(1+.11*(p.weapons[id]-1))*(p.attackInterval/.56)),casts=Math.max(1,Math.floor(-this.spellTimers[id]/interval)+1);
-          this[id](casts);this.spellTimers[id]+=casts*interval;
+          if(this[id])this[id](casts);else this.directedSpell(id,casts);this.spellTimers[id]+=casts*interval;
         }
       }
       this.updateAreas(dt);
@@ -188,7 +209,13 @@
             const t=N.circleHit(ox,oy,b.x,b.y,e.x,e.y-12,e.radius+b.radius);if(t<first){first=t;hit=e;}
           }
           if(!hit)break;b.hitIds.add(hit.id);
-          const speed=Math.hypot(b.vx,b.vy)||1;hit.hit(b.damage,b.crit,b.vx/speed,b.vy/speed);
+          const speed=Math.hypot(b.vx,b.vy)||1;hit.hit(b.damage,b.crit,b.vx/speed,b.vy/speed,b.source);
+          if(b.expose>0)hit.exposed=Math.max(hit.exposed,b.expose);
+          if(b.blast>0){
+            this.effect('ring',hit.x,hit.y-12,0,0,b.blast,b.color,.4);
+            this.game.hash.query(hit.x-b.blast-60,hit.y-b.blast-60,hit.x+b.blast+60,hit.y+b.blast+60,this.areaCandidates);
+            for(const e of this.areaCandidates)if(e.alive&&e.spawnDelay<=0&&N.dist2(e,hit)<(b.blast+e.radius)**2){if(e!==hit)e.hit(b.damage*.65,b.crit,0,0,b.source);if(b.source==='glacier'){e.slow=Math.max(e.slow,2);if(b.freeze)e.frozen=Math.max(e.frozen,e.boss?.1:b.freeze);}}
+          }
           if(b.evolved&&b.crit){
             this.effect('ring',hit.x,hit.y-12,0,0,70,'#ead6f5');
             this.game.hash.query(hit.x-115,hit.y-115,hit.x+115,hit.y+115,this.areaCandidates);
@@ -227,7 +254,7 @@
           c.globalAlpha=t*.23;N.drawWitch(c,this.game.images,r.facing,r.frame,r.x-40,r.y-99);
         }else if(r.kind==='corpse'){
           c.globalAlpha=t*.55;const s=r.scale*(.85+.15*t);
-          N.drawEnemy(c,this.game.images,{type:r.type,game:this.game},r.x-40*s,r.y-79*s+(1-t)*5,80*s,88*s,'death',1-t);
+          N.drawEnemy(c,this.game.images,{type:r.type,facing:r.facing,game:this.game},r.x-40*s,r.y-99*s+(1-t)*5,80*s,107*s,'death',1-t);
         }else{
           c.globalAlpha=t*.22;c.fillStyle='#9ca18e';c.beginPath();c.ellipse(r.x,r.y,r.radius*(2-t),r.radius*.55*(2-t),0,0,Math.PI*2);c.fill();
         }
@@ -263,9 +290,9 @@
       for(const b of this.projectiles.active){
         if(!this.game.visible(b.x,b.y,50))continue;
         for(let i=b.trailCount-1;i>=0;i--){
-          c.globalAlpha=(1-i/5)*.38;c.strokeStyle='#e9e2ff';c.lineWidth=Math.max(.8,4-i*.65);c.beginPath();c.moveTo(b.trailX[i],b.trailY[i]);c.lineTo(i?b.trailX[i-1]:b.x,i?b.trailY[i-1]:b.y);c.stroke();
+          c.globalAlpha=(1-i/5)*.38;c.strokeStyle=b.color||'#e9e2ff';c.lineWidth=Math.max(.8,4-i*.65);c.beginPath();c.moveTo(b.trailX[i],b.trailY[i]);c.lineTo(i?b.trailX[i-1]:b.x,i?b.trailY[i-1]:b.y);c.stroke();
         }
-        c.globalAlpha=1;c.drawImage(this.game.images.orb,b.x-19,b.y-19,38,38);
+        c.globalAlpha=1;c.drawImage(this.game.images.orb,b.x-19,b.y-19,38,38);if(b.source!=='bolt'){c.fillStyle=b.color;c.beginPath();c.arc(b.x,b.y,b.radius,0,Math.PI*2);c.fill();}
       }
       for(const b of this.hostile.active){
         if(!this.game.visible(b.x,b.y,30))continue;
@@ -273,7 +300,8 @@
       }
       for(const e of this.effects.active){
         c.globalAlpha=e.life/e.total;c.strokeStyle=e.color;c.lineWidth=2;
-        if(e.kind==='ring'){c.beginPath();c.ellipse(e.x,e.y,Math.max(1,e.radius*(1-e.life/e.total)),Math.max(1,e.radius*.85*(1-e.life/e.total)),0,0,Math.PI*2);c.stroke();}
+        if(e.kind==='slash'){const t=1-e.life/e.total;c.lineWidth=2+5*(1-t);for(let j=0;j<3;j++){c.beginPath();c.arc(e.x,e.y,Math.max(1,e.radius*(.55+t*.45)-j*10),e.x2-e.y2/2,e.x2+e.y2/2);c.stroke();}}
+        else if(e.kind==='ring'){c.beginPath();c.ellipse(e.x,e.y,Math.max(1,e.radius*(1-e.life/e.total)),Math.max(1,e.radius*.85*(1-e.life/e.total)),0,0,Math.PI*2);c.stroke();}
         else if(e.kind==='lance'){c.lineWidth=Math.max(2,e.radius*.55);c.strokeStyle=e.color+'55';c.beginPath();c.moveTo(e.x,e.y);c.lineTo(e.x2,e.y2);c.stroke();c.lineWidth=2;c.strokeStyle='#fff4ff';c.stroke();}
         else if(e.kind==='lightning'){
           const dx=e.x2-e.x,dy=e.y2-e.y,len=Math.hypot(dx,dy)||1;c.beginPath();c.moveTo(e.x,e.y);

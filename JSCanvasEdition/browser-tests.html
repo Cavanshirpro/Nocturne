@@ -9,7 +9,7 @@
 <main>
 <h1>Nocturne · Browser verification</h1>
 <p>Real Canvas, decoded animation strips, DOM buttons, keyboard events and offline audio rendering. Fixtures reset only their separate verification save store.</p>
-<div class="actions"><button id="run" disabled>RUN BROWSER CHECKS</button><button data-scene="boss" disabled>PREVIEW WARDEN</button><button data-scene="shop" disabled>PREVIEW MERCHANT</button><button data-scene="level" disabled>PREVIEW AWAKENING</button><button data-scene="evolved" disabled>PREVIEW EVOLUTIONS</button><button data-scene="enemies" disabled>PREVIEW ENEMY TRAITS</button><button data-scene="spells" disabled>PREVIEW NEW SPELLS</button><a href="index.html">OPEN GAME</a><button id="mobile-view">MOBILE VIEW · 390px</button><button id="desktop-view">DESKTOP VIEW</button></div>
+<div class="actions"><button id="run" disabled>RUN BROWSER CHECKS</button><button data-scene="boss" disabled>PREVIEW WARDEN</button><button data-scene="shop" disabled>PREVIEW MERCHANT</button><button data-scene="level" disabled>PREVIEW AWAKENING</button><button data-scene="evolved" disabled>PREVIEW EVOLUTIONS</button><button data-scene="enemies" disabled>PREVIEW ENEMY TRAITS</button><button data-scene="spells" disabled>PREVIEW NEW SPELLS</button><button data-scene="demon" disabled>PREVIEW DEMON & FEAR</button><button data-scene="overlord" disabled>PREVIEW OVERLORD</button><button data-scene="directions" disabled>PREVIEW ENEMY FACINGS</button><a href="index.html">OPEN GAME</a><button id="mobile-view">MOBILE VIEW · 390px</button><button id="desktop-view">DESKTOP VIEW</button></div>
 <p id="status" role="status">Loading the game…</p>
 <iframe id="arena" src="index.html#verification" title="Nocturne game verification frame"></iframe>
 <pre id="results" aria-live="polite">Serve this folder over HTTP for frame access: python -m http.server 8000</pre>
@@ -30,7 +30,14 @@ function setup(){
 }
 function present(scene){
   setup();
-  if(scene==='shop'){g.wave=4;g.ui.openShop();}
+  if(['demon','overlord','directions'].includes(scene)){
+    g.wave=10;g.player.level=100;g.player.progress.demonTime=scene==='demon'?8:0;g.player.progress.essence=67;g.player.progress.special='soulstorm';
+    const types=scene==='overlord'?['overlord','slime','slime','cultist','wraith','reaper']:['slime','skeleton','gargoyle','hound','cultist','wraith','reaper','warden'];
+    types.forEach((type,i)=>{const a=i*Math.PI*2/types.length,e=new N.Enemy(g,type,Math.cos(a)*235,Math.sin(a)*155,++g.nextId,false,{level:type==='overlord'?118:60+i*3,tier:'regular',trait:'none'});e.phase=i*.7;e.gait=i*.6;e.terrified=scene==='demon'&&!e.boss;e.facing=['E','SE','S','SW','W','NW','N','NE'][i%8];e.moving=true;g.enemies.push(e);g.hash.insert(e);if(e.boss){g.boss=e;g.bossSpawned=true;}});
+    if(scene==='demon'){g.abilities.begin();g.abilities.charge=1;g.combat.effect('slash',0,0,0,Math.PI,220,'#efb9da',.7);}
+    g.state='paused';g.ui.hide();
+  }
+  else if(scene==='shop'){g.wave=4;g.ui.openShop();}
   else if(scene==='level'){g.player.weapons.nova=1;g.player.pendingLevels=1;g.ui.afterLevel='playing';g.ui.levelUp();}
   else if(scene==='enemies'||scene==='spells'){
     g.wave=9;g.player.level=15;g.boss=null;
@@ -57,17 +64,17 @@ run.onclick=async()=>{
   const results=[];let passed=0,failed=0;
   const test=(name,fn)=>{try{fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
   const testAsync=async(name,fn)=>{try{await fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
-  test('39 actual images decode',()=>check(Object.values(g.images).length===39&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
+  test('48 actual images decode',()=>check(Object.values(g.images).length===48&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
   test('starting coven buttons',()=>{g.ui.title();doc.querySelector('[data-coven="storm"]').click();doc.querySelector('#begin').click();check(g.player.coven==='storm'&&g.player.weapons.lightning===1,'Wrong starting witch');});
   test('real keyboard movement and dash',()=>{g.reset();key('KeyD');g.player.update(1/60);key('KeyD','keyup');check(g.player.x>0&&g.player.facing==='E','Movement failed');key('Space');key('Space','keyup');check(g.player.dashTimer>0&&g.stats.dashes===1,'Dash failed');});
   test('pause and resume buttons',()=>{key('Escape');check(g.state==='paused'&&doc.querySelector('#resume'),'Pause did not open');doc.querySelector('#resume').click();check(g.state==='playing','Resume failed');});
   test('three level cards apply exactly one gift',()=>{g.reset();g.addXP(8);g.ui.levelUp();check(doc.querySelectorAll('[data-choice]').length===3,'Expected 3 cards');doc.querySelector('[data-choice="0"]').click();check(g.player.pendingLevels===0&&g.player.upgrades.length===1,'Gift was lost or duplicated');});
-  test('grimoire preserves pending choices',()=>{g.addXP(g.player.xpNeeded);g.ui.levelUp();const ids=g.ui.choices.map(c=>c.id).join(',');key('KeyI');check(doc.querySelectorAll('.spell-entry').length===8,'Missing spell descriptions');key('Escape');check(g.state==='levelup'&&ids===g.ui.choices.map(c=>c.id).join(','),'Cards changed while reading');doc.querySelector('[data-choice="0"]').click();});
+  test('grimoire preserves pending choices',()=>{g.addXP(g.player.xpNeeded);g.ui.levelUp();const ids=g.ui.choices.map(c=>c.id).join(',');key('KeyI');check(doc.querySelectorAll('.spell-entry').length===12,'Missing spell descriptions');key('Escape');check(g.state==='levelup'&&ids===g.ui.choices.map(c=>c.id).join(','),'Cards changed while reading');doc.querySelector('[data-choice="0"]').click();});
   test('merchant lock survives real reroll click',()=>{g.player.gold=500;g.ui.openShop();doc.querySelector('[data-lock="0"]').click();const id=g.ui.slots[0].item.id,price=g.ui.slots[0].price;doc.querySelector('[data-reroll]').click();check(g.ui.slots[0].item.id===id&&g.ui.slots[0].price===price&&g.ui.slots[0].locked,'Lock failed');});
   test('real purchase button debits once and sells its slot',()=>{const before=g.player.gold,price=g.ui.slots[1].price;doc.querySelector('[data-buy="1"]').click();check(g.player.gold===before-price&&g.ui.slots[1].item===null,'Purchase failed');check(!doc.querySelector('[data-buy="1"]'),'Sold slot can still be bought');});
   test('merchant save survives reconstruction',()=>{if(!g.save.available)return;const gold=g.player.gold,id=g.ui.slots[0].item.id;g.save.data=new N.SaveStore().data;check(g.continueRun()&&g.state==='shop'&&g.player.gold===gold&&g.ui.slots[0].item.id===id,'Checkpoint mismatch');});
   test('start-next-wave DOM button',()=>{const wave=g.wave;doc.querySelector('[data-start]').click();check(g.wave===wave+1&&g.state==='playing'&&g.ui.overlay.hidden,'Wave did not begin');});
-  test('all eight evolved spells render with real canvas',()=>{setup();for(const id of Object.keys(g.player.weapons))check(g.player.evolved(id),'Missing evolution');const e=new N.Enemy(g,'warden',130,0,++g.nextId);g.enemies.push(e);g.hash.insert(e);g.combat.fire(e);g.combat.lightning();g.combat.nova();g.combat.updateWisps();g.combat.update(.016);g.draw();check(g.stats.damage>0,'Spells did not hit');});
+  test('all twelve evolved spells render with real canvas',()=>{setup();for(const id of Object.keys(g.player.weapons))check(g.player.evolved(id),'Missing evolution');const e=new N.Enemy(g,'warden',130,0,++g.nextId);g.enemies.push(e);g.hash.insert(e);g.combat.fire(e);g.combat.lightning();g.combat.nova();g.combat.updateWisps();g.combat.update(.016);g.draw();check(g.stats.damage>0,'Spells did not hit');});
   test('Warden health HUD and telegraph draw',()=>{present('boss');check(!doc.querySelector('#boss-hud').hidden&&doc.querySelector('#boss-hp').textContent.includes('/'),'Boss HUD missing');check(g.combat.hazards.active.length===1,'Hazard missing');});
   test('low quality and reduced motion controls',()=>{g.state='playing';g.ui.pause();const old=g.quality;doc.querySelector('#quality').click();check(g.quality!==old,'Quality unchanged');const reduced=g.reducedMotion;doc.querySelector('#effects').click();check(g.reducedMotion!==reduced,'Motion setting unchanged');});
   test('death summary, retry and chronicle',()=>{g.state='playing';g.die();check(doc.querySelector('.damage-report')&&doc.querySelector('#retry'),'Summary missing');doc.querySelector('#retry').click();check(g.wave===1&&g.state==='playing','Retry failed');g.ui.title();doc.querySelector('#chronicle').click();check(doc.querySelectorAll('.achievement').length===6,'Chronicle missing');});
@@ -142,22 +149,49 @@ run.onclick=async()=>{
     g.reset();g.player.level=40;g.player.gold=5000;g.ui.openShop();for(let i=0;i<4;i++)doc.querySelector(`[data-buy="${i}"]`).click();check(g.ui.slots.every(s=>!s.item),'Purchase did not clear slots');
     const before=g.player.gold,cost=g.ui.refillCost();doc.querySelector('[data-refill]').click();check(g.player.gold===before-cost&&g.ui.slots.every(s=>s.item),'Refill failed');check(doc.querySelectorAll('[data-buy]').length===4,'Refilled stock not rendered');
   });
-  test('bestiary and all eight spell entries render real enemy art and traits',()=>{
-    g.state='shop';g.ui.toggleGrimoire();check(doc.querySelectorAll('.spell-entry').length===8,'Missing spells');check(doc.querySelectorAll('.bestiary-grid article').length===6,'Missing enemy families');check(doc.querySelectorAll('.trait-list p').length===4,'Missing trait descriptions');g.ui.toggleGrimoire();
+  test('bestiary and all twelve spell entries render real enemy art and traits',()=>{
+    g.state='shop';g.ui.toggleGrimoire();check(doc.querySelectorAll('.spell-entry').length===12,'Missing spells');check(doc.querySelectorAll('.bestiary-grid article').length===9,'Missing enemy families');check(doc.querySelectorAll('.trait-list p').length===4,'Missing trait descriptions');g.ui.toggleGrimoire();
   });
   test('enemy state atlases and new spell areas render on Canvas',()=>{
     present('spells');check(g.combat.areas.active.length>=3,'New spell fields missing');check(g.combat.effects.active.some(e=>e.kind==='lance'),'Beam missing');
-    for(const e of g.enemies)check(g.images['enemy_atlas_'+e.type].naturalWidth===1680,'Enemy atlas wrong');g.draw();
+    for(const e of g.enemies)check(g.images['enemy_atlas_'+e.type].naturalWidth===3168,'Enemy atlas wrong');g.draw();
   });
-  test('all eight learned spells coexist without an active spell limit',()=>{
-    g.reset();g.player.level=40;for(const id of N.SPELL_IDS)g.player.upgradeWeapon(id);check(g.player.progress.equipped.length===8,'An active spell limit remains');
+  test('all twelve learned spells coexist without an active spell limit',()=>{
+    g.reset();g.player.level=40;for(const id of N.SPELL_IDS)g.player.upgradeWeapon(id);check(g.player.progress.equipped.length===12,'An active spell limit remains');
     g.player.damage=2000;g.player.projectileCount=40;g.player.attackInterval=.02;g.checkpoint('wave');check(g.continueRun(),'Large build did not load');check(g.player.damage===2000&&g.player.projectileCount===40&&g.player.attackInterval===.02,'Stats were capped on load');
+  });
+  test('level 100 encounter distribution matches 80 / 15 / 5 with correct bands',()=>{
+    g.reset();g.player.level=100;g.wave=20;const counts={fodder:0,regular:0,veteran:0};
+    for(let i=0;i<100;i++){const e=N.EnemyDirector.roll(g,i);counts[e.tier]++;if(e.tier==='fodder')check(e.level>=50&&e.level<=70,'Swarm too strong');if(e.tier==='veteran')check(e.level>=105&&e.level<=110,'Veteran band wrong');}
+    check(counts.fodder===80&&counts.regular===15&&counts.veteran===5,'Distribution mismatch');
+  });
+  test('real right-pointer handlers charge and release an aimed slash',()=>{
+    g.reset();g.player.critChance=0;const e=new N.Enemy(g,'gargoyle',120,0,++g.nextId);e.maxHp=e.hp=10000;g.enemies=[e];
+    const canvas=doc.querySelector('#game'),r=canvas.getBoundingClientRect();canvas.dispatchEvent(new win.PointerEvent('pointerdown',{button:2,clientX:r.left+r.width*.8,clientY:r.top+r.height*.5,bubbles:true,cancelable:true}));
+    check(g.abilities.charging,'Right-click did not charge');g.abilities.update(1.2);win.dispatchEvent(new win.PointerEvent('pointerup',{button:2,bubbles:true}));
+    check(!g.abilities.charging&&g.player.progress.specialRemaining>0&&e.hp<10000,'Slash did not release');g.draw();
+  });
+  test('Q instant special and Z cycle respect shared cooldown',()=>{
+    g.reset();g.player.level=16;key('KeyZ');key('KeyZ','keyup');check(g.player.progress.special==='frostfall','Cycle wrong');key('KeyQ');key('KeyQ','keyup');const recovery=g.player.progress.specialRemaining;check(recovery>0,'Q did not cast');key('KeyZ');key('KeyZ','keyup');key('KeyQ');key('KeyQ','keyup');check(g.player.progress.specialRemaining===recovery,'Switch bypassed recovery');
+  });
+  test('grimoire equips unlocked directed rituals through real buttons',()=>{
+    g.reset();g.player.level=16;g.ui.toggleGrimoire();check(doc.querySelectorAll('[data-special]').length===3,'Missing rituals');doc.querySelector('[data-special="soulstorm"]').click();check(g.player.progress.special==='soulstorm'&&g.state==='grimoire','Equip failed');g.ui.toggleGrimoire();
+  });
+  test('Demon Witch form renders and frightens normal foes, bosses resist',()=>{
+    present('demon');g.state='playing';const e=g.enemies.find(e=>!e.boss),boss=g.enemies.find(e=>e.boss),before=win.Nocturne.dist2(e,g.player);e.update(.1);boss.update(.1);check(e.terrified&&win.Nocturne.dist2(e,g.player)>before,'Fear did not reverse pursuit');check(!boss.terrified,'Boss fled');g.state='paused';g.draw();g.ui.hudFrame=3;g.ui.updateHUD();check(doc.querySelector('#form-label').textContent==='DEMON WITCH','Form meter missing');
+  });
+  test('Overlord model, crown HUD and minion portals draw correctly',()=>{
+    present('overlord');g.boss.summonTimer=0;g.boss.update(.1);check(g.enemies.filter(e=>e.tier==='minion').length===3,'Minions missing');g.ui.hudFrame=3;g.ui.updateHUD();check(doc.querySelector('#boss-phase').textContent==='ASH OVERLORD','Wrong boss label');g.draw();
+  });
+  test('new directed projectile spells render and preserve sources on reload',()=>{
+    setup();g.combat.clear();const e=new N.Enemy(g,'warden',160,0,++g.nextId);e.hp=e.maxHp=1e8;g.enemies=[e];g.hash.clear();g.hash.insert(e);
+    for(const id of ['rapid','cannon','burst','glacier'])g.combat.directedSpell(id);check(new Set(g.combat.projectiles.active.map(b=>b.source)).size===4,'Missing spell family');g.player.progress.demonTime=4;g.player.progress.specialRemaining=2;g.checkpoint('wave');check(g.continueRun(),'Save failed');check(g.player.progress.demonTime===4&&g.player.progress.specialRemaining===2,'Timers reset');g.draw();
   });
   await testAsync('idle audio is silent with ambience off and has no looping noise source',async()=>{
     const context=new win.OfflineAudioContext(2,11025,22050),engine=new N.AudioEngine(g);engine.setEnabled(true);engine.attach(context);engine.setAmbience(false);engine.transport(true);
     check(engine.ambientSources.every(node=>!node.loop),'Looping noise exists');const buffer=await context.startRendering();check(buffer.getChannelData(0).every(value=>Math.abs(value)<1e-8),'Idle audio contains noise');engine.dispose();
   });
-  await testAsync('all 29 sound recipes render distinct, non-silent finite waveforms',async()=>{
+  await testAsync('all 38 sound recipes render distinct, non-silent finite waveforms',async()=>{
     check(win.OfflineAudioContext,'Offline Web Audio unavailable');const signatures=new Set();
     for(const kind of Object.keys(N.AudioEngine.SOUNDS)){
       const context=new win.OfflineAudioContext(2,33075,22050),engine=new N.AudioEngine(g);engine.setEnabled(true);engine.attach(context);
@@ -166,7 +200,7 @@ run.onclick=async()=>{
       for(let i=0;i<samples.length;i++){const value=samples[i];check(Number.isFinite(value),'Invalid audio sample');energy+=value*value;peak=Math.max(peak,Math.abs(value));if(i%23===0)hash=Math.imul(hash^Math.round(value*1e7),16777619);}
       check(Math.sqrt(energy/samples.length)>1e-6,'Silent effect: '+kind);check(peak<=1,'Clipping: '+kind);signatures.add(hash);engine.dispose();
     }
-    check(signatures.size===29,'Sound recipes produced duplicate waveforms');
+    check(signatures.size===38,'Sound recipes produced duplicate waveforms');
   });
   output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
   present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;

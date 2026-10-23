@@ -4,12 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14191a">
-  <meta name="description" content="Nocturne 4.0: endless growth, mixed enemy levels and traits, animated enemies, eight spells, evolving builds, refilling shops and clean synthesized audio. Fully offline.">
-  <title>Nocturne — Living Grimoire</title>
+  <meta name="description" content="Nocturne 5.0: twelve spells, charged directed rituals, Demon Witch transformation, eight-direction enemy animations and Overlord encounters. Fully offline.">
+  <title>Nocturne — Demon Ascendant</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="assets.js"></script>
   <script defer src="game.js"></script>
   <script defer src="systems/progression.js"></script>
+  <script defer src="systems/abilities.js"></script>
   <script defer src="systems/director.js"></script>
   <script defer src="systems/balance.js"></script>
   <script defer src="systems/animation.js"></script>
@@ -43,6 +44,7 @@
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="menu-title">
     <section id="menu" class="menu"><p class="eyebrow">ENTERING THE HOLLOW</p><h1 id="menu-title">Loading the grimoire…</h1></section>
   </div>
+  <aside id="power-hud" hidden><div class="power-title"><strong id="form-label">DEMON ESSENCE</strong><span id="form-text">0 / 100</span></div><div class="bar"><i id="form-fill"></i></div><div class="special-row"><button id="special-button" aria-label="Hold for charged special ability">☽ SPECIAL</button><button id="cycle-special" aria-label="Cycle special ability (Z)">Z ↻</button></div><small id="special-text">RIGHT CLICK / Q · READY</small></aside>
   <div id="touch-zone" aria-label="Touch movement control"><div id="touch-knob"></div></div>
   <button id="dash-button" aria-label="Dash">»<small>DASH</small></button>
   <noscript>This game requires JavaScript. Enable it and reopen index.html.</noscript>

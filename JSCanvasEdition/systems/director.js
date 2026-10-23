@@ -10,18 +10,19 @@
     volatile:{name:'Volatile',icon:'✹',color:'#ecad85',text:'On death, leaves a small explosion with a 0.9s warning. Move out.'}
   });
   N.EnemyDirector={
-    target(g){return Math.max(1,Math.round(g.player.level+.18*(g.wave-1)-.1*Math.sqrt(Math.max(0,g.player.level-1))));},
+    target(g){return Math.max(1,g.player.level);},
+    bands(g){const t=N.clamp((g.player.level-8)/32,0,1);return {fodder:.55+.25*t,regular:.35-.20*t,veteran:.10-.05*t};},
     roll(g,ordinal){
-      const target=this.target(g),band=ordinal%20;
-      let tier=band<7?'fodder':band<17||g.wave<3?'regular':'veteran';
-      const living=g.enemies.filter(e=>e.alive);
-      if(tier==='veteran'&&living.filter(e=>e.tier==='veteran').length>=Math.max(1,Math.ceil((living.length+1)*.22)))tier='regular';
-      const int=(a,b)=>Math.floor(N.rand(a,b+1));
-      const level=tier==='fodder'?int(Math.max(1,Math.floor(target*.5)),Math.max(1,target-3)):
-        tier==='veteran'?int(target+2,target+3):int(Math.max(1,target-1),target+1);
-      const elite=tier==='veteran'&&Math.random()<.32;
-      const trait=g.wave>=4&&tier!=='fodder'&&Math.random()<(tier==='veteran'?.65:.14)?N.pick(['swift','armored','mending','volatile']):'none';
-      return {level,tier,trait,elite};
+      const level=g.player.level,mix=this.bands(g),band=((ordinal%100)+100)%100;
+      let tier=band<Math.round(mix.fodder*100)?'fodder':band<Math.round((mix.fodder+mix.regular)*100)?'regular':'veteran';
+      const living=g.enemies.filter(e=>e.alive&&!e.boss);
+      if(tier==='veteran'&&living.filter(e=>e.tier==='veteran').length>=Math.max(1,Math.ceil((living.length+1)*.08)))tier='regular';
+      const int=(a,b)=>Math.floor(N.rand(a,b+1)),mature=N.clamp((level-8)/32,0,1);
+      const lo=tier==='fodder'?Math.max(1,Math.floor(level*(70-20*mature)/100)):tier==='regular'?Math.max(1,Math.floor(level*.75)):Math.max(level+1,Math.ceil(level*105/100));
+      const hi=tier==='fodder'?Math.max(lo,Math.floor(level*(90-20*mature)/100)):tier==='regular'?Math.max(lo,level):Math.max(lo,Math.floor(level*110/100));
+      const elite=tier==='veteran'&&Math.random()<.20;
+      const trait=g.wave>=4&&tier!=='fodder'&&Math.random()<(tier==='veteran'?.5:.08)?N.pick(['swift','armored','mending','volatile']):'none';
+      return {level:int(lo,hi),tier,trait,elite};
     }
   };
 })();
