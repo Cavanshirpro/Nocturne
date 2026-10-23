@@ -1,12 +1,7 @@
 (() => {
   'use strict';
   const N=window.Nocturne;
-  const WEAPONS=Object.freeze({
-    bolt:{name:'Arcane Bolt',icon:'✧',color:'#eee5ff',evolution:'Shattered Moon',relic:'mirror',text:'Targets foes within 430 world units. Orbs fade after 490 units. Each rank adds 15% damage; multicast shares power across orbs.',evolved:'Orbs pierce +1 target. Critical hits explode for 45% damage in 70 range.'},
-    orbit:{name:'Moon Wisps',icon:'☽',color:'#e8ba93',evolution:'Cinder Halo',relic:'cinder',text:'1 + rank orbiting wisps. Each rank increases contact damage.',evolved:'Wisp hits ignite enemies for 2 seconds of additional damage.'},
-    lightning:{name:'Chain Lightning',icon:'ϟ',color:'#b6e4ec',evolution:'Thunder Crown',relic:'conductor',text:'Targets within 390 units, then chains 170 units per jump through 2 + rank enemies.',evolved:'Chains to 2 more targets, reaches farther and briefly stuns enemies.'},
-    nova:{name:'Frost Nova',icon:'❄',color:'#b6d6ef',evolution:'Absolute Winter',relic:'permafrost',text:'A slowing pulse within 100 + 17 per rank units. Ranks increase damage and cast rate.',evolved:'The pulse freezes enemies for 0.5 seconds, then leaves them slowed.'}
-  });
+  const WEAPONS=N.WEAPONS;
   // All sound is synthesized locally. One shared graph, bounded short voices,
   // per-event limits, a master fader and gentle compression keep dense combat tame.
   class Pool {
@@ -27,39 +22,39 @@
       this.game=game;this.cooldown=0;this.candidates=[];this.areaCandidates=[];
       this.projectiles=new Pool(()=>new Projectile(),240);this.particles=new Pool(()=>({}),650);this.numbers=new Pool(()=>({}),55);
       this.hostile=new Pool(()=>({}),180);this.hazards=new Pool(()=>({}),24);this.effects=new Pool(()=>({}),80);
-      this.remnants=new Pool(()=>({}),96);
-      this.spellTimers={lightning:.5,nova:1};this.wispHits=new Map();this.mapClock=0;
+      this.remnants=new Pool(()=>({}),96);this.areas=new Pool(()=>({}),Infinity);
+      this.spellTimers={lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2};this.wispHits=new Map();this.mapClock=0;
       this.audioEngine=new N.AudioEngine(game);this.soundEnabled=false;
     }
     clear(){
-      for(const pool of [this.projectiles,this.particles,this.numbers,this.hostile,this.hazards,this.effects,this.remnants])pool.clear();
-      this.wispHits.clear();this.spellTimers.lightning=.5;this.spellTimers.nova=1;this.mapClock=0;
+      for(const pool of [this.projectiles,this.particles,this.numbers,this.hostile,this.hazards,this.effects,this.remnants,this.areas])pool.clear();
+      this.wispHits.clear();Object.assign(this.spellTimers,{lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2});this.mapClock=0;
     }
     get audio(){return this.audioEngine.context;}
     get soundEnabled(){return this.audioEngine.enabled;}
     set soundEnabled(value){this.audioEngine.setEnabled(value);}
     enableAudio(cue='ui'){return this.audioEngine.activate(cue);}
     sound(kind,x){return this.audioEngine.play(kind,x);}
-    nearest(origin=this.game.player,range=N.BALANCE.boltRange,exclude=null){
+    nearest(origin=this.game.player,range=N.boltRange(this.game.player),exclude=null){
       let nearest=null,best=range*range;
       for(const e of this.game.enemies){if(!e.alive||e.spawnDelay>0||exclude?.has(e.id))continue;const d=N.dist2(origin,e);if(d<best){best=d;nearest=e;}}
       return nearest;
     }
-    fire(target){
-      const p=this.game.player,ox=p.x,oy=p.y-18,angle=Math.atan2(target.y-12-oy,target.x-ox),count=p.projectileCount;
+    fire(target,volleys=1){
+      const p=this.game.player,ox=p.x,oy=p.y-18,angle=Math.atan2(target.y-12-oy,target.x-ox),logical=p.projectileCount;
+      const count=Math.min(logical,this.game.quality==='low'?12:24),span=Math.min(Math.PI*1.4,(logical-1)*.105);
+      const weight=logical/count*volleys;
       for(let i=0;i<count;i++){
-        const bullet=this.projectiles.acquire();if(!bullet)break;
-        const theta=angle+(i-(count-1)/2)*.105,crit=Math.random()<p.critChance;
-        bullet.reset(ox,oy,Math.cos(theta)*p.projectileSpeed,Math.sin(theta)*p.projectileSpeed,p.damage*(1+.15*(p.weapons.bolt-1))/Math.sqrt(count)*(crit?p.critMultiplier:1),crit,p.pierce+(p.evolved('bolt')?1:0),p.evolved('bolt'));
+        const roll=N.critRoll(p),damage=p.damage*(1+.15*((p.weapons.bolt||1)-1))*weight*roll.multiplier;
+        const bullet=this.projectiles.acquire();
+        if(!bullet){const existing=this.projectiles.active[0];if(existing)existing.damage+=damage*(count-i);break;}
+        const theta=angle+(count>1?(i/(count-1)-.5)*span:0);
+        bullet.reset(ox,oy,Math.cos(theta)*p.projectileSpeed,Math.sin(theta)*p.projectileSpeed,damage,roll.crit,p.pierce+(p.evolved('bolt')?1:0),p.evolved('bolt'));
+        bullet.life=N.boltTravel(p)/p.projectileSpeed;
       }
-      for(const b of this.projectiles.active)if(b.trailCount===0)b.life=Math.min(b.life,N.BALANCE.boltTravel/p.projectileSpeed);
-      this.sound('fire');
-      p.cast(target);this.effect('muzzle',ox,oy,0,0,21,p.evolved('bolt')?'#dfc2f4':'#e9e2ff',.18);
+      this.sound('fire');p.cast(target);this.effect('muzzle',ox,oy,0,0,21,p.evolved('bolt')?'#dfc2f4':'#e9e2ff',.18);
     }
-    spellHit(enemy,multiplier,source){
-      const p=this.game.player,crit=Math.random()<p.critChance;
-      enemy.hit(p.damage*multiplier*(crit?p.critMultiplier:1),crit,0,0,source);
-    }
+    spellHit(enemy,multiplier,source){const p=this.game.player,roll=N.critRoll(p);enemy.hit(p.damage*multiplier*roll.multiplier,roll.crit,0,0,source);}
     effect(kind,x,y,x2,y2,radius,color,duration=.32){
       const e=this.effects.acquire();if(e)Object.assign(e,{kind,x,y,x2,y2,radius,color,life:duration,total:duration,seed:N.fxRand(0,Math.PI*2)});
     }
@@ -79,37 +74,72 @@
       const r=this.remnants.acquire();if(r)Object.assign(r,{kind:'corpse',x:enemy.x,y:enemy.y,type:enemy.type,scale:enemy.scale,life:this.game.reducedMotion?.25:.6,total:this.game.reducedMotion?.25:.6,vx:0,vy:0});
       this.effect('ring',enemy.x,enemy.y-10,0,0,enemy.boss?110:enemy.radius*1.5,enemy.boss?'#e2bf8b':'#b6b0c5',enemy.boss?.8:.3);
     }
-    lightning(){
+    lightning(weight=1){
       const p=this.game.player,rank=p.weapons.lightning,evolved=p.evolved('lightning'),seen=new Set();
-      let current=this.nearest(p,N.BALANCE.lightningRange),from={x:p.x,y:p.y-28};
+      let current=this.nearest(p,390+18*((p.weapons.lightning||1)-1)),from={x:p.x,y:p.y-28};
       for(let i=0;current&&i<2+rank+(evolved?2:0);i++){
         seen.add(current.id);this.effect('lightning',from.x,from.y,current.x,current.y-14,0,'#c4edf5',.23);
-        this.spellHit(current,(.65+.15*rank)*Math.max(.5,.88**i),'lightning');
+        this.spellHit(current,weight*(.65+.15*rank)*Math.max(.5,.88**i),'lightning');
         if(evolved&&current.alive)current.frozen=Math.max(current.frozen,current.boss?.04:.2);
-        from=current;current=this.nearest(current,evolved?N.BALANCE.evolvedChainRange:N.BALANCE.chainRange,seen);
+        from=current;current=this.nearest(current,(evolved?210:170)+10*(rank-1),seen);
       }
       if(seen.size){this.sound('lightning');p.cast();}
     }
-    nova(){
+    nova(weight=1){
       const p=this.game.player,rank=p.weapons.nova,radius=100+17*rank;
       this.effect('ring',p.x,p.y-6,0,0,radius,'#b6d6ef',.55);
       this.sound('nova');p.cast();this.burst(p.x,p.y-6,12,'#bfdceb','frost');
       this.game.hash.query(p.x-radius-45,p.y-radius-45,p.x+radius+45,p.y+radius+45,this.areaCandidates);
       for(const e of this.areaCandidates)if(e.alive&&e.spawnDelay<=0&&N.dist2(p,e)<(radius+e.radius)**2){
-        this.spellHit(e,.7+.2*rank,'nova');e.slow=1.35;if(p.evolved('nova'))e.frozen=e.boss?.1:.5;
+        this.spellHit(e,weight*(.7+.2*rank),'nova');e.slow=1.35;if(p.evolved('nova'))e.frozen=e.boss?.1:.5;
       }
     }
     updateWisps(){
       const p=this.game.player,rank=p.weapons.orbit;if(!rank)return;
-      const count=1+rank,radius=70+rank*4;
+      const logical=1+rank,count=Math.min(logical,32),radius=70+rank*4;
       for(let i=0;i<count;i++){
         const angle=this.game.time*2.3+i*Math.PI*2/count,x=p.x+Math.cos(angle)*radius,y=p.y-12+Math.sin(angle)*radius*.78;
         this.game.hash.query(x-65,y-65,x+65,y+65,this.areaCandidates);
         for(const e of this.areaCandidates)if(e.alive&&e.spawnDelay<=0&&(e.x-x)**2+(e.y-12-y)**2<(e.radius+11)**2&&(this.wispHits.get(e.id)||-1)<this.game.time){
-          this.wispHits.set(e.id,this.game.time+.65);this.spellHit(e,.34+.09*rank,'orbit');
+          this.wispHits.set(e.id,this.game.time+.65);this.spellHit(e,(.34+.09*rank)*logical/count,'orbit');
           this.sound('orbit',e.x);
-          if(p.evolved('orbit')&&e.alive){e.burn=2;e.burnDamage=p.damage*.16;e.burnTick=.35;}
+          if(p.evolved('orbit')&&e.alive){N.applyBurn(e,2,p.damage*.16,'orbit');}
         }
+      }
+    }
+    addArea(kind,x,y,radius,delay,duration,damage,rank=1,evolved=false,weight=1){
+      const area=this.areas.acquire();
+      Object.assign(area,{kind,x,y,radius,delay,duration,damage,rank,evolved,weight,age:0,tick:0,pulses:0});return area;
+    }
+    meteor(weight=1){const p=this.game.player,target=this.nearest(p,370+12*(p.weapons.meteor-1));if(!target)return;
+      this.addArea('meteor',target.x,target.y,65+7*p.weapons.meteor,.65,.3,p.damage*(1.25+.22*p.weapons.meteor),p.weapons.meteor,p.evolved('meteor'),weight);p.cast(target);}
+    lance(weight=1){
+      const p=this.game.player,target=this.nearest(p,400+14*(p.weapons.lance-1));if(!target)return;
+      const angle=Math.atan2(target.y-p.y,target.x-p.x),range=410+14*(p.weapons.lance-1),x=p.x+Math.cos(angle)*range,y=p.y+Math.sin(angle)*range,width=9+p.weapons.lance*2;
+      this.effect('lance',p.x,p.y-16,x,y-16,width,'#e4c4fc',.24);p.cast(target);this.sound('lance');
+      const enemies=this.game.enemies.filter(e=>e.alive&&e.spawnDelay<=0&&N.segmentDistance2(p.x,p.y,x,y,e.x,e.y)<(e.radius+width)**2).sort((a,b)=>N.dist2(p,a)-N.dist2(p,b));
+      for(const e of enemies.slice(0,2+p.weapons.lance)){this.spellHit(e,weight*(.8+.14*p.weapons.lance),'lance');if(p.evolved('lance'))e.exposed=2;}
+    }
+    thorn(weight=1){const p=this.game.player,rank=p.weapons.thorn;this.addArea('thorn',p.x-p.lastX*55,p.y-p.lastY*55,74+rank*6+(p.evolved('thorn')?15:0),.12,3.2,p.damage*(.25+.07*rank),rank,p.evolved('thorn'),weight);p.cast();this.sound('thorn');}
+    rift(weight=1){const p=this.game.player,target=this.nearest(p,350+10*(p.weapons.rift-1));if(!target)return;this.addArea('rift',target.x,target.y,90+p.weapons.rift*7,.2,2.2,p.damage*(.25+.08*p.weapons.rift),p.weapons.rift,p.evolved('rift'),weight);p.cast(target);this.sound('rift');}
+    veilBloom(p){this.addArea('veil',p.x,p.y,42+8*p.progress.talents.veil,0,.7,0,1,false,1);}
+    updateAreas(dt){
+      const p=this.game.player;
+      for(let i=this.areas.active.length-1;i>=0;i--){
+        const a=this.areas.active[i];a.age+=dt;if(a.age<a.delay)continue;a.tick-=dt;
+        const expires=a.age>=a.delay+a.duration,pulse=a.tick<=0&&(a.kind!=='meteor'||a.pulses===0||a.evolved&&a.pulses===1),final=expires&&a.kind==='rift'&&a.evolved;
+        this.game.hash.query(a.x-a.radius-70,a.y-a.radius-70,a.x+a.radius+70,a.y+a.radius+70,this.areaCandidates);
+        for(const e of this.areaCandidates){
+          if(!e.alive||e.spawnDelay>0||N.dist2(e,a)>(a.radius+e.radius)**2)continue;
+          if(a.kind==='rift'&&!e.frozen){const d=Math.hypot(a.x-e.x,a.y-e.y)||1,pull=Math.min(d,(e.boss?15+a.rank*.6:90+a.rank*4)*dt);e.x+=(a.x-e.x)/d*pull;e.y+=(a.y-e.y)/d*pull;}
+          if(!pulse&&!final)continue;
+          if(a.damage>0){const roll=N.critRoll(p);e.hit((a.damage*(final?2.3:1))*a.weight*roll.multiplier,roll.crit,0,0,a.kind);}
+          if(a.kind==='thorn'||a.kind==='veil')e.slow=Math.max(e.slow,1.2);
+          if(a.kind==='thorn'&&a.evolved&&a.pulses===0)e.frozen=Math.max(e.frozen,e.boss?.04:.25);
+          if(a.kind==='meteor'&&a.evolved&&e.alive)N.applyBurn(e,3,p.damage*.15*a.weight,'meteor');
+        }
+        if(pulse){a.tick=a.kind==='meteor'?.14:a.kind==='thorn'?.65:.5;a.pulses++;if(a.kind==='meteor'){this.sound('meteor');this.burst(a.x,a.y-6,18,'#f1b283');this.effect('ring',a.x,a.y,0,0,a.radius,'#efbd8e',.35);if(a.evolved)this.effect('ring',a.x,a.y,0,0,a.radius*1.12,'#f4dfaa',.5);}}
+        if(expires)this.areas.release(i);
       }
     }
     enemyShot(x,y,tx,ty,speed,damage){
@@ -133,14 +163,16 @@
     update(dt){
       const p=this.game.player;
       this.cooldown-=dt;
-      if(this.cooldown<=0){const target=this.nearest();if(target){this.fire(target);this.cooldown=Math.max(N.BALANCE.minAttackInterval,p.attackInterval);}else this.cooldown=0;}
-      for(const id of ['lightning','nova'])if(p.weapons[id]>0){
+      if(this.cooldown<=0){const target=this.nearest();if(target){const interval=N.castInterval(p),casts=Math.max(1,Math.floor(-this.cooldown/interval)+1);this.fire(target,casts);this.cooldown+=casts*interval;}else this.cooldown=0;}
+      for(const id of ['lightning','nova','meteor','lance','thorn','rift'])if((p.weapons[id]||0)>0){
         this.spellTimers[id]-=dt;
         if(this.spellTimers[id]<=0){
-          if(id==='lightning')this.lightning();else this.nova();
-          this.spellTimers[id]=Math.max(id==='lightning'?1.05:2,(id==='lightning'?2.8-.25*p.weapons[id]:5-.35*p.weapons[id])*N.clamp(p.attackInterval/.56,.72,1.5));
+          const base={lightning:2.8,nova:5,meteor:3.6,lance:2.6,thorn:4.5,rift:6}[id];
+          const interval=Math.max(Number.MIN_VALUE,base/(1+.11*(p.weapons[id]-1))*(p.attackInterval/.56)),casts=Math.max(1,Math.floor(-this.spellTimers[id]/interval)+1);
+          this[id](casts);this.spellTimers[id]+=casts*interval;
         }
       }
+      this.updateAreas(dt);
       this.updateWisps();this.mapClock-=dt;
       if(this.mapClock<=0){this.mapClock=1;for(const [id,until] of this.wispHits)if(until<this.game.time-1)this.wispHits.delete(id);}
       const active=this.projectiles.active;
@@ -150,7 +182,7 @@
         const ox=b.x,oy=b.y,step=Math.min(dt,Math.max(0,b.life));b.x+=b.vx*step;b.y+=b.vy*step;b.life-=dt;
         this.game.hash.query(Math.min(ox,b.x)-65,Math.min(oy,b.y)-65,Math.max(ox,b.x)+65,Math.max(oy,b.y)+65,this.candidates);
         let consumed=false;
-        for(let hitCount=0;hitCount<5;hitCount++){
+        for(let hitCount=0;hitCount<this.candidates.length;hitCount++){
           let hit=null,first=Infinity;
           for(const e of this.candidates)if(e.alive&&e.spawnDelay<=0&&!b.hitIds.has(e.id)){
             const t=N.circleHit(ox,oy,b.x,b.y,e.x,e.y-12,e.radius+b.radius);if(t<first){first=t;hit=e;}
@@ -195,10 +227,20 @@
           c.globalAlpha=t*.23;N.drawWitch(c,this.game.images,r.facing,r.frame,r.x-40,r.y-99);
         }else if(r.kind==='corpse'){
           c.globalAlpha=t*.55;const s=r.scale*(.85+.15*t);
-          c.drawImage(this.game.images[r.type],r.x-40*s,r.y-79*s+(1-t)*12,80*s,88*s);
+          N.drawEnemy(c,this.game.images,{type:r.type,game:this.game},r.x-40*s,r.y-79*s+(1-t)*5,80*s,88*s,'death',1-t);
         }else{
           c.globalAlpha=t*.22;c.fillStyle='#9ca18e';c.beginPath();c.ellipse(r.x,r.y,r.radius*(2-t),r.radius*.55*(2-t),0,0,Math.PI*2);c.fill();
         }
+        c.restore();
+      }
+      const fieldStride=Math.max(1,Math.ceil(this.areas.active.length/(this.game.quality==='low'?24:72)));
+      for(let fieldIndex=0;fieldIndex<this.areas.active.length;fieldIndex+=fieldStride){
+        const a=this.areas.active[fieldIndex];
+        if(!this.game.visible(a.x,a.y,a.radius))continue;
+        c.save();const t=a.age<a.delay?a.age/Math.max(.001,a.delay):1,color=a.kind==='meteor'?'#ecb180':a.kind==='rift'?'#b5a9ed':a.kind==='thorn'?'#b3d5a1':'#bbd9e8';
+        c.globalAlpha=a.age<a.delay?.35:.7;c.strokeStyle=color;c.fillStyle=color+'12';c.lineWidth=1.5;const r=Math.max(1,a.radius);c.beginPath();c.ellipse(a.x,a.y,r,r*.78,0,0,Math.PI*2);c.fill();c.stroke();
+        if(a.kind==='meteor'&&a.age<a.delay){c.strokeStyle=color;c.setLineDash([5,7]);c.beginPath();c.arc(a.x,a.y,Math.max(1,r*t),0,Math.PI*2);c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(a.x+55*(1-t),a.y-130*(1-t));c.lineTo(a.x,a.y);c.stroke();}
+        else for(let j=0;j<8;j++){const phase=this.game.reducedMotion?0:a.age*(a.kind==='rift'?2:.3),angle=j*Math.PI/4+phase;const x=a.x+Math.cos(angle)*r*.65,y=a.y+Math.sin(angle)*r*.5;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(angle+.8)*12,y-12);c.lineTo(x+Math.cos(angle)*5,y-20);c.stroke();}
         c.restore();
       }
       for(const h of this.hazards.active){
@@ -212,7 +254,7 @@
     draw(c){
       const p=this.game.player;c.save();c.globalCompositeOperation='lighter';
       if(p.weapons.orbit){
-        const count=1+p.weapons.orbit,radius=70+p.weapons.orbit*4;c.strokeStyle='#bcb1d022';c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y-12,radius,radius*.78,0,0,Math.PI*2);c.stroke();
+        const count=Math.min(32,1+p.weapons.orbit),radius=70+p.weapons.orbit*4;c.strokeStyle='#bcb1d022';c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y-12,radius,radius*.78,0,0,Math.PI*2);c.stroke();
         for(let i=0;i<count;i++){
           const a=this.game.time*2.3+i*Math.PI*2/count,x=p.x+Math.cos(a)*radius,y=p.y-12+Math.sin(a)*radius*.78;
           c.drawImage(this.game.images.orb,x-18,y-18,36,36);c.fillStyle=p.evolved('orbit')?'#e2a17a':'#c8bbdf';c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill();
@@ -232,6 +274,7 @@
       for(const e of this.effects.active){
         c.globalAlpha=e.life/e.total;c.strokeStyle=e.color;c.lineWidth=2;
         if(e.kind==='ring'){c.beginPath();c.ellipse(e.x,e.y,Math.max(1,e.radius*(1-e.life/e.total)),Math.max(1,e.radius*.85*(1-e.life/e.total)),0,0,Math.PI*2);c.stroke();}
+        else if(e.kind==='lance'){c.lineWidth=Math.max(2,e.radius*.55);c.strokeStyle=e.color+'55';c.beginPath();c.moveTo(e.x,e.y);c.lineTo(e.x2,e.y2);c.stroke();c.lineWidth=2;c.strokeStyle='#fff4ff';c.stroke();}
         else if(e.kind==='lightning'){
           const dx=e.x2-e.x,dy=e.y2-e.y,len=Math.hypot(dx,dy)||1;c.beginPath();c.moveTo(e.x,e.y);
           for(let j=1;j<8;j++){const offset=Math.sin(j*19.7+e.seed)*9;c.lineTo(e.x+dx*j/8-dy/len*offset,e.y+dy*j/8+dx/len*offset);}c.lineTo(e.x2,e.y2);c.stroke();

@@ -26,7 +26,7 @@ def png(key):
 
 class AssetTests(unittest.TestCase):
     def test_all_embedded_images_are_valid(self):
-        self.assertEqual(len(data()),33)
+        self.assertEqual(len(data()),39)
         for key in data():
             im=png(key)
             self.assertGreater(im.width,0)
@@ -83,6 +83,27 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(im.getpixel((0,0))[3],0)
             self.assertGreater(im.getchannel("A").getbbox()[3],170)
 
+    def test_enemy_state_atlases_have_distinct_local_poses(self):
+        for kind in TYPES:
+            im=png('enemy_atlas_'+kind)
+            self.assertEqual(im.size,(1680,88))
+            for state,start,count in [('idle',0,2),('attack',6,6),('hurt',12,3),('death',15,6)]:
+                frames=[im.crop(((start+i)*80,0,(start+i+1)*80,88)).tobytes() for i in range(count)]
+                self.assertGreaterEqual(len(set(frames)),2 if state=='idle' else 3,(kind,state))
+
+    def test_enemy_death_silhouettes_collapse(self):
+        for kind in TYPES:
+            im=png('enemy_atlas_'+kind)
+            first=im.crop((15*80,0,16*80,88)).getchannel('A').getbbox()
+            last=im.crop((20*80,0,21*80,88)).getchannel('A').getbbox()
+            self.assertLess(last[3]-last[1],(first[3]-first[1])*.6,kind)
+
+    def test_enemy_animation_preview_loops(self):
+        with Image.open(ROOT/'enemy-animation-preview.gif') as gif:
+            self.assertEqual(gif.n_frames,12)
+            self.assertEqual(gif.info['loop'],0)
+            self.assertEqual(gif.size,(640,624))
+
     def test_preview_loops(self):
         with Image.open(ROOT/"walking-preview.gif") as gif:
             self.assertEqual(gif.n_frames,8)
@@ -91,7 +112,7 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(gif.info["duration"],90)
 
     def test_generation_is_deterministic(self):
-        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif"]
+        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif",ROOT/"enemy-animation-preview.gif"]
         before=[hashlib.sha256(p.read_bytes()).digest() for p in paths]
         subprocess.run([sys.executable,str(ROOT/"generate_assets.py")],check=True,stdout=subprocess.DEVNULL)
         self.assertEqual(before,[hashlib.sha256(p.read_bytes()).digest() for p in paths])

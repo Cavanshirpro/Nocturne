@@ -18,7 +18,7 @@
     }
     profile(){return {runs:0,bestWave:0,bestKills:0,bestTime:0,bosses:0,achievements:[]};}
     slot(id){const now=Date.now();return {id,name:`Save ${id}`,createdAt:now,updatedAt:now,profile:this.profile(),checkpoint:null};}
-    defaults(){return {schema:3,activeSlotId:1,nextSlotId:2,settings:{sound:true,volume:.6,ambience:true,reduced:null,quality:'high',zoom:1},slots:[this.slot(1)]};}
+    defaults(){return {schema:3,activeSlotId:1,nextSlotId:2,settings:{sound:true,volume:.6,ambience:false,audioRevision:2,reduced:null,quality:'high',zoom:1},slots:[this.slot(1)]};}
     get active(){return this.data.slots.find(s=>s.id===this.data.activeSlotId)||this.data.slots[0];}
     cleanProfile(p){
       const result=this.profile();
@@ -26,7 +26,7 @@
       result.achievements=Array.isArray(p?.achievements)?[...new Set(p.achievements.filter(id=>typeof id==='string'&&id.length<80))].slice(0,32):[];
       return result;
     }
-    cleanSettings(s={}){return {sound:s.sound!==false,volume:Number.isFinite(s.volume)?N.clamp(s.volume,0,1):.6,ambience:s.ambience!==false,reduced:typeof s.reduced==='boolean'?s.reduced:null,quality:s.quality==='low'?'low':'high',zoom:Number.isFinite(s.zoom)?N.clamp(s.zoom,.65,1.55):1};}
+    cleanSettings(s={}){return {sound:s.sound!==false,volume:Number.isFinite(s.volume)?N.clamp(s.volume,0,1):.6,ambience:s.audioRevision===2&&s.ambience===true,audioRevision:2,reduced:typeof s.reduced==='boolean'?s.reduced:null,quality:s.quality==='low'?'low':'high',zoom:Number.isFinite(s.zoom)?N.clamp(s.zoom,.65,1.55):1};}
     read(){
       const fresh=this.defaults();
       try{
@@ -78,20 +78,24 @@
     }
     validCheckpoint(c){
       if(!c||c.schema!==2||!['wave','shop'].includes(c.phase)||!['ash','moon','storm'].includes(c.coven))return false;
-      if(!Number.isInteger(c.wave)||c.wave<1||c.wave>10000||!Number.isFinite(c.time)||c.time<0)return false;
+      if(!Number.isSafeInteger(c.wave)||c.wave<1||!Number.isFinite(c.time)||c.time<0)return false;
       const p=c.player;
-      if(!p||!N.PLAYER_FIELDS.every(k=>Number.isFinite(p[k])&&Math.abs(p[k])<=1e9))return false;
-      if(p.hp<=0||p.maxHp<1||p.hp>p.maxHp||p.speed<1||p.damage<1||p.attackInterval<.12||p.attackInterval>10)return false;
-      if(p.armor<0||p.armor>.6||p.critChance<0||p.critChance>.75||p.regen<0||p.dashCooldown<.7||p.projectileSpeed<1||p.critMultiplier<1||p.pickupRadius<1)return false;
-      if(!['projectileCount','level','gold','kills','xp','xpNeeded','pendingLevels','pierce'].every(k=>Number.isInteger(p[k])&&p[k]>=0))return false;
-      if(p.projectileCount<1||p.projectileCount>7||p.level<1||p.xpNeeded<1||p.xp>=p.xpNeeded||p.pendingLevels!==0||p.pierce>2)return false;
-      if(!p.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isInteger(p.weapons[k])&&p.weapons[k]>=0&&p.weapons[k]<=4)||p.weapons.bolt<1)return false;
+      if(!p||!N.PLAYER_FIELDS.every(k=>Number.isFinite(p[k])))return false;
+      if(p.hp<=0||p.maxHp<1||p.hp>p.maxHp||p.speed<1||p.damage<1||p.attackInterval<=0)return false;
+      if(p.armor<0||p.critChance<0||p.regen<0||p.dashCooldown<=0||p.projectileSpeed<1||p.critMultiplier<1||p.pickupRadius<1)return false;
+      if(!['projectileCount','level','gold','kills','xp','xpNeeded','pendingLevels','pierce'].every(k=>Number.isSafeInteger(p[k])&&p[k]>=0))return false;
+      if(p.projectileCount<1||p.level<1||p.xpNeeded<1||p.xp>=p.xpNeeded||p.pendingLevels!==0)return false;
+      if(!p.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isInteger(p.weapons[k])&&p.weapons[k]>=0&&Number.isSafeInteger(p.weapons[k]))||p.weapons.bolt<1)return false;
+      if(!N.SPELL_IDS.filter(id=>!['bolt','orbit','lightning','nova'].includes(id)).every(id=>p.weapons[id]===undefined||Number.isSafeInteger(p.weapons[id])&&p.weapons[id]>=0))return false;
+      if(p.progress&&!N.validProgression(p.progress,p))return false;
       if(!p.relics||!['cinder','conductor','permafrost','mirror'].every(k=>typeof p.relics[k]==='boolean'))return false;
-      if(!Array.isArray(p.upgrades)||p.upgrades.length>10000||!p.upgrades.every(k=>typeof k==='string'))return false;
-      if(!Array.isArray(c.slots)||c.slots.length!==4||!c.slots.every(s=>s&&typeof s.locked==='boolean'&&(s.id===null||typeof s.id==='string')&&Number.isInteger(s.price)&&s.price>=0&&s.price<1e7))return false;
-      if(!Number.isInteger(c.rolls)||c.rolls<0||c.rolls>10000)return false;
-      if(!c.stats||!['damage','damageTaken','goldEarned','elites','bosses','dashes'].every(k=>Number.isFinite(c.stats[k])&&c.stats[k]>=0&&c.stats[k]<1e12))return false;
+      if(!['sunstone','soulchain','thornheart','voidglass'].every(id=>p.relics[id]===undefined||typeof p.relics[id]==='boolean'))return false;
+      if(!Array.isArray(p.upgrades)||!p.upgrades.every(k=>typeof k==='string'))return false;
+      if(!Array.isArray(c.slots)||c.slots.length!==4||!c.slots.every(s=>s&&typeof s.locked==='boolean'&&(s.id===null||typeof s.id==='string')&&Number.isInteger(s.price)&&s.price>=0))return false;
+      if(!Number.isInteger(c.rolls)||c.rolls<0)return false;
+      if(!c.stats||!['damage','damageTaken','goldEarned','elites','bosses','dashes'].every(k=>Number.isFinite(c.stats[k])&&c.stats[k]>=0))return false;
       if(!c.stats.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isFinite(c.stats.weapons[k])&&c.stats.weapons[k]>=0))return false;
+      if(!N.SPELL_IDS.every(id=>c.stats.weapons[id]===undefined||Number.isFinite(c.stats.weapons[id])&&c.stats.weapons[id]>=0))return false;
       if(c.world&&!N.validWorld?.(c.world))return false;
       return true;
     }

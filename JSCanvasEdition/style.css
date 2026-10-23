@@ -94,3 +94,26 @@ input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @media(pointer:coarse){#zoom-hud{bottom:225px;right:24px}}
 @media(max-height:700px) and (min-width:701px){.title-crest{min-height:160px;margin-bottom:12px;gap:25px}.title-art{height:156px;width:130px}.title-art>img{height:160px;width:120px}.title-art>span{font-size:112px;top:-7px}.title-crest h1{font-size:57px}.title-crest .eyebrow{margin:2px 0 8px}.title-crest .subtitle-name{margin-bottom:12px}.title-crest .title-sub{font-size:12px}.active-save{padding:10px 15px;margin-bottom:12px}.menu[data-screen="title"] .hint{margin-top:13px}}
 .menu[data-screen="saves"]>.shop-actions{position:sticky;bottom:-1px;z-index:2;padding:16px 10px;margin-top:16px;background:#142328f2;border-top:1px solid #c6b48155;box-shadow:0 -10px 25px #102024cc}
+
+/* 4.0 · Living Grimoire */
+.prepared-oath{max-width:720px;margin:20px auto 8px;padding:12px 18px;border:1px solid #bcb08755;background:#b9ad7620;color:#ddcfa5;font:11px/1.8 Georgia,serif}
+.section-title{font:27px Georgia,serif;color:#dfd3b5;font-weight:400;margin:35px 0 16px}
+.talent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left}
+.talent-grid article{padding:18px;border:1px solid #8ea08e44;background:#25353888}
+.talent-grid article>span{font:25px Georgia,serif;color:var(--gold);display:block;margin-bottom:11px}
+.talent-grid strong{font:16px Georgia,serif;font-weight:400;display:block}
+.talent-grid p{font:11px/1.8 Arial,sans-serif;color:#b0c0b6}
+.talent-grid small{font-size:8px;letter-spacing:1px;color:var(--gold)}
+.bestiary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.bestiary-grid article{border:1px solid #82978844;padding:12px 8px;background:#18282a99;display:flex;align-items:center;flex-direction:column}
+.bestiary-grid img{width:70px;height:77px;object-fit:contain}
+.bestiary-grid strong{font:16px Georgia,serif;margin:9px 0}
+.bestiary-grid small{font:9px/1.7 Arial,sans-serif;color:var(--muted)}
+.trait-list{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;text-align:left;margin:18px 0 28px}
+.trait-list p{font-size:11px;line-height:1.8;color:var(--muted);border-bottom:1px solid #82978833;padding-bottom:12px}
+.trait-list b{display:block;margin-bottom:5px;letter-spacing:1px}
+.undiscovered{opacity:.55}.spell-entry small{line-height:1.8}
+.menu[data-screen="grimoire"]>#close-grimoire{position:sticky;bottom:0;z-index:2;box-shadow:0 -5px 22px #152429}
+#spell-belt{flex-wrap:wrap;max-width:180px}.belt-spell{flex-shrink:0}
+.belt-spell small{max-width:45px;white-space:nowrap}
+@media(max-width:700px){.talent-grid{grid-template-columns:1fr 1fr}.talent-grid article{padding:13px}.talent-grid strong{font-size:15px}.talent-grid p{font-size:10px}.bestiary-grid{grid-template-columns:repeat(3,1fr)}.trait-list{grid-template-columns:1fr}.section-title{font-size:23px}#spell-belt{max-width:135px}#performance{max-width:180px;line-height:1.8}.prepared-oath{font-size:10px;padding:10px 13px}}

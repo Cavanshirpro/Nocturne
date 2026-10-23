@@ -5,8 +5,8 @@
   class AudioEngine {
     constructor(game){
       this.game=game;this.context=null;this.enabled=false;this.foreground=true;
-      this.volume=game.save.data.settings.volume??.6;this.ambience=game.save.data.settings.ambience!==false;
-      this.voices=new Set();this.last=new Map();this.maxVoices=28;this.ambientSources=[];this.active=false;
+      this.volume=game.save.data.settings.volume??.6;this.ambience=game.save.data.settings.ambience===true;
+      this.voices=new Set();this.retiring=new Set();this.last=new Map();this.maxVoices=28;this.ambientSources=[];this.active=false;
     }
     attach(context){
       if(this.context)return this.context;
@@ -14,16 +14,15 @@
       const a=context;this.master=a.createGain();this.sfx=a.createGain();this.ambient=a.createGain();this.compressor=a.createDynamicsCompressor();
       this.compressor.threshold.value=-18;this.compressor.knee.value=20;this.compressor.ratio.value=6;
       this.compressor.attack.value=.004;this.compressor.release.value=.16;
-      this.sfx.connect(this.master);this.ambient.connect(this.master);this.master.connect(this.compressor);this.compressor.connect(a.destination);
+      this.sfx.connect(this.master);this.ambient.connect(this.master);this.master.connect(this.compressor);this.lowpass=a.createBiquadFilter();this.lowpass.type='lowpass';this.lowpass.frequency.value=6500;this.highpass=a.createBiquadFilter();this.highpass.type='highpass';this.highpass.frequency.value=25;this.compressor.connect(this.highpass);this.highpass.connect(this.lowpass);this.lowpass.connect(a.destination);
       this.ambient.gain.value=0;this.master.gain.value=this.enabled&&this.foreground?this.volume*.7:0;
       this.noise=a.createBuffer(1,a.sampleRate,a.sampleRate);
       let seed=91723;const values=this.noise.getChannelData(0);
       for(let i=0;i<values.length;i++){seed=(seed*1664525+1013904223)>>>0;values[i]=seed/2147483648-1;}
       if(!this.offline){
-        const wind=a.createBufferSource(),filter=a.createBiquadFilter();wind.buffer=this.noise;wind.loop=true;filter.type='bandpass';filter.frequency.value=350;filter.Q.value=.45;
-        wind.connect(filter);filter.connect(this.ambient);wind.start();this.ambientSources.push(wind,filter);
+        // Optional tonal ambience only. No looping noise or wind generator.
         for(const frequency of [82.41,123.47]){
-          const tone=a.createOscillator(),gain=a.createGain();tone.type='sine';tone.frequency.value=frequency;gain.gain.value=.07;
+          const tone=a.createOscillator(),gain=a.createGain();tone.type='sine';tone.frequency.value=frequency;gain.gain.value=.025;
           tone.connect(gain);gain.connect(this.ambient);tone.start();this.ambientSources.push(tone,gain);
         }
       }
@@ -42,29 +41,29 @@
       if(!this.context)return;
       const a=this.context,t=a.currentTime;
       this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(this.enabled&&this.foreground?this.volume*.7:0,t,.025);
-      this.ambient.gain.cancelScheduledValues(t);this.ambient.gain.setTargetAtTime(this.enabled&&this.foreground&&this.active&&this.ambience ? .018 : 0,t,.12);
+      this.ambient.gain.cancelScheduledValues(t);this.ambient.gain.setTargetAtTime(this.enabled&&this.foreground&&this.active&&this.ambience ? .06 : 0,t,.12);
     }
     setEnabled(value){this.enabled=Boolean(value);if(!value)this.stopVoices();this.mix();}
     setVolume(value){this.volume=N.clamp(Number(value)||0,0,1);this.mix();}
     setAmbience(value){this.ambience=Boolean(value);this.mix();}
     transport(active){if(this.active===active)return;this.active=active;this.mix();}
     setForeground(value){this.foreground=Boolean(value);if(!value)this.stopVoices();this.mix();}
-    stopVoices(){for(const v of [...this.voices]){try{v.source.stop();}catch{}v.cleanup();}}
+    stopVoices(){for(const v of [...this.voices])v.retire();}
     voice(spec,time,pan,priority){
       const a=this.context;
       if(this.voices.size>=this.maxVoices){
         const candidate=[...this.voices].find(v=>v.priority<priority);
-        if(!candidate)return false;try{candidate.source.stop();}catch{}candidate.cleanup();
+        if(!candidate)return false;candidate.retire();
       }
       const source=spec.noise?a.createBufferSource():a.createOscillator(),gain=a.createGain(),nodes=[source,gain];
       if(spec.noise)source.buffer=this.noise;
       else{source.type=spec.wave||'sine';source.frequency.setValueAtTime(spec.f,time);source.frequency.exponentialRampToValueAtTime(Math.max(20,spec.to??spec.f),time+spec.d);}
       let output=source;
       if(spec.noise){const filter=a.createBiquadFilter();filter.type=spec.filter||'lowpass';filter.frequency.value=spec.cut||900;filter.Q.value=.6;source.connect(filter);nodes.push(filter);output=filter;}
-      output.connect(gain);const attack=Math.min(.012,spec.d*.2),amplitude=spec.g??.06;
+      output.connect(gain);const attack=Math.min(.018,spec.d*.25),amplitude=spec.g??.06;
       gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,amplitude),time+attack);gain.gain.exponentialRampToValueAtTime(.0001,time+spec.d);
       if(a.createStereoPanner){const panner=a.createStereoPanner();panner.pan.value=pan;gain.connect(panner);panner.connect(this.sfx);nodes.push(panner);}else gain.connect(this.sfx);
-      let released=false;const v={source,priority,cleanup:()=>{if(released)return;released=true;for(const node of nodes)node.disconnect();this.voices.delete(v);}};
+      let released=false;const v={source,priority,cleanup:()=>{if(released)return;released=true;for(const node of nodes)node.disconnect();this.voices.delete(v);this.retiring.delete(v);},retire:()=>{if(released||this.retiring.has(v))return;this.voices.delete(v);this.retiring.add(v);const t=a.currentTime;if(gain.gain.cancelAndHoldAtTime)gain.gain.cancelAndHoldAtTime(t);else{const held=gain.gain.value;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(held,t);}gain.gain.setTargetAtTime(.0001,t,.005);try{source.stop(t+.025);}catch{v.cleanup();}}};
       this.voices.add(v);source.onended=v.cleanup;source.start(time);source.stop(time+spec.d+.02);return true;
     }
     play(kind,x=this.game.player?.x??0){
@@ -75,18 +74,22 @@
       let count=0;for(const spec of recipe.notes)if(this.voice(spec,now+(spec.at||0),pan,recipe.priority??1))count++;
       return count>0;
     }
-    dispose(){this.stopVoices();for(const node of this.ambientSources){try{node.stop?.();}catch{}node.disconnect();}this.ambientSources.length=0;this.master?.disconnect();this.sfx?.disconnect();this.ambient?.disconnect();this.compressor?.disconnect();}
+    dispose(){this.stopVoices();for(const v of [...this.retiring])v.cleanup();for(const node of this.ambientSources){try{node.stop?.();}catch{}node.disconnect();}this.ambientSources.length=0;this.master?.disconnect();this.sfx?.disconnect();this.ambient?.disconnect();this.compressor?.disconnect();this.lowpass?.disconnect();this.highpass?.disconnect();}
   }
   AudioEngine.SOUNDS=Object.freeze({
-    fire:{gap:.085,notes:[{f:760,to:350,d:.12,g:.04},{noise:true,cut:1900,d:.055,g:.022}]},
-    lightning:{gap:.13,notes:[{noise:true,filter:'highpass',cut:1500,d:.18,g:.085},{f:210,to:60,wave:'triangle',d:.15,g:.04}]},
-    nova:{gap:.2,notes:[{noise:true,filter:'highpass',cut:2700,d:.38,g:.07},{f:940,to:320,d:.38,g:.045},{f:1410,to:640,d:.25,g:.025,at:.035}]},
+    fire:{gap:.12,notes:[{f:740,to:390,d:.14,g:.04},{f:1110,to:780,d:.1,g:.014,at:.015}]},
+    lightning:{gap:.18,notes:[{noise:true,cut:1200,d:.085,g:.025},{f:290,to:110,wave:'triangle',d:.2,g:.045},{f:870,to:440,d:.12,g:.02}]},
+    nova:{gap:.2,notes:[{noise:true,cut:1600,d:.13,g:.018},{f:940,to:320,d:.38,g:.045},{f:1410,to:640,d:.25,g:.025,at:.035}]},
     orbit:{gap:.12,notes:[{f:520,to:340,d:.1,g:.032}]},
+    meteor:{gap:.3,notes:[{f:160,to:44,wave:'triangle',d:.36,g:.065},{f:480,to:120,d:.18,g:.025}]},
+    lance:{gap:.18,notes:[{f:440,to:1320,d:.16,g:.032},{f:880,to:660,d:.24,g:.027,at:.04}]},
+    thorn:{gap:.25,notes:[{f:330,to:390,d:.2,g:.03},{f:495,to:580,d:.18,g:.02,at:.06}]},
+    rift:{gap:.4,notes:[{f:98,to:65.4,d:.6,g:.04},{f:196,to:147,d:.48,g:.024,at:.04}]},
     hit:{gap:.07,notes:[{noise:true,cut:800,d:.065,g:.055},{f:170,to:70,d:.075,g:.045}]},
     crit:{gap:.12,priority:2,notes:[{f:110,to:45,wave:'triangle',d:.19,g:.07},{f:1320,to:660,d:.19,g:.045},{noise:true,cut:2100,d:.09,g:.055}]},
     death:{gap:.1,notes:[{noise:true,cut:600,d:.24,g:.06},{f:150,to:45,d:.22,g:.04}]},
     dash:{gap:.2,priority:2,notes:[{noise:true,filter:'bandpass',cut:1500,d:.2,g:.08},{f:330,to:90,d:.2,g:.04}]},
-    step:{gap:.12,priority:0,notes:[{noise:true,cut:450,d:.045,g:.035}]},
+    step:{gap:.12,priority:0,notes:[{f:125,to:75,d:.055,g:.023}]},
     xp:{gap:.07,notes:[{f:1000,to:1390,d:.075,g:.026}]},
     gold:{gap:.09,notes:[{f:1568,d:.11,g:.033},{f:2093,d:.09,g:.024,at:.025}]},
     heal:{gap:.2,priority:2,notes:[{f:440,to:660,d:.22,g:.05},{f:880,d:.24,g:.045,at:.09}]},

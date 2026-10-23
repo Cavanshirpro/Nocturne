@@ -10,43 +10,52 @@
     {id:'evolution',name:'Forbidden knowledge',text:'Evolve any spell with its matching relic.'}
   ];
   const RELICS={
-    mirror:{name:'Lunar Mirror',icon:'◈',text:'+8% magic damage. Evolves rank IV Arcane Bolt into Shattered Moon.',cost:30,apply:p=>p.damage*=1.08},
-    cinder:{name:'Cinder Seed',icon:'❧',text:'+0.2 vitality regeneration. Evolves rank IV Moon Wisps into Cinder Halo.',cost:28,apply:p=>p.regen+=.2},
-    conductor:{name:'Storm Conductor',icon:'ϟ',text:'+5 percentage points of critical chance (cap 45%). Evolves rank IV Chain Lightning into Thunder Crown.',cost:30,apply:p=>p.critChance=Math.min(.45,p.critChance+.05)},
-    permafrost:{name:'Permafrost Shard',icon:'❄',text:'+10 maximum vitality, restore 10 vitality. Evolves rank IV Frost Nova into Absolute Winter.',cost:28,apply:p=>{p.maxHp+=10;p.hp=Math.min(p.maxHp,p.hp+10);}}
+    mirror:{name:'Lunar Mirror',icon:'◈',text:'+8% damage. Rank IV+ Bolt evolves into Shattered Moon.',cost:30,apply:p=>p.damage*=1.08},
+    cinder:{name:'Cinder Seed',icon:'❧',text:'+0.2 regeneration. Rank IV+ Wisps evolve into Cinder Halo.',cost:28,apply:p=>p.regen+=.2},
+    conductor:{name:'Storm Conductor',icon:'ϟ',text:'+5 critical percentage points. Rank IV+ Lightning evolves into Thunder Crown.',cost:30,apply:p=>p.critChance+=.05},
+    permafrost:{name:'Permafrost Shard',icon:'❄',text:'+10 maximum vitality; heal 10. Rank IV+ Nova evolves into Absolute Winter.',cost:28,apply:p=>{p.maxHp+=10;p.hp=Math.min(p.maxHp,p.hp+10);}},
+    sunstone:{name:'Cracked Sunstone',icon:'☀',text:'+8% damage. Rank IV+ Meteor evolves into Solar Ruin.',cost:32,level:4,apply:p=>p.damage*=1.08},
+    soulchain:{name:'Silver Soulchain',icon:'⟡',text:'+5 critical percentage points. Rank IV+ Lance evolves into Requiem.',cost:32,level:7,apply:p=>p.critChance+=.05},
+    thornheart:{name:'Thornheart',icon:'❦',text:'+0.3 regeneration. Rank IV+ Sigil evolves into Briar Court.',cost:32,level:10,apply:p=>p.regen+=.3},
+    voidglass:{name:'Voidglass',icon:'◉',text:'+15 maximum vitality; heal 15. Rank IV+ Rift evolves into Event Horizon.',cost:34,level:14,apply:p=>{p.maxHp+=15;p.hp=Math.min(p.maxHp,p.hp+15);}}
   };
   const weaponChoices=Object.entries(N.WEAPONS).map(([id,w])=>({
-    id:'spell_'+id,name:w.name,icon:w.icon,tag:'SPELL',valid:p=>p.weapons[id]<4,
-    text:p=>`${p.weapons[id]===0?'Learn this spell.':`Advance to rank ${p.weapons[id]+1} / 4.`} ${w.text}`,
+    id:'spell_'+id,name:w.name,icon:w.icon,tag:'SPELL',valid:p=>p.level>=w.unlock,
+    text:p=>`${(p.weapons[id]||0)===0?'Learn a new automatic spell.':`Advance to rank ${(p.weapons[id]||0)+1}.`} ${w.text} Ranks continue beyond IV.`,
     apply:p=>p.upgradeWeapon(id),weapon:id
   }));
+  const talentChoices=Object.entries(N.TALENTS).map(([id,t])=>({id:'talent_'+id,name:t.name,icon:t.icon,tag:'TALENT',valid:p=>p.level>=t.level,text:p=>`Rank ${p.progress.talents[id]+1}. ${t.text}`,apply:p=>p.progress.talents[id]++}));
+  const masteryChoices=N.SPELL_IDS.map(id=>({id:'mastery_'+id,name:N.WEAPONS[id].name+' mastery',icon:N.WEAPONS[id].icon,tag:'MASTERY',valid:p=>(p.weapons[id]||0)>=4&&p.level>=18+p.progress.mastery[id]*6,text:p=>`Mastery ${p.progress.mastery[id]+1}: +6% ${N.WEAPONS[id].name} damage. The next mastery opens six character levels later.`,apply:p=>p.progress.mastery[id]++}));
   const UPGRADES=[
-    {id:'damage',name:'Arcane intensity',icon:'✧',text:'+15% magic damage, up to 95.',tag:'OFFENSE',valid:p=>p.damage<95,apply:p=>p.damage*=1.15},
-    {id:'haste',name:'Quickened ritual',icon:'ϟ',text:'Cast 12% faster. Also quickens lightning and nova.',tag:'CAST SPEED',valid:p=>p.attackInterval>.24,apply:p=>p.attackInterval=Math.max(.24,p.attackInterval*.88)},
-    {id:'speed',name:'Ghost steps',icon:'⋗',text:'+10% movement speed, up to 300. Dash distance grows with it.',tag:'MOVEMENT',valid:p=>p.speed<300,apply:p=>p.speed*=1.1},
-    {id:'orb',name:'Divided moon',icon:'☽',text:'+1 orb per cast, up to 7. Power is shared; total volley damage grows with the square root of orb count.',tag:'MULTICAST',valid:p=>p.projectileCount<7,apply:p=>p.projectileCount++},
-    {id:'health',name:'Blood covenant',icon:'♡',text:'+20 maximum vitality. Restore 25 vitality now.',tag:'SURVIVAL',valid:p=>p.maxHp<320,apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+25);}},
-    {id:'velocity',name:'Falling star',icon:'↗',text:'+20% projectile speed, up to 850. Travel range stays at 490.',tag:'PROJECTILE SPEED',valid:p=>p.projectileSpeed<850,apply:p=>p.projectileSpeed*=1.2},
-    {id:'crit',name:'Wicked fortune',icon:'◇',text:'+8 percentage points of critical chance, up to 45%.',tag:'CRITICAL CHANCE',valid:p=>p.critChance<.45,apply:p=>p.critChance=Math.min(.45,p.critChance+.08)},
-    {id:'magnet',name:'Soul gathering',icon:'◎',text:'+35% pickup range, up to 190 world units.',tag:'COLLECTION',valid:p=>p.pickupRadius<190,apply:p=>p.pickupRadius*=1.35},
-    {id:'dash',name:'Between worlds',icon:'»',text:'Dash recovers 15% sooner (minimum 1.25 seconds).',tag:'EVASION',valid:p=>p.dashCooldown>1.25,apply:p=>p.dashCooldown=Math.max(1.25,p.dashCooldown*.85)},
-    {id:'pierce',name:'Needle of night',icon:'⤴',text:'Arcane orbs pierce +1 target (maximum 2 bonus targets).',tag:'PENETRATION',valid:p=>p.pierce<2,apply:p=>p.pierce++},
-    ...weaponChoices
+    {id:'damage',name:'Arcane intensity',icon:'✧',text:'+15% magic damage. No ceiling.',tag:'OFFENSE',apply:p=>p.damage*=1.15},
+    {id:'haste',name:'Quickened ritual',icon:'ϟ',text:'Reduce cast intervals by 12%. Fast casts are batched without losing their power.',tag:'CAST SPEED',apply:p=>p.attackInterval=Math.max(Number.MIN_VALUE,p.attackInterval*.88)},
+    {id:'speed',name:'Ghost steps',icon:'⋗',text:'+10% movement speed. No ceiling.',tag:'MOVEMENT',apply:p=>p.speed*=1.1},
+    {id:'orb',name:'Divided moon',icon:'☽',text:'+1 orb per cast. Count and total volley power have no ceiling.',tag:'MULTICAST',apply:p=>p.projectileCount++},
+    {id:'health',name:'Blood covenant',icon:'♡',text:'+20 maximum vitality. Restore 25 vitality.',tag:'SURVIVAL',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+25);}},
+    {id:'velocity',name:'Falling star',icon:'↗',text:'+20% projectile speed; also expands targeting and travel range.',tag:'SPEED & RANGE',apply:p=>p.projectileSpeed*=1.2},
+    {id:'crit',name:'Wicked fortune',icon:'◇',text:'+8 critical percentage points. Above 100%, excess chance rolls stronger multi-crits.',tag:'CRITICAL',apply:p=>p.critChance+=.08},
+    {id:'magnet',name:'Soul gathering',icon:'◎',text:'+35% pickup range. No ceiling.',tag:'COLLECTION',apply:p=>p.pickupRadius*=1.35},
+    {id:'dash',name:'Between worlds',icon:'»',text:'Reduce dash recovery by 15%. No upgrade floor.',tag:'EVASION',apply:p=>p.dashCooldown*=.85},
+    {id:'pierce',name:'Needle of night',icon:'⤴',text:'Orbs pierce +1 foe. No ceiling.',tag:'PENETRATION',apply:p=>p.pierce++},
+    ...weaponChoices,...talentChoices,...masteryChoices
   ];
   const ITEMS=[
-    {id:'wand',name:'Ashwood wand',icon:'ϟ',text:'+6 magic damage, up to 95.',tag:'CHARM',rarity:'common',cost:15,valid:p=>p.damage<95,apply:p=>p.damage+=6},
-    {id:'prism',name:'Prism of dusk',icon:'◈',text:'+1 arcane orb (maximum 7). Multicast shares power across the volley.',tag:'CHARM',rarity:'rare',cost:30,valid:p=>p.projectileCount<7,apply:p=>p.projectileCount++},
-    {id:'hourglass',name:'Broken hourglass',icon:'⋈',text:'Cast 10% faster. Affects all cast timers.',tag:'RELIC',rarity:'common',cost:18,valid:p=>p.attackInterval>.24,apply:p=>p.attackInterval=Math.max(.24,p.attackInterval*.9)},
-    {id:'cloak',name:'Grave silk',icon:'♜',text:'+8 percentage points of damage reduction (maximum 45%).',tag:'PASSIVE',rarity:'common',cost:17,valid:p=>p.armor<.45,apply:p=>p.armor=Math.min(.45,p.armor+.08)},
-    {id:'heart',name:'Ember heart',icon:'♡',text:'+15 maximum vitality. Restore 15 vitality.',tag:'PASSIVE',rarity:'common',cost:16,valid:p=>p.maxHp<320,apply:p=>{p.maxHp+=15;p.hp=Math.min(p.maxHp,p.hp+15);}},
-    {id:'boots',name:'Pilgrim boots',icon:'⋗',text:'+12% movement speed, up to 300.',tag:'PASSIVE',rarity:'common',cost:17,valid:p=>p.speed<300,apply:p=>p.speed*=1.12},
+    {id:'wand',name:'Ashwood wand',icon:'ϟ',text:'+6 magic damage.',tag:'CHARM',rarity:'common',cost:15,apply:p=>p.damage+=6},
+    {id:'prism',name:'Prism of dusk',icon:'◈',text:'+1 arcane orb per cast. No ceiling.',tag:'CHARM',rarity:'rare',cost:30,apply:p=>p.projectileCount++},
+    {id:'hourglass',name:'Broken hourglass',icon:'⋈',text:'Reduce cast intervals by 10%.',tag:'RELIC',rarity:'common',cost:18,apply:p=>p.attackInterval=Math.max(Number.MIN_VALUE,p.attackInterval*.9)},
+    {id:'cloak',name:'Grave silk',icon:'♜',text:'+0.08 armor rating. Reduction = rating / (1 + rating); rating grows without a ceiling.',tag:'PASSIVE',rarity:'common',cost:17,apply:p=>p.armor+=.08},
+    {id:'heart',name:'Ember heart',icon:'♡',text:'+15 maximum vitality. Restore 15 vitality.',tag:'PASSIVE',rarity:'common',cost:16,apply:p=>{p.maxHp+=15;p.hp=Math.min(p.maxHp,p.hp+15);}},
+    {id:'boots',name:'Pilgrim boots',icon:'⋗',text:'+12% movement speed.',tag:'PASSIVE',rarity:'common',cost:17,apply:p=>p.speed*=1.12},
     {id:'salve',name:'Moonlit salve',icon:'✚',text:'Restore 40 vitality immediately.',tag:'CONSUMABLE',rarity:'common',cost:10,valid:p=>p.hp<p.maxHp,apply:p=>p.hp=Math.min(p.maxHp,p.hp+40)},
-    {id:'dew',name:'Silver dew',icon:'❧',text:'Regenerate +0.4 vitality per second, up to 1.2.',tag:'PASSIVE',rarity:'rare',cost:23,valid:p=>p.regen<1.2,apply:p=>p.regen+=.4},
-    {id:'glass',name:'Stargazer lens',icon:'◎',text:'+30% projectile speed (850 cap) and +20% pickup range (190 cap). Does not increase spell range.',tag:'RELIC',rarity:'common',cost:18,valid:p=>p.projectileSpeed<850||p.pickupRadius<190,apply:p=>{p.projectileSpeed*=1.3;p.pickupRadius*=1.2;}},
-    {id:'ring',name:'Serpent ring',icon:'○',text:'+10 percentage points of critical chance (maximum 45%).',tag:'PASSIVE',rarity:'rare',cost:22,valid:p=>p.critChance<.45,apply:p=>p.critChance=Math.min(.45,p.critChance+.1)},
-    {id:'feather',name:'Raven feather',icon:'»',text:'Dash recovers 18% sooner (minimum 1.25 seconds).',tag:'PASSIVE',rarity:'common',cost:16,valid:p=>p.dashCooldown>1.25,apply:p=>p.dashCooldown=Math.max(1.25,p.dashCooldown*.82)},
+    {id:'dew',name:'Silver dew',icon:'❧',text:'Regenerate +0.4 vitality per second.',tag:'PASSIVE',rarity:'rare',cost:23,apply:p=>p.regen+=.4},
+    {id:'glass',name:'Stargazer lens',icon:'◎',text:'+30% projectile speed and +20% pickup range. Target and travel ranges also grow.',tag:'RELIC',rarity:'common',cost:18,apply:p=>{p.projectileSpeed*=1.3;p.pickupRadius*=1.2;}},
+    {id:'ring',name:'Serpent ring',icon:'○',text:'+10 critical percentage points. Excess chance enables multi-crits.',tag:'PASSIVE',rarity:'rare',cost:22,apply:p=>p.critChance+=.1},
+    {id:'feather',name:'Raven feather',icon:'»',text:'Dash recovery takes 18% less time.',tag:'PASSIVE',rarity:'common',cost:16,apply:p=>p.dashCooldown*=.82},
     ...weaponChoices.map(w=>({...w,id:'tome_'+w.weapon,tag:'SPELL TOME',rarity:'rare',cost:24})),
-    ...Object.entries(RELICS).map(([id,r])=>({...r,id:'relic_'+id,tag:'EVOLUTION RELIC',rarity:'epic',valid:p=>!p.relics[id],apply:p=>{p.relics[id]=true;r.apply(p);p.checkEvolutions();}}))
+    ...talentChoices.map(t=>({...t,tag:'TALENT SCROLL',rarity:'rare',cost:23})),
+    ...masteryChoices.map(t=>({...t,tag:'MASTERY SCROLL',rarity:'epic',cost:35})),
+    ...Object.entries(RELICS).map(([id,r])=>({...r,id:'relic_'+id,tag:'EVOLUTION RELIC',rarity:'epic',valid:p=>!p.relics[id]&&p.level>=(r.level||1),apply:p=>{p.relics[id]=true;r.apply(p);p.checkEvolutions();}})),
+    ...Object.entries(N.OATHS).map(([id,o])=>({id:'oath_'+id,...o,tag:'NEXT-WAVE OATH',rarity:'rare',cost:14,valid:p=>p.progress.preparedOath!==id,text:o.text+' Replaces your prepared oath; one oath per wave.',apply:p=>p.progress.preparedOath=id}))
   ];
   class UI {
     constructor(game){
@@ -67,7 +76,7 @@
       this.title();
     }
     describe(item){return typeof item.text==='function'?item.text(this.game.player):item.text;}
-    resetShop(){this.slots=Array.from({length:4},()=>({item:null,locked:false,price:0}));this.rolls=0;}
+    resetShop(){this.slots=Array.from({length:4},()=>({item:null,locked:false,price:0,sold:false}));this.rolls=0;}
     show(html,focus=true){
       this.transition?.cancel();
       this.menu.dataset.screen=this.game.state;
@@ -82,21 +91,21 @@
     on(selector,fn){this.menu.querySelector(selector)?.addEventListener('click',e=>{this.game.combat.sound('ui');fn(e);});}
     audioControls(){
       const engine=this.game.combat.audioEngine;
-      return `<div class="audio-settings"><label for="volume">SOUND VOLUME <strong id="volume-value">${Math.round(engine.volume*100)}%</strong><input id="volume" type="range" min="0" max="100" step="1" value="${Math.round(engine.volume*100)}" aria-label="Sound volume"></label><button class="secondary" id="ambience">AMBIENCE: ${engine.ambience?'ON':'OFF'}</button><button class="secondary" id="test-sound">TEST SOUND</button></div>`;
+      return `<div class="audio-settings"><label for="volume">SOUND VOLUME <strong id="volume-value">${Math.round(engine.volume*100)}%</strong><input id="volume" type="range" min="0" max="100" step="1" value="${Math.round(engine.volume*100)}" aria-label="Sound volume"></label><button class="secondary" id="ambience">TONAL AMBIENCE: ${engine.ambience?'ON':'OFF'}</button><button class="secondary" id="test-sound">TEST SOUND</button></div>`;
     }
     bindAudioControls(){
       const g=this.game,engine=g.combat.audioEngine;
       this.menu.querySelector('#volume')?.addEventListener('input',e=>{
         engine.setVolume(Number(e.currentTarget.value)/100);this.menu.querySelector('#volume-value').textContent=`${Math.round(engine.volume*100)}%`;g.saveSettings();
       });
-      this.on('#ambience',e=>{engine.setAmbience(!engine.ambience);g.saveSettings();e.currentTarget.textContent=`AMBIENCE: ${engine.ambience?'ON':'OFF'}`;});
+      this.on('#ambience',e=>{engine.setAmbience(!engine.ambience);g.saveSettings();e.currentTarget.textContent=`TONAL AMBIENCE: ${engine.ambience?'ON':'OFF'}`;});
       this.on('#test-sound',()=>{g.combat.soundEnabled=true;g.combat.enableAudio('choose');g.saveSettings();const b=this.menu.querySelector('#sound');if(b)b.textContent='SOUND: ON';});
     }
     escape(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
     title(){
       const g=this.game;if(g.state==='paused')g.checkpoint('wave');g.state='title';g.input.clear();
       const profile=g.save.data.profile,checkpoint=g.save.data.checkpoint,slot=g.save.active;
-      this.show(`<div class="title-crest"><div class="title-art" aria-hidden="true"><span>☾</span><img src="${window.NOCTURNE_ASSETS.witch_SE}" alt=""></div><div><p class="eyebrow">ARCANE HORIZONS · ${N.VERSION}</p><h1 id="menu-title">Nocturne</h1><p class="subtitle-name">Witch of Ash</p><p class="subtitle title-sub">A spell is power.<br>Survival is knowing when to move.</p></div></div>
+      this.show(`<div class="title-crest"><div class="title-art" aria-hidden="true"><span>☾</span><img src="${window.NOCTURNE_ASSETS.witch_SE}" alt=""></div><div><p class="eyebrow">LIVING GRIMOIRE · ${N.VERSION}</p><h1 id="menu-title">Nocturne</h1><p class="subtitle-name">Witch of Ash</p><p class="subtitle title-sub">A spell is power.<br>Survival is knowing when to move.</p></div></div>
         <button class="active-save" id="saves"><span>◈ ${this.escape(slot.name)}</span><small>${checkpoint?`WAVE ${checkpoint.wave} · LEVEL ${checkpoint.player.level}`:'A NEW CHAPTER'} · ${g.save.data.slots.length} SAVE${g.save.data.slots.length===1?'':'S'} · MANAGE ↗</small></button>
         <div class="coven-grid" role="group" aria-label="Choose your starting witch">${Object.entries(N.COVENS).map(([id,c])=>`<button class="coven-choice ${g.selectedCoven===id?'chosen':''}" data-coven="${id}" aria-pressed="${g.selectedCoven===id}"><span aria-hidden="true" style="color:${c.color}">${c.icon}</span><strong>${c.name}</strong><small>${c.text}</small></button>`).join('')}</div>
         <div class="shop-actions">${checkpoint?`<button class="primary" id="continue">CONTINUE · ${this.escape(slot.name)}</button>`:''}<button class="${checkpoint?'secondary':'primary'}" id="begin">${checkpoint?'NEW RITUAL · NEW SAVE':'ENTER THE HOLLOW'} ↗</button></div>
@@ -140,13 +149,13 @@
       document.getElementById('zoom-value').textContent=`${Math.round(g.userZoom*100)}%`;
       document.getElementById('zoom-hud').hidden=['title','chronicle','saves'].includes(g.state);
       document.getElementById('save-label').textContent=g.save.active.name;
-      h.gold.textContent=p.gold;h.kills.textContent=p.kills;
+      h.gold.textContent=N.fmt(p.gold);h.kills.textContent=N.fmt(p.kills);
       h['wave-fill'].style.width=`${N.clamp(g.waveTime/g.waveDuration,0,1)*100}%`;
-      h['health-fill'].style.width=`${p.hp/p.maxHp*100}%`;h['health-text'].textContent=`${Math.ceil(p.hp)} / ${p.maxHp}`;
+      h['health-fill'].style.width=`${p.hp/p.maxHp*100}%`;h['health-text'].textContent=`${N.fmt(Math.ceil(p.hp))} / ${N.fmt(p.maxHp)}${p.progress.shield>0?' +'+N.fmt(p.progress.shield)+' SHIELD':''}`;
       h['level-label'].textContent=`LEVEL ${String(p.level).padStart(2,'0')}`;h['xp-text'].textContent=`${p.xp} / ${p.xpNeeded} XP`;h['xp-fill'].style.width=`${p.xp/p.xpNeeded*100}%`;
       h['dash-fill'].style.width=`${(1-p.dashRemaining/p.dashCooldown)*100}%`;h['dash-text'].textContent=p.dashRemaining>0?`${p.dashRemaining.toFixed(1)}s`:'READY · SPACE';
       h['wave-status'].textContent=g.state==='shop'?'A MOMENT OF RESPITE':g.state==='paused'?'RITUAL PAUSED':g.boss?.alive?'WARDEN HUNT':g.biome().name.toUpperCase();
-      h['biome-name'].textContent=N.COVENS[p.coven].name.toUpperCase();h.performance.textContent=`${Math.round(Math.min(240,g.fps))} FPS · ${g.quality.toUpperCase()}`;
+      h['biome-name'].textContent=N.COVENS[p.coven].name.toUpperCase();h.performance.textContent=`${Math.round(Math.min(240,g.fps))} FPS · ${g.quality.toUpperCase()} · FOES ~L${N.fmt(N.EnemyDirector.target(g))}`;
       const belt=Object.entries(N.WEAPONS).map(([id,w])=>`<span class="belt-spell ${p.weapons[id]?'learned':''} ${p.evolved(id)?'evolved':''}" title="${w.name}: ${p.weapons[id]?'rank '+p.weapons[id]:'not learned'}"><i>${w.icon}</i><small>${p.evolved(id)?'✦':p.weapons[id]||'—'}</small></span>`).join('');
       if(h['spell-belt'].innerHTML!==belt)h['spell-belt'].innerHTML=belt;
       const boss=g.boss;h['boss-hud'].hidden=!boss?.alive||['title','chronicle','saves'].includes(g.state);
@@ -159,18 +168,14 @@
       this.game.combat.effect('rune',this.game.player.x,this.game.player.y-6,0,0,95,'#d2bfeb',.65);
       this.game.state='levelup';this.game.input.clear();this.selected=false;
       const pool=UPGRADES.filter(u=>!u.valid||u.valid(this.game.player));
-      if(pool.length<3)pool.push(...[
-        {id:'dividend',name:'A hollow dividend',icon:'◈',tag:'GOLD',text:'Gain 14 gold. Your permanent stats are at their limits.',apply:p=>this.game.earnGold(14)},
-        {id:'mending',name:'Mending moon',icon:'♡',tag:'RESTORATION',text:'Restore 30 vitality; gain 10 gold if already healthy.',apply:p=>{if(p.hp>=p.maxHp)this.game.earnGold(10);else p.hp=Math.min(p.maxHp,p.hp+30);}},
-        {id:'respite',name:'A brief respite',icon:'☽',tag:'RECOVERY',text:'Restore 15 vitality and gain 8 gold.',apply:p=>{p.hp=Math.min(p.maxHp,p.hp+15);this.game.earnGold(8);}}]);
-      const spells=N.shuffle(pool.filter(u=>u.weapon)),others=N.shuffle(pool.filter(u=>!u.weapon));
+      const spells=N.shuffle(pool.filter(u=>u.weapon)),fresh=spells.filter(u=>!(this.game.player.weapons[u.weapon]||0)).sort((a,b)=>N.WEAPONS[b.weapon].unlock-N.WEAPONS[a.weapon].unlock),others=N.shuffle(pool.filter(u=>!u.weapon));
       // Always offer an eligible spell path, alongside two distinct alternatives.
-      this.choices=spells.length?N.shuffle([spells[0],...N.shuffle([...spells.slice(1),...others]).slice(0,2)]):others.slice(0,3);
+      this.choices=spells.length?N.shuffle([fresh[0]||spells[0],...N.shuffle([...spells.filter(u=>u!==(fresh[0]||spells[0])),...others]).slice(0,2)]):others.slice(0,3);
       this.renderLevel();
     }
     renderLevel(){
       const p=this.game.player,cost=5+p.level;
-      this.show(`<p class="eyebrow">LEVEL ${p.level} · A SOUL REMEMBERS</p><h2 id="menu-title">Choose your awakening</h2><p class="subtitle">Build a spell. Find its relic. Become something the night fears.</p><div class="cards">${this.choices.map((u,i)=>`<button class="card choice ${u.weapon?'rarity-rare':''}" data-choice="${i}"><span class="card-icon" aria-hidden="true">${u.icon}</span><h3>${u.name}</h3><p>${this.describe(u)}</p><span class="tag">${u.weapon?`RANK ${p.weapons[u.weapon]+1} / 4`:u.tag} · ${i+1}</span></button>`).join('')}</div><div class="shop-actions"><button class="secondary" id="level-reroll" ${p.gold<cost?'disabled':''}>NEW GIFTS · ◈ ${cost}</button><button class="text-button" id="recipe">VIEW GRIMOIRE · I</button></div><p class="hint">${p.pendingLevels>1?`${p.pendingLevels} awakenings waiting · `:''}Choose a card or press 1, 2, or 3. Time is paused.</p>`);
+      this.show(`<p class="eyebrow">LEVEL ${p.level} · A SOUL REMEMBERS</p><h2 id="menu-title">Choose your awakening</h2><p class="subtitle">New spells unlock at levels 4, 7, 10 and 14. Spell ranks and talents keep growing.</p><div class="cards">${this.choices.map((u,i)=>`<button class="card choice ${u.weapon?'rarity-rare':''}" data-choice="${i}"><span class="card-icon" aria-hidden="true">${u.icon}</span><h3>${u.name}</h3><p>${this.describe(u)}</p><span class="tag">${u.weapon?`RANK ${(p.weapons[u.weapon]||0)+1}`:u.tag} · ${i+1}</span></button>`).join('')}</div><div class="shop-actions"><button class="secondary" id="level-reroll" ${p.gold<cost?'disabled':''}>NEW GIFTS · ◈ ${cost}</button><button class="text-button" id="recipe">VIEW GRIMOIRE · I</button></div><p class="hint">${p.pendingLevels>1?`${p.pendingLevels} awakenings waiting · `:''}Choose a card or press 1, 2, or 3. Time is paused.</p>`);
       this.menu.querySelectorAll('[data-choice]').forEach(b=>b.addEventListener('click',()=>this.chooseLevel(Number(b.dataset.choice))));
       this.on('#level-reroll',()=>{if(p.gold>=cost&&this.game.state==='levelup'){p.gold-=cost;this.levelUp();}});
       this.on('#recipe',()=>this.toggleGrimoire());
@@ -185,13 +190,15 @@
       const used=new Set(this.slots.filter(s=>s!==slot&&s.item).map(s=>s.item.id));
       const all=this.eligibleItems(),unique=all.filter(item=>!used.has(item.id));slot.item=N.pick(unique.length?unique:all);
       if(!slot.item){slot.price=0;slot.locked=false;return;}
-      slot.price=slot.item.cost+Math.floor((this.game.wave-1)*1.5);slot.locked=false;
+      slot.price=slot.item.cost+Math.floor((this.game.wave-1)*1.5);slot.locked=false;slot.sold=false;
     }
     openShop(){
       this.game.state='shop';this.game.input.clear();this.rolls=0;
-      for(const slot of this.slots)if(!slot.locked||!slot.item)this.rollSlot(slot);
+      for(const slot of this.slots)if(!slot.locked||!slot.item||slot.item.valid&&!slot.item.valid(this.game.player))this.rollSlot(slot);
       this.renderShop();this.game.checkpoint('shop');
     }
+    refillCost(){return 2+Math.ceil(this.game.wave*.6)+this.slots.filter(s=>!s.item).length*2;}
+    refill(){const g=this.game,cost=this.refillCost();if(g.state!=='shop'||g.player.gold<cost||this.slots.every(s=>s.item))return;g.player.gold-=cost;for(const s of this.slots)if(!s.item)this.rollSlot(s);this.renderShop('[data-refill]');g.checkpoint('shop');g.combat.sound('reroll');}
     rerollCost(){return 3+this.game.wave+this.rolls*2;}
     reroll(){
       const g=this.game,cost=this.rerollCost();if(g.state!=='shop'||g.player.gold<cost||this.slots.every(s=>s.locked))return;
@@ -201,20 +208,20 @@
     toggleLock(index){const s=this.slots[index];if(this.game.state!=='shop'||!s?.item)return;s.locked=!s.locked;this.game.combat.sound('lock');this.renderShop(`[data-lock="${index}"]`);this.game.checkpoint('shop');}
     buy(index){
       const g=this.game,s=this.slots[index];if(g.state!=='shop'||!s?.item||g.player.gold<s.price)return;
-      if(s.item.valid&&!s.item.valid(g.player)){this.toast('This gift has reached its limit. Unlock or reroll its slot.');return;}
-      const name=s.item.name;g.player.gold-=s.price;s.item.apply(g.player);N.balancePlayer(g.player);g.player.upgrades.push(s.item.id);s.item=null;s.locked=false;
+      if(s.item.valid&&!s.item.valid(g.player)){this.toast('This gift is not available for this build right now. Unlock or reroll it.');return;}
+      const name=s.item.name;g.player.gold-=s.price;s.item.apply(g.player);N.balancePlayer(g.player);g.player.upgrades.push(s.item.id);s.item=null;s.locked=false;s.sold=true;
       g.combat.sound('buy');
       this.renderShop('[data-start]');g.checkpoint('shop');this.toast(`${name} acquired`);
     }
     statStrip(){
-      const p=this.game.player;return `<div class="stat-strip"><span>DAMAGE <b>${p.damage.toFixed(1)}</b></span><span>CASTS / SEC <b>${(1/p.attackInterval).toFixed(2)}</b></span><span>ORBS <b>${p.projectileCount}</b></span><span>CRITICAL <b>${Math.round(p.critChance*100)}%</b></span><span>ARMOR <b>${Math.round(p.armor*100)}%</b></span><span>RANGE <b>430</b></span><span>DASH <b>${p.dashCooldown.toFixed(1)}s</b></span></div>`;
+      const p=this.game.player;return `<div class="stat-strip"><span>DAMAGE <b>${p.damage.toFixed(1)}</b></span><span>CASTS / SEC <b>${(1/p.attackInterval).toFixed(2)}</b></span><span>ORBS <b>${p.projectileCount}</b></span><span>CRITICAL <b>${Math.round(p.critChance*100)}%</b></span><span>ARMOR <b>${Math.round(N.armorReduction(p)*100)}%</b></span><span>RANGE <b>${N.fmt(N.boltRange(p))}</b></span><span>DASH <b>${p.dashCooldown.toFixed(1)}s</b></span></div>`;
     }
     renderShop(focus){
       const g=this.game,p=g.player,summary=g.waveSummary;
-      this.show(`<p class="eyebrow">WAVE ${String(g.wave).padStart(2,'0')} COMPLETE</p><h2 id="menu-title">The midnight merchant</h2><p class="subtitle">${summary?`${summary.kills} souls banished · ◈ ${summary.bonus} wave reward${summary.clean?' (includes Flawless +6)':''}`:'A little power. A little longer in the dark.'}</p><div class="shop-top"><span>YOUR GOLD <strong>◈ ${p.gold}</strong></span><span>NEXT WAVE <strong>${g.wave+1}${(g.wave+1)%5===0?' · WARDEN':''}</strong></span></div><div class="cards shop-cards">${this.slots.map((s,i)=>s.item?`<article class="card rarity-${s.item.rarity||'common'} ${s.locked?'locked':''}"><span class="card-icon" aria-hidden="true">${s.item.icon}</span><span class="tag">${s.item.tag}</span><h3>${s.item.name}</h3><p>${this.describe(s.item)}</p><div class="card-actions"><button class="buy" data-buy="${i}" aria-label="Buy ${s.item.name} for ${s.price} gold" ${p.gold<s.price||(s.item.valid&&!s.item.valid(p))?'disabled':''}>◈ ${s.price} · BUY</button><button class="lock" data-lock="${i}" aria-label="${s.locked?'Unlock':'Lock'} ${s.item.name}" aria-pressed="${s.locked}">${s.locked?'LOCKED':'LOCK'}</button></div></article>`:`<article class="card"><span class="card-icon" aria-hidden="true">✓</span><h3>A pact is made</h3><p>This gift is yours.</p><span class="sold">SOLD</span></article>`).join('')}</div>${this.statStrip()}<div class="shop-actions"><button class="secondary" data-reroll ${p.gold<this.rerollCost()||this.slots.every(s=>s.locked)?'disabled':''}>REROLL · ◈ ${this.rerollCost()}</button><button class="secondary" id="inventory">GRIMOIRE · I</button><button class="secondary" id="save-quit">SAVE &amp; TITLE</button><button class="primary" data-start>START WAVE ${g.wave+1} ↗</button></div><p class="hint">Locked gifts keep their item and price through rerolls and later shops.<br>${g.save.available?this.escape(g.save.active.name)+' saved automatically.':'Storage is unavailable. This session is not saved.'} A new wave restores 12% maximum vitality.</p>`,!focus);
+      this.show(`<p class="eyebrow">WAVE ${String(g.wave).padStart(2,'0')} COMPLETE</p><h2 id="menu-title">The midnight merchant</h2><p class="subtitle">${summary?`${summary.kills} souls banished · ◈ ${summary.bonus} wave reward${summary.clean?' (includes Flawless +6)':''}`:'A little power. A little longer in the dark.'}</p><div class="shop-top"><span>YOUR GOLD <strong>◈ ${p.gold}</strong></span><span>NEXT WAVE <strong>${g.wave+1}${(g.wave+1)%5===0?' · WARDEN':''}</strong></span></div><div class="cards shop-cards">${this.slots.map((s,i)=>s.item?`<article class="card rarity-${s.item.rarity||'common'} ${s.locked?'locked':''}"><span class="card-icon" aria-hidden="true">${s.item.icon}</span><span class="tag">${s.item.tag}</span><h3>${s.item.name}</h3><p>${this.describe(s.item)}</p><div class="card-actions"><button class="buy" data-buy="${i}" aria-label="Buy ${s.item.name} for ${s.price} gold" ${p.gold<s.price||(s.item.valid&&!s.item.valid(p))?'disabled':''}>◈ ${s.price} · BUY</button><button class="lock" data-lock="${i}" aria-label="${s.locked?'Unlock':'Lock'} ${s.item.name}" aria-pressed="${s.locked}">${s.locked?'LOCKED':'LOCK'}</button></div></article>`:`<article class="card"><span class="card-icon" aria-hidden="true">✓</span><h3>A pact is made</h3><p>${s.sold?'This gift is yours. Refill this slot or wait for the next merchant.':'New stock is available through refill.'}</p><span class="sold">${s.sold?'SOLD':'AWAITING STOCK'}</span></article>`).join('')}</div><div class="prepared-oath">${p.progress.preparedOath?`${N.OATHS[p.progress.preparedOath].icon} PREPARED: ${N.OATHS[p.progress.preparedOath].name} · ${N.OATHS[p.progress.preparedOath].text}`:'NO OATH PREPARED · Choose a temporary blessing for the next wave.'}</div>${this.statStrip()}<div class="shop-actions"><button class="secondary" data-refill ${p.gold<this.refillCost()||this.slots.every(s=>s.item)?'disabled':''}>REFILL EMPTY · ◈ ${this.refillCost()}</button><button class="secondary" data-reroll ${p.gold<this.rerollCost()||this.slots.every(s=>s.locked)?'disabled':''}>REROLL · ◈ ${this.rerollCost()}</button><button class="secondary" id="inventory">GRIMOIRE · I</button><button class="secondary" id="save-quit">SAVE &amp; TITLE</button><button class="primary" data-start>START WAVE ${g.wave+1} ↗</button></div><p class="hint">Locked gifts keep their item and price through rerolls and later shops.<br>${g.save.available?this.escape(g.save.active.name)+' saved automatically.':'Storage is unavailable. This session is not saved.'} A new wave restores 12% maximum vitality.</p>`,!focus);
       this.menu.querySelectorAll('[data-buy]').forEach(b=>b.addEventListener('click',()=>this.buy(Number(b.dataset.buy))));
       this.menu.querySelectorAll('[data-lock]').forEach(b=>b.addEventListener('click',()=>this.toggleLock(Number(b.dataset.lock))));
-      this.on('#save-quit',()=>{g.checkpoint('shop');this.title();});this.on('[data-reroll]',()=>this.reroll());this.on('[data-start]',()=>{if(g.state==='shop')g.startWave();});this.on('#inventory',()=>this.toggleGrimoire());
+      this.on('[data-refill]',()=>this.refill());this.on('#save-quit',()=>{g.checkpoint('shop');this.title();});this.on('[data-reroll]',()=>this.reroll());this.on('[data-start]',()=>{if(g.state==='shop')g.startWave();});this.on('#inventory',()=>this.toggleGrimoire());
       if(focus){const b=this.menu.querySelector(focus);if(b&&!b.disabled)b.focus({preventScroll:true});else this.menu.querySelector('[data-start]')?.focus({preventScroll:true});}
     }
     toggleGrimoire(){
@@ -227,12 +234,15 @@
       if(!['playing','paused','shop','levelup'].includes(g.state))return;
       this.grimoireFrom=g.state;g.state='grimoire';g.input.clear();
       const p=g.player;
-      this.show(`<p class="eyebrow">${N.COVENS[p.coven].name.toUpperCase()} · LEVEL ${p.level}</p><h2 id="menu-title">The living grimoire</h2>${this.statStrip()}<div class="grimoire-grid">${Object.entries(N.WEAPONS).map(([id,w])=>`<article class="spell-entry ${p.evolved(id)?'awakened':''}"><span class="card-icon" style="color:${w.color}">${w.icon}</span><div><span class="tag">${p.evolved(id)?'EVOLVED':p.weapons[id]?`RANK ${p.weapons[id]} / 4`:'NOT LEARNED'}</span><h3>${p.evolved(id)?w.evolution:w.name}</h3><p>${p.evolved(id)?w.evolved:w.text}</p><div class="recipe"><span class="${p.weapons[id]===4?'met':''}">${w.name} IV</span> + <span class="${p.relics[w.relic]?'met':''}">${RELICS[w.relic].name}</span> → ${w.evolution}</div><small>${Math.round(g.stats.weapons[id]).toLocaleString('en-US')} damage this ritual</small></div></article>`).join('')}</div><div class="owned-relics">${Object.entries(RELICS).map(([id,r])=>`<span class="${p.relics[id]?'owned':''}">${r.icon} ${r.name}${p.relics[id]?' ✓':''}</span>`).join('')}</div><p class="hint">${g.stats.elites} elites · ${g.stats.bosses} Wardens · ${g.stats.dashes} dashes · ◈ ${g.stats.goldEarned} earned<br>Rank IV + the matching relic evolves a spell automatically. Either purchase order works.</p><button class="primary" id="close-grimoire">RETURN · I / ESC</button>`);this.on('#close-grimoire',()=>this.toggleGrimoire());
+      this.show(`<p class="eyebrow">${N.COVENS[p.coven].name.toUpperCase()} · LEVEL ${p.level}</p><h2 id="menu-title">The living grimoire</h2>${this.statStrip()}<p class="hint">Every learned spell is active. Ranks have no ceiling; rank IV + a relic unlocks evolution.</p>
+        <div class="grimoire-grid">${Object.entries(N.WEAPONS).map(([id,w])=>`<article class="spell-entry ${p.evolved(id)?'awakened':''} ${p.level<w.unlock?'undiscovered':''}"><span class="card-icon" style="color:${w.color}">${w.icon}</span><div><span class="tag">${p.level<w.unlock?'OPENS AT LEVEL '+w.unlock:p.evolved(id)?'EVOLVED · RANK '+p.weapons[id]:(p.weapons[id]||0)?'RANK '+p.weapons[id]:'READY TO LEARN'}</span><h3>${p.evolved(id)?w.evolution:w.name}</h3><p>${p.evolved(id)?w.evolved:w.text}</p><div class="recipe"><span class="${(p.weapons[id]||0)>=4?'met':''}">Rank IV+</span> + <span class="${p.relics[w.relic]?'met':''}">${RELICS[w.relic].name}</span></div><small>${N.fmt(g.stats.weapons[id]||0)} damage · Mastery ${p.progress.mastery[id]||0}</small></div></article>`).join('')}</div>
+        <h3 class="section-title">Your spellcraft</h3><div class="talent-grid">${Object.entries(N.TALENTS).map(([id,t])=>`<article><span>${t.icon}</span><strong>${t.name} · ${p.progress.talents[id]||0}</strong><p>${t.text}</p><small>${p.level<t.level?'OPENS AT LEVEL '+t.level:'SCROLLS & LEVEL GIFTS'}</small></article>`).join('')}</div>
+        <h3 class="section-title">Creatures of the Hollow</h3><p class="hint">Encounter mix: 35% weaker, 50% peers, up to 15% veterans. Target level now: ${N.EnemyDirector.target(g)}.<br>Veterans are kept to a minority of the living enemies. Levels and stats continue growing.</p><div class="bestiary-grid">${Object.entries(N.ENEMY_TYPES).map(([id,t])=>`<article><img src="${window.NOCTURNE_ASSETS[id]}" alt=""><strong>${id.charAt(0).toUpperCase()+id.slice(1)}</strong><small>${id==='hound'?'Telegraphed charge':id==='cultist'?'Ranged staff attack':id==='warden'?'Every fifth wave':id==='gargoyle'?'Heavy winged hunter':id==='slime'?'Slow pursuing swarm':'Fast skeletal pursuer'}</small></article>`).join('')}</div><div class="trait-list">${Object.entries(N.ENEMY_TRAITS).filter(([id])=>id!=='none').map(([,t])=>`<p><b style="color:${t.color}">${t.icon} ${t.name}</b> ${t.text}</p>`).join('')}</div><p class="hint">${g.stats.elites} elites · ${g.stats.bosses} Wardens · ${g.stats.dashes} dashes · ◈ ${N.fmt(g.stats.goldEarned)} earned</p><button class="primary" id="close-grimoire">RETURN · I / ESC</button>`);this.on('#close-grimoire',()=>this.toggleGrimoire());
     }
     togglePause(){if(['saves','chronicle'].includes(this.game.state))this.title();else if(this.game.state==='grimoire')this.toggleGrimoire();else if(this.game.state==='playing')this.pause();else if(this.game.state==='paused')this.resume();}
     pause(){
       const g=this.game;if(g.state!=='playing')return;g.checkpoint('wave');g.state='paused';g.input.clear();
-      this.show(`<p class="eyebrow">THE NIGHT HOLDS ITS BREATH</p><h2 id="menu-title">Ritual paused</h2><p class="subtitle">${this.escape(g.save.active.name)} · ${g.save.available?'Your world is saved.':'Storage unavailable; export from the title screen.'}</p><button class="primary" id="resume">RESUME RITUAL</button><div class="rule"></div><div class="shop-actions"><button class="secondary" id="sound">SOUND: ${g.combat.soundEnabled?'ON':'OFF'}</button><button class="secondary" id="effects">REDUCED MOTION: ${g.reducedMotion?'ON':'OFF'}</button><button class="secondary" id="quality">QUALITY: ${g.quality.toUpperCase()}</button><button class="secondary" id="inventory">GRIMOIRE · I</button></div>${this.audioControls()}<div class="zoom-settings"><label for="camera-zoom">CAMERA ZOOM <strong>${Math.round(g.userZoom*100)}%</strong></label><input id="camera-zoom" type="range" min="65" max="155" value="${Math.round(g.userZoom*100)}"><small>Scroll / + / − to zoom · 0 to reset. Spell ranges stay fixed.</small></div><p class="hint">WASD / arrows / touch stick: move · SPACE / SHIFT: dash<br>I: grimoire · ESC / P: resume · Focus loss pauses the game<br>Curses appear from wave 3: leave the marked circle before it ignites.<br>Damage caps at 95 · Cast interval 0.24s · Armor / crit 45% · Regen 1.2/s</p><button class="text-button" id="title">SAVE &amp; RETURN TO TITLE</button>`);
+      this.show(`<p class="eyebrow">THE NIGHT HOLDS ITS BREATH</p><h2 id="menu-title">Ritual paused</h2><p class="subtitle">${this.escape(g.save.active.name)} · ${g.save.available?'Your world is saved.':'Storage unavailable; export from the title screen.'}</p><button class="primary" id="resume">RESUME RITUAL</button><div class="rule"></div><div class="shop-actions"><button class="secondary" id="sound">SOUND: ${g.combat.soundEnabled?'ON':'OFF'}</button><button class="secondary" id="effects">REDUCED MOTION: ${g.reducedMotion?'ON':'OFF'}</button><button class="secondary" id="quality">QUALITY: ${g.quality.toUpperCase()}</button><button class="secondary" id="inventory">GRIMOIRE · I</button></div>${this.audioControls()}<div class="zoom-settings"><label for="camera-zoom">CAMERA ZOOM <strong>${Math.round(g.userZoom*100)}%</strong></label><input id="camera-zoom" type="range" min="65" max="155" value="${Math.round(g.userZoom*100)}"><small>Scroll / + / − to zoom · 0 to reset. Spell ranges stay fixed.</small></div><p class="hint">WASD / arrows / touch stick: move · SPACE / SHIFT: dash<br>I: grimoire · ESC / P: resume · Focus loss pauses the game<br>Curses appear from wave 3: leave the marked circle before it ignites.<br>Endless growth · Armor uses a rating curve · 100%+ critical chance enables multi-crits</p><button class="text-button" id="title">SAVE &amp; RETURN TO TITLE</button>`);
       this.on('#resume',()=>this.resume());this.on('#inventory',()=>this.toggleGrimoire());this.on('#title',()=>this.title());
       this.on('#sound',()=>{g.combat.soundEnabled=!g.combat.soundEnabled;if(g.combat.soundEnabled)g.combat.enableAudio();g.saveSettings();this.pauseRefresh();});
       this.on('#effects',()=>{g.reducedMotion=!g.reducedMotion;g.saveSettings();this.pauseRefresh();});

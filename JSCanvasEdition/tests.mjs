@@ -17,15 +17,15 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/director.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
 let passed=0;
 function test(name,fn){memory.clear();seed=271828;fn();passed++;console.log(`PASS ${name}`);}
 
-test('all 33 procedural PNG assets are real, encoded images',()=>{
-  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,33);
+test('all 39 procedural PNG assets are real, encoded images',()=>{
+  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,39);
   for(const src of Object.values(sandbox.NOCTURNE_ASSETS))assert.equal(Buffer.from(src.split(',')[1],'base64').subarray(1,4).toString(),'PNG');
   assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_atlas_')).map(([,v])=>v)).size,8);
 });
@@ -164,13 +164,13 @@ test('dash is directional, grants invulnerability and respects cooldown and paus
   g.input.clear();g.player.dashRemaining=0;g.player.dashTimer=0;g.ui.pause();assert.equal(g.player.dash(),false);
   g.ui.resume();assert.equal(g.player.dash(),true);assert.equal(g.player.dashX,1);
 });
-test('all four spell evolutions require both rank IV and their own relic, in either order',()=>{
+test('all eight spell evolutions require both rank IV and their own relic, in either order',()=>{
   for(const [id,w] of Object.entries(N.WEAPONS))for(const first of ['rank','relic']){
-    const g=create();g.reset();const p=g.player;
+    const g=create();g.reset();const p=g.player;p.level=Math.max(p.level,w.unlock);
     if(first==='rank'){p.weapons[id]=4;assert.equal(p.evolved(id),false);p.relics[w.relic]=true;}
     else{p.relics[w.relic]=true;p.weapons[id]=3;assert.equal(p.evolved(id),false);p.upgradeWeapon(id);}
     p.checkEvolutions();assert.equal(p.evolved(id),true);assert.ok(g.save.data.profile.achievements.includes('evolution'));
-    assert.equal(p.upgradeWeapon(id),false);assert.equal(p.weapons[id],4);
+    assert.equal(p.upgradeWeapon(id),true);assert.equal(p.weapons[id],5);
   }
 });
 test('lightning chains to distinct living enemies and reports only actual damage',()=>{
@@ -249,7 +249,7 @@ test('merchant checkpoint retains sold slots, lock prices, reroll cost and exact
 });
 test('checkpoint validation rejects incomplete, nonfinite and out-of-range data',()=>{
   const g=create();g.reset();const valid=JSON.parse(JSON.stringify(g.save.data.checkpoint));assert.ok(g.save.validCheckpoint(valid));
-  const edits=[c=>c.player.hp=NaN,c=>c.player.damage=-1,c=>c.player.armor=1,c=>c.player.weapons.nova=9,c=>c.player.dashCooldown=0,c=>c.player.pierce=8,c=>c.player.projectileCount=1.5,c=>c.player.gold=-5,c=>c.player.projectileSpeed=0,c=>c.slots[0].price=-1,c=>c.stats.weapons.nova=NaN,c=>c.coven='unknown',c=>c.player.pendingLevels=1,c=>delete c.player.relics];
+  const edits=[c=>c.player.hp=NaN,c=>c.player.damage=-1,c=>c.player.armor=-1,c=>c.player.weapons.nova=-1,c=>c.player.dashCooldown=0,c=>c.player.pierce=-1,c=>c.player.projectileCount=1.5,c=>c.player.gold=-5,c=>c.player.projectileSpeed=0,c=>c.slots[0].price=-1,c=>c.stats.weapons.nova=NaN,c=>c.coven='unknown',c=>c.player.pendingLevels=1,c=>delete c.player.relics];
   for(const edit of edits){const c=JSON.parse(JSON.stringify(valid));edit(c);assert.equal(g.save.validCheckpoint(c),false);}
   memory.set(g.save.key,'{bad json');const broken=create();assert.equal(broken.save.data.checkpoint,null);broken.reset();assert.equal(broken.state,'playing');
 });
@@ -398,9 +398,9 @@ test('cosmetic draw frequency and extra particles do not change gameplay randomn
   }
   assert.equal(simulate(false),simulate(true));
 });
-test('all 25 sound recipes schedule finite, bounded voices and clean up their nodes',()=>{
+test('all 29 sound recipes schedule finite, bounded voices and clean up their nodes',()=>{
   const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;engine.attach(a);engine.setEnabled(true);
-  assert.equal(Object.keys(N.AudioEngine.SOUNDS).length,25);
+  assert.equal(Object.keys(N.AudioEngine.SOUNDS).length,29);
   for(const kind of Object.keys(N.AudioEngine.SOUNDS)){engine.play(kind);assert.ok(engine.voices.size<=28);}
   assert.ok(engine.voices.size>0);engine.stopVoices();assert.equal(engine.voices.size,0);
   engine.dispose();assert.equal(engine.ambientSources.length,0);
@@ -417,7 +417,7 @@ test('sound limits are per event and important warnings take priority over foots
 test('volume, ambience and foreground muting do not change player state',()=>{
   const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;g.reset();const hp=g.player.hp;
   engine.attach(a);engine.setEnabled(true);engine.setVolume(3);assert.equal(engine.volume,1);engine.setVolume(-2);assert.equal(engine.volume,0);
-  engine.setVolume(.35);engine.transport(true);assert.ok(engine.ambient.gain.value>0);engine.setAmbience(false);assert.equal(engine.ambient.gain.value,0);
+  engine.setVolume(.35);engine.setAmbience(true);engine.transport(true);assert.ok(engine.ambient.gain.value>0);engine.setAmbience(false);assert.equal(engine.ambient.gain.value,0);
   engine.play('hurt');engine.setForeground(false);assert.equal(engine.voices.size,0);assert.equal(engine.master.gain.value,0);assert.equal(engine.play('fire'),false);
   engine.setForeground(true);assert.ok(engine.master.gain.value>0);assert.equal(g.player.hp,hp);
 });
@@ -425,7 +425,7 @@ test('new sound settings save and legacy version 2 checkpoints remain usable',()
   const g=create();g.reset();g.combat.audioEngine.setVolume(.42);g.combat.audioEngine.setAmbience(false);g.saveSettings();
   const loaded=create();assert.equal(loaded.combat.audioEngine.volume,.42);assert.equal(loaded.combat.audioEngine.ambience,false);assert.equal(loaded.continueRun(),true);
   const old=JSON.parse(memory.get(g.save.key));delete old.settings.volume;delete old.settings.ambience;old.settings.sound=false;memory.set(g.save.key,JSON.stringify(old));
-  const migrated=create();assert.equal(migrated.combat.audioEngine.volume,.6);assert.equal(migrated.combat.audioEngine.ambience,true);assert.equal(migrated.combat.soundEnabled,false);assert.equal(migrated.continueRun(),true);
+  const migrated=create();assert.equal(migrated.combat.audioEngine.volume,.6);assert.equal(migrated.combat.audioEngine.ambience,false);assert.equal(migrated.combat.soundEnabled,false);assert.equal(migrated.continueRun(),true);
 });
 test('unavailable Web Audio and missing stereo panning fail gracefully',()=>{
   const g=create();assert.equal(g.combat.enableAudio(),false);assert.equal(g.combat.sound('fire'),false);
@@ -505,21 +505,25 @@ test('camera zoom clamps, persists and does not change movement or spell targeti
   for(const zoom of [.2,.65,1,1.55,8]){g.setZoom(zoom);assert.equal(g.combat.nearest(),g.enemies[0]);assert.equal(p.speed,195);assert.ok(g.userZoom>=.65&&g.userZoom<=1.55);}
   assert.equal(new N.SaveStore().data.settings.zoom,1.55);g.enemies.shift();assert.equal(g.combat.nearest(),null);
 });
-test('projectile speed buffs never extend an arcane orb past 490 world units',()=>{
+test('projectile speed upgrades expand targeting and travel without a ceiling',()=>{
   const g=create();g.reset();const e=new N.Enemy(g,'warden',400,0,1);
-  for(const speed of [510,700,850]){g.combat.clear();g.player.projectileSpeed=speed;g.combat.fire(e);const b=g.combat.projectiles.active[0];assert.ok(Math.abs(Math.hypot(b.vx,b.vy)*b.life-490)<1e-7);g.combat.cooldown=99;for(let i=0;i<65;i++)g.combat.update(.017);assert.ok(Math.abs(Math.hypot(b.x,b.y+18)-490)<1e-6);}
+  for(const speed of [510,850,4000,20000]){g.combat.clear();g.player.projectileSpeed=speed;g.combat.fire(e);const b=g.combat.projectiles.active[0],expected=N.boltTravel(g.player);assert.ok(Math.abs(Math.hypot(b.vx,b.vy)*b.life-expected)<1e-5);g.combat.cooldown=99;for(let i=0;i<180;i++)g.combat.update(.017);assert.ok(Math.abs(Math.hypot(b.x,b.y+18)-expected)<1e-4);}
 });
-test('multicast grows volley damage by square root instead of sevenfold',()=>{
+
+test('multicast grows full volley power and batches counts above the visual budget',()=>{
   const g=create();g.reset();g.player.critChance=0;const e=new N.Enemy(g,'slime',100,0,1);
-  g.combat.fire(e);const single=g.combat.projectiles.active[0].damage;g.combat.clear();g.player.projectileCount=7;g.combat.fire(e);
-  const total=g.combat.projectiles.active.reduce((sum,b)=>sum+b.damage,0);assert.ok(Math.abs(total/single-Math.sqrt(7))<1e-8);
+  g.combat.fire(e);const single=g.combat.projectiles.active[0].damage;
+  for(const count of [7,70,7000]){g.combat.clear();g.player.projectileCount=count;g.combat.fire(e);assert.ok(g.combat.projectiles.active.length<=24);const total=g.combat.projectiles.active.reduce((sum,b)=>sum+b.damage,0);assert.ok(Math.abs(total/single-count)<1e-6);}
 });
-test('permanent stat upgrades respect every cap and legacy stats are normalized on load',()=>{
-  const g=create();g.reset();Object.assign(g.player,{damage:400,speed:900,projectileSpeed:8000,pickupRadius:20000,attackInterval:.12,armor:.6,critChance:.75,regen:9,dashCooldown:.7,maxHp:1000,hp:800});
-  g.checkpoint('wave');assert.ok(g.continueRun());const p=g.player,b=N.BALANCE;
-  assert.equal(p.damage,b.maxDamage);assert.equal(p.speed,b.maxSpeed);assert.equal(p.hp,320);assert.equal(p.regen,b.maxRegen);assert.equal(p.attackInterval,.24);assert.equal(p.armor,.45);assert.equal(p.critChance,.45);assert.equal(p.dashCooldown,1.25);
-  for(const upgrade of N.UPGRADES)if(upgrade.valid&&!upgrade.weapon&&upgrade.id!=='orb'&&upgrade.id!=='pierce')assert.equal(upgrade.valid(p),false,upgrade.id);
+
+test('stats beyond every former cap survive a save and keep upgrading',()=>{
+  const g=create();g.reset();Object.assign(g.player,{damage:400,speed:900,projectileSpeed:8000,pickupRadius:20000,attackInterval:.01,armor:6,critChance:2.75,regen:90,dashCooldown:.1,maxHp:10000,hp:8000,projectileCount:80,pierce:30});
+  g.player.weapons.bolt=30;g.checkpoint('wave');assert.ok(g.continueRun());const p=g.player;
+  assert.equal(p.damage,400);assert.equal(p.speed,900);assert.equal(p.hp,8000);assert.equal(p.regen,90);assert.equal(p.attackInterval,.01);assert.equal(p.armor,6);assert.equal(p.critChance,2.75);assert.equal(p.projectileCount,80);assert.equal(p.weapons.bolt,30);
+  for(const upgrade of N.UPGRADES.filter(u=>['damage','haste','speed','health','velocity','crit','magnet','dash','pierce'].includes(u.id))){assert.ok(!upgrade.valid||upgrade.valid(p));upgrade.apply(p);}
+  assert.ok(p.damage>400&&p.speed>900&&p.armor===6&&p.critChance>2.75&&p.dashCooldown<.1&&p.attackInterval<.01&&p.pierce>30);
 });
+
 test('cast and hurt clips use priority, complete and return to locomotion',()=>{
   const g=create();g.reset();const p=g.player;p.cast({x:-100,y:100});assert.equal(p.facing,'SW');assert.equal(p.animator.state,'cast');p.update(.08);assert.ok(p.animator.frame>=12&&p.animator.frame<18);
   p.invulnerable=0;p.hurt(1);assert.equal(p.animator.state,'hurt');p.cast();assert.equal(p.animator.state,'hurt');p.update(.3);assert.equal(p.animator.state,'idle');
@@ -530,11 +534,11 @@ test('spawn portals block attacks and damage until their warning expires',()=>{
   e.hit(1000);assert.equal(e.alive,true);assert.equal(g.combat.nearest(),null);e.update(.4);assert.equal(g.player.hp,hp);
   e.update(.5);assert.equal(e.spawnDelay,0);assert.equal(g.combat.nearest(),e);e.update(.01);assert.ok(g.player.hp<hp);
 });
-test('all capped builds still get three usable level-up gifts and a safe shop',()=>{
+test('late builds still get three usable level-up gifts and a safe shop',()=>{
   const g=create();g.reset();Object.assign(g.player,{damage:95,speed:300,projectileSpeed:850,pickupRadius:190,attackInterval:.24,armor:.45,critChance:.45,regen:1.2,dashCooldown:1.25,maxHp:320,hp:320,projectileCount:7,pierce:2});g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};
   g.player.pendingLevels=1;g.ui.levelUp();assert.equal(g.ui.choices.length,3);assert.equal(new Set(g.ui.choices.map(c=>c.id)).size,3);g.ui.chooseLevel(0);g.ui.openShop();assert.equal(g.ui.slots.length,4);
 });
-test('late-game maxed build cannot survive by standing still, while moving avoids curses',()=>{
+test('late-game reference build cannot survive by standing still, while moving avoids curses',()=>{
   function run(moving){
     seed=9981;const g=create();g.reset();g.wave=24;g.startWave(true);
     Object.assign(g.player,{damage:95,speed:300,projectileSpeed:850,pickupRadius:190,attackInterval:.24,armor:.45,critChance:.45,regen:1.2,dashCooldown:1.25,maxHp:320,hp:320,projectileCount:7,pierce:2});g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};
@@ -549,4 +553,113 @@ test('late-game maxed build cannot survive by standing still, while moving avoid
   assert.equal(still.state,'dead');assert.notEqual(moving.state,'dead');assert.ok(moving.time>=60);assert.ok(moving.lost<still.lost);
 });
 
+
+test('encounter director mixes 35% weaker, 50% peers and 15% veterans',()=>{
+  const g=create();g.reset();g.wave=10;g.player.level=20;const bands={fodder:0,regular:0,veteran:0},levels={fodder:[],regular:[],veteran:[]};
+  for(let i=0;i<400;i++){const e=N.EnemyDirector.roll(g,i);bands[e.tier]++;levels[e.tier].push(e.level);assert.ok(e.level>=1);if(e.tier==='fodder')assert.equal(e.trait,'none');}
+  assert.deepEqual(bands,{fodder:140,regular:200,veteran:60});assert.ok(Math.max(...levels.fodder)<Math.min(...levels.regular));assert.ok(Math.min(...levels.veteran)>g.player.level);
+  g.player.level=10000;assert.ok(N.EnemyDirector.target(g)>9000);
+});
+test('director defers new veterans when the living group already has many',()=>{
+  const g=create();g.reset();g.wave=12;g.enemies=Array.from({length:12},()=>({alive:true,tier:'veteran'}));assert.equal(N.EnemyDirector.roll(g,19).tier,'regular');
+});
+test('enemy level increases vitality, speed and damage without an upper level ceiling',()=>{
+  const g=create();g.reset();g.wave=10;const make=level=>new N.Enemy(g,'gargoyle',400,0,1,false,{level,tier:'regular',trait:'none'}),a=make(20),b=make(2000);
+  assert.equal(b.level,2000);assert.ok(b.maxHp>a.maxHp&&b.speed>a.speed&&b.damage>a.damage);assert.equal(a.tier,'regular');
+});
+test('swift, armored, mending and volatile enemies have real distinct mechanics',()=>{
+  const g=create();g.reset();const make=trait=>new N.Enemy(g,'gargoyle',500,0,1,false,{level:1,tier:'regular',trait});
+  const plain=make('none'),swift=make('swift'),armor=make('armored');assert.ok(swift.speed>plain.speed&&swift.maxHp<plain.maxHp);
+  const hp=armor.hp;armor.hit(10);assert.ok(Math.abs(armor.hp-(hp-8.2))<1e-8);const h=armor.hp;armor.hit(10,true);assert.equal(armor.hp,h-10);
+  const heal=make('mending');heal.hp=20;heal.update(1);assert.ok(heal.hp>20);heal.hit(1);const after=heal.hp;heal.update(1);assert.equal(heal.hp,after);
+  const volatile=make('volatile');volatile.hit(1e8);assert.equal(g.combat.hazards.active.at(-1).delay,.9);assert.equal(g.combat.hazards.active.at(-1).radius,52);
+});
+test('new spells unlock at 4, 7, 10 and 14, with unlimited ranks and all learned spells active',()=>{
+  const g=create();g.reset();const p=g.player;
+  for(const [id,level]of [['meteor',4],['lance',7],['thorn',10],['rift',14]]){p.level=level-1;assert.equal(p.upgradeWeapon(id),false);p.level=level;assert.equal(p.upgradeWeapon(id),true);for(let i=0;i<20;i++)assert.equal(p.upgradeWeapon(id),true);assert.equal(p.weapons[id],21);assert.ok(p.progress.equipped.includes(id));}
+  for(const id of N.SPELL_IDS)p.upgradeWeapon(id);assert.equal(p.progress.equipped.length,8);
+});
+test('milestone level choice guarantees the newest unlearned spell',()=>{
+  const g=create();g.reset();for(const [level,id]of [[4,'meteor'],[7,'lance'],[10,'thorn'],[14,'rift']]){g.player.level=level;g.player.pendingLevels=1;g.ui.levelUp();assert.ok(g.ui.choices.some(c=>c.weapon===id));assert.equal(new Set(g.ui.choices.map(c=>c.id)).size,3);}
+});
+test('meteor warns before striking; its evolution produces two damaging pulses',()=>{
+  const g=create();g.reset();const p=g.player;p.weapons.meteor=4;p.relics.sunstone=true;p.critChance=0;g.combat.cooldown=99;g.combat.spellTimers.meteor=99;
+  const e=new N.Enemy(g,'gargoyle',100,0,1);e.hp=e.maxHp=1000;g.enemies=[e];g.hash.insert(e);g.combat.meteor();g.combat.update(.64);assert.equal(e.hp,1000);
+  g.combat.update(.02);const first=e.hp;assert.ok(first<1000);g.combat.update(.14);assert.ok(e.hp<first);assert.equal(e.burn,3);assert.equal(g.combat.areas.active[0].pulses,2);
+});
+test('Soul Lance hits foes in its line and leaves off-axis foes untouched',()=>{
+  const g=create();g.reset();g.player.weapons.lance=4;g.player.relics.soulchain=true;g.player.critChance=0;
+  const line=new N.Enemy(g,'gargoyle',100,0,1),next=new N.Enemy(g,'gargoyle',180,0,2),off=new N.Enemy(g,'gargoyle',180,150,3);g.enemies=[line,next,off];
+  g.combat.lance();assert.ok(line.hp<line.maxHp&&next.hp<next.maxHp);assert.equal(off.hp,off.maxHp);assert.equal(line.exposed,2);assert.ok(g.stats.weapons.lance>0);
+});
+test('Thorn Sigil stays where cast, slows, and respects its pulse timer',()=>{
+  const g=create();g.reset();g.player.weapons.thorn=1;g.player.critChance=0;g.combat.cooldown=99;g.combat.spellTimers.thorn=99;
+  const e=new N.Enemy(g,'gargoyle',0,-55,1);g.enemies=[e];g.hash.insert(e);g.combat.thorn();const area=g.combat.areas.active[0];g.player.x=250;g.combat.update(.13);assert.ok(e.slow>0);const hp=e.hp;g.combat.update(.2);assert.equal(e.hp,hp);assert.equal(area.x,0);
+});
+test('Abyss Rift pulls nearby enemies and its evolved closing pulse deals damage',()=>{
+  const g=create();g.reset();g.player.weapons.rift=4;g.player.relics.voidglass=true;g.player.critChance=0;g.combat.cooldown=99;g.combat.spellTimers.rift=99;
+  const a=new N.Enemy(g,'gargoyle',100,0,1),b=new N.Enemy(g,'gargoyle',155,0,2);for(const e of [a,b]){e.hp=e.maxHp=1000;g.hash.insert(e);}g.enemies=[a,b];
+  g.combat.rift();g.combat.update(.25);assert.ok(b.x<155);const hp=a.hp;g.combat.update(2.2);assert.ok(a.hp<hp);assert.equal(g.combat.areas.active.length,0);assert.ok(g.stats.weapons.rift>0);
+});
+test('talent and mastery ranks keep growing and have real combat effects',()=>{
+  const g=create();g.reset();const p=g.player;p.level=200;p.progress.talents.kindling=10;p.progress.talents.frostbite=10;p.progress.mastery.bolt=10;
+  const e=new N.Enemy(g,'gargoyle',100,0,1);e.hp=e.maxHp=1000;e.slow=2;e.hit(10,true);assert.ok(e.hp<1000-20);assert.equal(e.burn,2);assert.ok(e.burnDamage>0);
+  const talent=N.UPGRADES.find(c=>c.id==='talent_kindling');assert.ok(talent.valid(p));talent.apply(p);assert.equal(p.progress.talents.kindling,11);
+  p.weapons.bolt=4;const mastery=N.UPGRADES.find(c=>c.id==='mastery_bolt');assert.ok(mastery.valid(p));mastery.apply(p);assert.equal(p.progress.mastery.bolt,11);
+});
+test('buying a next-wave oath is saved, applies once, and loading cannot refill its shield',()=>{
+  const g=create();g.reset();g.player.gold=1000;g.ui.openShop();g.ui.slots[0]={item:N.ITEMS.find(i=>i.id==='oath_stone'),locked:false,price:14,sold:false};g.ui.buy(0);
+  assert.equal(g.player.progress.preparedOath,'stone');g.startWave();assert.equal(g.player.progress.shield,35);g.player.invulnerable=0;const hp=g.player.hp;g.player.hurt(20);assert.equal(g.player.hp,hp);assert.equal(g.player.progress.shield,15);
+  g.checkpoint('wave');assert.ok(g.continueRun());assert.equal(g.player.progress.shield,15);g.finishWave();assert.equal(g.player.progress.activeOath,null);assert.equal(g.player.progress.shield,0);
+});
+test('fractional XP and gold oath rewards accumulate accurately for small drops',()=>{
+  const g=create();g.reset();g.player.progress.activeOath='wisdom';for(let i=0;i<5;i++)g.addXP(1);assert.equal(g.player.xp,6);
+  g.player.progress.activeOath='fortune';for(let i=0;i<5;i++)g.earnGold(1);assert.equal(g.player.gold,6);
+});
+test('refill restores bought slots while preserving locked merchandise and exact price',()=>{
+  const g=create();g.reset();g.player.level=100;g.player.gold=10000;g.ui.openShop();g.ui.toggleLock(0);const keep=g.ui.slots[0].item.id,price=g.ui.slots[0].price;
+  for(let i=1;i<4;i++)g.ui.buy(i);assert.equal(g.ui.slots.filter(s=>!s.item).length,3);const gold=g.player.gold,cost=g.ui.refillCost();g.ui.refill();assert.equal(g.player.gold,gold-cost);assert.equal(g.ui.slots[0].item.id,keep);assert.equal(g.ui.slots[0].price,price);assert.ok(g.ui.slots[0].locked);assert.equal(new Set(g.ui.slots.map(s=>s.item.id)).size,4);
+  for(let wave=2;wave<35;wave++){g.wave=wave;g.ui.openShop();assert.ok(g.ui.slots.every(s=>s.item));}
+});
+test('new enemy traits, learned spells and active spell areas survive exact saves',()=>{
+  const g=create();g.reset();g.player.level=30;g.player.upgradeWeapon('meteor');g.player.upgradeWeapon('rift');g.nextId=1;
+  const e=new N.Enemy(g,'cultist',160,50,1,false,{level:28,tier:'veteran',trait:'mending'});e.exposed=1.3;e.lastHit=.7;e.burnSource='meteor';g.enemies=[e];g.hash.insert(e);g.combat.meteor();g.combat.rift();g.combat.areas.active[0].age=.4;
+  g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));assert.ok(g.continueRun());assert.equal(g.player.weapons.rift,1);assert.equal(g.enemies[0].level,28);assert.equal(g.enemies[0].trait,'mending');assert.equal(g.enemies[0].exposed,1.3);assert.equal(g.enemies[0].burnSource,'meteor');assert.equal(g.combat.areas.active.length,2);assert.equal(g.combat.areas.active[0].age,.4);
+});
+test('multi-crits work above 100% and armor ratings increase without a hard cap',()=>{
+  const g=create();g.reset();g.player.critChance=2;const crit=N.critRoll(g.player);assert.equal(crit.crit,true);assert.ok(Math.abs(crit.multiplier-2.7)<1e-8);
+  g.player.armor=100;assert.ok(N.armorReduction(g.player)>.99);g.player.armor=10000;assert.ok(N.armorReduction(g.player)>.999);
+});
+test('very fast casts retain their aggregate damage instead of stopping at frame rate',()=>{
+  const g=create();g.reset();g.player.attackInterval=.0001;g.player.projectileCount=100;g.player.critChance=0;g.combat.cooldown=0;
+  const e=new N.Enemy(g,'warden',300,0,1);e.maxHp=e.hp=1e12;g.enemies=[e];g.hash.insert(e);g.combat.update(1/60);
+  assert.ok(g.combat.projectiles.active.length<=24);const represented=g.combat.projectiles.active.reduce((sum,b)=>sum+b.damage,0);assert.ok(represented>=g.player.damage*100*160);assert.ok(g.combat.cooldown>=0);
+});
+test('huge spell range queries populated cells rather than iterating empty world space',()=>{
+  const hash=new N.SpatialHash(),out=[];for(let i=0;i<100;i++)hash.insert({x:i*80,y:-i*20,alive:true});hash.query(-1e15,-1e15,1e15,1e15,out);assert.equal(out.length,100);
+});
+test('enemy atlas renders walk, attack, hurt and death crops with real clip boundaries',()=>{
+  const g=create();g.reset();const e=new N.Enemy(g,'skeleton',100,0,1),calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);
+  try{for(const state of ['walk','attack','hurt','death'])N.drawEnemy(context,g.images,e,0,0,80,88,state,.6);}finally{context.drawImage=old;}
+  assert.equal(calls.length,4);for(let i=0;i<calls.length;i++){const clip=sandbox.NOCTURNE_ENEMY_ATLAS.clips[['walk','attack','hurt','death'][i]];assert.ok(calls[i][1]>=clip.start*80&&calls[i][1]<(clip.start+clip.frames)*80);}
+});
+test('audio starts quiet and never creates a looping noise buffer',()=>{
+  const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;engine.attach(a);engine.setEnabled(true);engine.transport(true);
+  assert.equal(engine.ambience,false);assert.equal(engine.ambient.gain.value,0);assert.ok(engine.ambientSources.every(n=>!n.loop));engine.setAmbience(true);assert.ok(engine.ambient.gain.value>0);engine.setAmbience(false);assert.equal(engine.ambient.gain.value,0);engine.dispose();
+});
+
+test('floating origin keeps extreme movement drawable and preserves relative world state',()=>{
+  const g=create();g.reset();g.player.x=2e8;g.player.y=-3e8;g.nextId=1;g.enemies=[new N.Enemy(g,'slime',2e8+150,-3e8+70,1)];
+  g.loot=[new N.Loot(g,'gold',2e8+50,-3e8-10,3)];g.combat.hazard(2e8+40,-3e8,50,1,20,1);g.rebaseWorld();
+  assert.equal(g.player.x,0);assert.equal(g.camera.x,0);assert.equal(g.enemies[0].x,150);assert.equal(g.loot[0].y,-10);assert.equal(g.combat.hazards.active[0].x,40);assert.equal(g.worldOrigin.x,2e8);
+  g.checkpoint('wave');assert.ok(g.continueRun());assert.equal(g.worldOrigin.x,2e8);g.draw();
+});
+test('actual v3 merchant data migrates armor, learned spells and genuinely empty stock',()=>{
+  const g=create();g.reset();g.ui.openShop();const c=JSON.parse(JSON.stringify(g.save.data.checkpoint));
+  delete c.player.progress;delete c.player.rules;c.player.armor=.45;
+  for(const id of ['meteor','lance','thorn','rift']){delete c.player.weapons[id];delete c.stats.weapons[id];}
+  for(const id of ['sunstone','soulchain','thornheart','voidglass'])delete c.player.relics[id];
+  c.slots=Array.from({length:4},()=>({id:null,price:0,locked:false}));g.save.data.checkpoint=c;
+  assert.ok(g.save.validCheckpoint(c));assert.ok(g.continueRun());assert.ok(Math.abs(N.armorReduction(g.player)-.45)<1e-10);assert.equal(g.player.weapons.meteor,0);assert.ok(g.ui.slots.every(s=>s.item&&!s.sold));
+});
 console.log(`\n${passed} test groups passed.`);
