@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14191a">
+  <title>Nocturne — Witch of Ash</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="assets.js"></script>
+  <script defer src="game.js"></script>
+  <script defer src="entities.js"></script>
+  <script defer src="combat.js"></script>
+  <script defer src="ui.js"></script>
+</head>
+<body>
+  <canvas id="game" aria-label="Nocturne arena. Move with WASD or arrow keys; magic fires automatically."></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <header id="hud" hidden>
+    <div class="brand"><span class="sigil">☾</span><div>NOCTURNE<small>WITCH OF ASH</small></div></div>
+    <div class="wave-hud"><span class="eyebrow" id="wave-label">WAVE 01</span><strong id="timer">00:30</strong><span id="wave-status">THE HOLLOW</span></div>
+    <div class="resources"><span class="gold-mark">◈</span><strong id="gold">0</strong><button id="pause-button" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
+    <div class="wave-progress"><i id="wave-fill"></i></div>
+  </header>
+  <footer id="bottom-hud" hidden>
+    <div class="vital"><span class="eyebrow">VITALITY</span><div class="bar health"><i id="health-fill"></i></div><span id="health-text">100 / 100</span></div>
+    <div class="experience"><div><span class="eyebrow" id="level-label">LEVEL 01</span><span id="xp-text">0 / 8 XP</span></div><div class="bar xp"><i id="xp-fill"></i></div></div>
+    <div class="kills"><span class="eyebrow">SOULS BANISHED</span><strong id="kills">0</strong></div>
+  </footer>
+  <div id="wave-banner" class="wave-banner" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <section id="menu" class="menu"><p class="eyebrow">ENTERING THE HOLLOW</p><h1 id="menu-title">Loading the grimoire…</h1></section>
+  </div>
+  <div id="touch-zone" aria-label="Touch movement control"><div id="touch-knob"></div></div>
+  <noscript>This game requires JavaScript. Enable it and reopen index.html.</noscript>
+</body>
+</html>
