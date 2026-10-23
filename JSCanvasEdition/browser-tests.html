@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nocturne — Browser Verification</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#12191b;color:#e5ded0;font:13px/1.6 Arial,sans-serif}main{max-width:1240px;margin:auto}h1{font:30px Georgia;margin:0 0 5px}p{color:#9fa99f;margin:8px 0}button,a{font:11px Arial;letter-spacing:1px;border:1px solid #c5ac7777;color:#e2cfaa;background:#252e2d;padding:11px 15px;cursor:pointer;text-decoration:none}button:disabled{opacity:.4;cursor:wait}button:focus-visible,a:focus-visible{outline:2px solid #d4b879;outline-offset:3px}.actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}iframe{display:block;width:100%;height:660px;border:1px solid #75826c55;background:#182020}#results{border-left:2px solid #7c8e76;padding:4px 16px;margin:18px 0;color:#a8c9aa;white-space:pre-wrap}#status{color:#c5ac77}small{color:#929f92}@media(max-width:700px){body{padding:12px}iframe{height:700px}}
+</style>
+<main>
+<h1>Nocturne · Browser verification</h1>
+<p>Real Canvas, decoded images, DOM buttons and keyboard events. These fixtures use a separate test save key and do not change your normal ritual.</p>
+<div class="actions"><button id="run" disabled>RUN BROWSER CHECKS</button><button data-scene="boss" disabled>PREVIEW WARDEN</button><button data-scene="shop" disabled>PREVIEW MERCHANT</button><button data-scene="level" disabled>PREVIEW AWAKENING</button><button data-scene="evolved" disabled>PREVIEW EVOLUTIONS</button><a href="index.html">OPEN GAME</a></div>
+<p id="status" role="status">Loading the game…</p>
+<iframe id="arena" src="index.html#verification" title="Nocturne game verification frame"></iframe>
+<pre id="results" aria-live="polite">Serve this folder over HTTP for frame access: python -m http.server 8000</pre>
+<small>These are development fixtures, not normal starting stats. Audio output, physical touch input and real-device performance require separate checks.</small>
+</main>
+<script>
+'use strict';
+const frame=document.getElementById('arena'),run=document.getElementById('run'),status=document.getElementById('status'),output=document.getElementById('results');
+let g,N,doc,win;
+function setup(){
+  g.reset('moon');g.player.hp=g.player.maxHp=1000;g.player.gold=250;
+  g.wave=5;g.waveDuration=50;g.waveTime=10;
+  g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};
+  g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};
+  g.enemies.length=0;g.hash.clear();g.combat.clear();g.state='playing';g.ui.hide();
+}
+function present(scene){
+  setup();
+  if(scene==='shop'){g.wave=4;g.ui.openShop();}
+  else if(scene==='level'){g.player.weapons.nova=1;g.player.pendingLevels=1;g.ui.afterLevel='playing';g.ui.levelUp();}
+  else{
+    const boss=new N.Enemy(g,'warden',g.player.x+210,g.player.y-45,++g.nextId);g.enemies.push(boss);g.boss=boss;g.bossSpawned=true;
+    for(let i=0;i<7;i++)g.enemies.push(new N.Enemy(g,i%2?'cultist':'hound',Math.cos(i)*240,Math.sin(i)*170,++g.nextId,i===0));
+    for(const e of g.enemies)g.hash.insert(e);
+    g.combat.hazard(-115,100,72,1.1,15,1.4);g.combat.hazards.active[0].age=.75;
+    if(scene==='evolved'){g.combat.lightning();g.combat.nova();g.combat.updateWisps();}
+    g.state='paused';g.ui.hide();
+  }
+  g.needsDraw=true;g.draw();g.ui.hudFrame=3;g.ui.updateHUD();
+  status.textContent=`Preview: ${scene}. Frozen fixtures keep the scene visible.`;
+}
+function key(code,type='keydown'){win.dispatchEvent(new win.KeyboardEvent(type,{code,bubbles:true,cancelable:true}));}
+function check(condition,message){if(!condition)throw new Error(message);}
+run.onclick=()=>{
+  const results=[];let passed=0,failed=0;
+  const test=(name,fn)=>{try{fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
+  test('16 actual images decode',()=>check(Object.values(g.images).length===16&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
+  test('starting coven buttons',()=>{g.ui.title();doc.querySelector('[data-coven="storm"]').click();doc.querySelector('#begin').click();check(g.player.coven==='storm'&&g.player.weapons.lightning===1,'Wrong starting witch');});
+  test('real keyboard movement and dash',()=>{g.reset();key('KeyD');g.player.update(1/60);key('KeyD','keyup');check(g.player.x>0&&g.player.facing==='E','Movement failed');key('Space');key('Space','keyup');check(g.player.dashTimer>0&&g.stats.dashes===1,'Dash failed');});
+  test('pause and resume buttons',()=>{key('Escape');check(g.state==='paused'&&doc.querySelector('#resume'),'Pause did not open');doc.querySelector('#resume').click();check(g.state==='playing','Resume failed');});
+  test('three level cards apply exactly one gift',()=>{g.reset();g.addXP(8);g.ui.levelUp();check(doc.querySelectorAll('[data-choice]').length===3,'Expected 3 cards');doc.querySelector('[data-choice="0"]').click();check(g.player.pendingLevels===0&&g.player.upgrades.length===1,'Gift was lost or duplicated');});
+  test('grimoire preserves pending choices',()=>{g.addXP(g.player.xpNeeded);g.ui.levelUp();const ids=g.ui.choices.map(c=>c.id).join(',');key('KeyI');check(doc.querySelectorAll('.spell-entry').length===4,'Missing spell descriptions');key('Escape');check(g.state==='levelup'&&ids===g.ui.choices.map(c=>c.id).join(','),'Cards changed while reading');doc.querySelector('[data-choice="0"]').click();});
+  test('merchant lock survives real reroll click',()=>{g.player.gold=500;g.ui.openShop();doc.querySelector('[data-lock="0"]').click();const id=g.ui.slots[0].item.id,price=g.ui.slots[0].price;doc.querySelector('[data-reroll]').click();check(g.ui.slots[0].item.id===id&&g.ui.slots[0].price===price&&g.ui.slots[0].locked,'Lock failed');});
+  test('real purchase button debits once and sells its slot',()=>{const before=g.player.gold,price=g.ui.slots[1].price;doc.querySelector('[data-buy="1"]').click();check(g.player.gold===before-price&&g.ui.slots[1].item===null,'Purchase failed');check(!doc.querySelector('[data-buy="1"]'),'Sold slot can still be bought');});
+  test('merchant save survives reconstruction',()=>{if(!g.save.available)return;const gold=g.player.gold,id=g.ui.slots[0].item.id;g.save.data=new N.SaveStore().data;check(g.continueRun()&&g.state==='shop'&&g.player.gold===gold&&g.ui.slots[0].item.id===id,'Checkpoint mismatch');});
+  test('start-next-wave DOM button',()=>{const wave=g.wave;doc.querySelector('[data-start]').click();check(g.wave===wave+1&&g.state==='playing'&&g.ui.overlay.hidden,'Wave did not begin');});
+  test('all four evolved spells render with real canvas',()=>{setup();for(const id of Object.keys(g.player.weapons))check(g.player.evolved(id),'Missing evolution');const e=new N.Enemy(g,'warden',130,0,++g.nextId);g.enemies.push(e);g.hash.insert(e);g.combat.fire(e);g.combat.lightning();g.combat.nova();g.combat.updateWisps();g.combat.update(.016);g.draw();check(g.stats.damage>0,'Spells did not hit');});
+  test('Warden health HUD and telegraph draw',()=>{present('boss');check(!doc.querySelector('#boss-hud').hidden&&doc.querySelector('#boss-hp').textContent.includes('/'),'Boss HUD missing');check(g.combat.hazards.active.length===1,'Hazard missing');});
+  test('low quality and reduced motion controls',()=>{g.state='playing';g.ui.pause();const old=g.quality;doc.querySelector('#quality').click();check(g.quality!==old,'Quality unchanged');const reduced=g.reducedMotion;doc.querySelector('#effects').click();check(g.reducedMotion!==reduced,'Motion setting unchanged');});
+  test('death summary, retry and chronicle',()=>{g.state='playing';g.die();check(doc.querySelector('.damage-report')&&doc.querySelector('#retry'),'Summary missing');doc.querySelector('#retry').click();check(g.wave===1&&g.state==='playing','Retry failed');g.ui.title();doc.querySelector('#chronicle').click();check(doc.querySelectorAll('.achievement').length===6,'Chronicle missing');});
+  output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
+  present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;
+};
+for(const b of document.querySelectorAll('[data-scene]'))b.onclick=()=>present(b.dataset.scene);
+frame.onload=()=>{
+  let attempts=0;
+  function ready(){
+    try{
+      win=frame.contentWindow;N=win.Nocturne;g=N?.game;doc=frame.contentDocument;
+      if(g){run.disabled=false;for(const b of document.querySelectorAll('[data-scene]'))b.disabled=false;status.textContent='Ready. Tests use the real game and a separate verification save.';return;}
+    }catch{status.textContent='Frame access requires HTTP. Serve this folder locally, then reload.';return;}
+    if(attempts++<240)requestAnimationFrame(ready);else status.textContent='Game did not load; inspect the frame for an error.';
+  }
+  ready();
+};
+</script>
+</html>

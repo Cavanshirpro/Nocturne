@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14191a">
-  <title>Nocturne — Witch of Ash</title>
+  <meta name="description" content="Nocturne 2.0: four evolving spells, three covens, dash combat, elite enemies and Hollow Wardens. A fully offline Canvas survival game.">
+  <title>Nocturne — The Coven Update</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="assets.js"></script>
   <script defer src="game.js"></script>
@@ -18,11 +19,14 @@
   <header id="hud" hidden>
     <div class="brand"><span class="sigil">☾</span><div>NOCTURNE<small>WITCH OF ASH</small></div></div>
     <div class="wave-hud"><span class="eyebrow" id="wave-label">WAVE 01</span><strong id="timer">00:30</strong><span id="wave-status">THE HOLLOW</span></div>
-    <div class="resources"><span class="gold-mark">◈</span><strong id="gold">0</strong><button id="pause-button" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
+    <div class="resources"><span class="gold-mark">◈</span><strong id="gold">0</strong><button id="grimoire-button" class="icon-button" aria-label="Open grimoire (I)">✧</button><button id="pause-button" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
     <div class="wave-progress"><i id="wave-fill"></i></div>
   </header>
+  <aside id="boss-hud" hidden aria-label="Hollow Warden health"><div><span id="boss-phase">HOLLOW WARDEN</span><span id="boss-hp"></span></div><div class="bar"><i id="boss-fill"></i></div></aside>
+  <aside id="ritual-hud"><span id="biome-name"></span><div id="spell-belt" aria-label="Spell ranks"></div><small id="performance"></small></aside>
   <footer id="bottom-hud" hidden>
     <div class="vital"><span class="eyebrow">VITALITY</span><div class="bar health"><i id="health-fill"></i></div><span id="health-text">100 / 100</span></div>
+    <div class="dash-meter"><span class="eyebrow">VEILSTEP</span><div class="bar"><i id="dash-fill"></i></div><span id="dash-text">READY · SPACE</span></div>
     <div class="experience"><div><span class="eyebrow" id="level-label">LEVEL 01</span><span id="xp-text">0 / 8 XP</span></div><div class="bar xp"><i id="xp-fill"></i></div></div>
     <div class="kills"><span class="eyebrow">SOULS BANISHED</span><strong id="kills">0</strong></div>
   </footer>
@@ -32,6 +36,7 @@
     <section id="menu" class="menu"><p class="eyebrow">ENTERING THE HOLLOW</p><h1 id="menu-title">Loading the grimoire…</h1></section>
   </div>
   <div id="touch-zone" aria-label="Touch movement control"><div id="touch-knob"></div></div>
+  <button id="dash-button" aria-label="Dash">»<small>DASH</small></button>
   <noscript>This game requires JavaScript. Enable it and reopen index.html.</noscript>
 </body>
 </html>
