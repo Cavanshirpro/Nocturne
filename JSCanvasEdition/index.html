@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14191a">
-  <meta name="description" content="Nocturne JSCanvasEdition v5.1.0: final boss sanctums, minimap, banked Demon Essence and clear vitality feedback. Fully offline.">
-  <title>Nocturne — JSCanvasEdition v5.1.0</title>
+  <meta name="description" content="Nocturne JSCanvasEdition v5.1.1: powerful Final Sovereigns, Aegis shields, saved same-wave retries, minimap and banked Demon Essence. Fully offline.">
+  <title>Nocturne — JSCanvasEdition v5.1.1</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="assets.js"></script>
   <script defer src="game.js"></script>
   <script defer src="systems/progression.js"></script>
   <script defer src="systems/abilities.js"></script>
+  <script defer src="systems/guardian.js"></script>
   <script defer src="systems/encounters.js"></script>
   <script defer src="systems/vitality.js"></script>
   <script defer src="systems/director.js"></script>
@@ -32,7 +33,7 @@
     <div class="resources"><span class="gold-mark">◈</span><strong id="gold">0</strong><button id="grimoire-button" class="icon-button" aria-label="Open grimoire (I)">✧</button><button id="pause-button" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
     <div class="wave-progress"><i id="wave-fill"></i></div>
   </header>
-  <aside id="boss-hud" hidden aria-label="Hollow Warden health"><div><span id="boss-phase">HOLLOW WARDEN</span><span id="boss-hp"></span></div><div class="bar"><i id="boss-fill"></i></div></aside>
+  <aside id="boss-hud" hidden aria-label="Boss vitality and ward"><div><span id="boss-phase">HOLLOW WARDEN</span><span id="boss-hp"></span></div><div class="bar"><i id="boss-fill"></i></div><div id="guardian-ward" hidden><small id="guardian-ward-text"></small><div class="bar"><i id="guardian-ward-fill"></i></div></div></aside>
   <aside id="ritual-hud"><span id="biome-name"></span><div id="spell-belt" aria-label="Spell ranks"></div><small id="performance"></small><small id="save-label"></small></aside>
   <footer id="bottom-hud" hidden>
     <div class="vital"><span class="eyebrow">VITALITY</span><div class="bar health"><i id="health-fill"></i></div><span id="health-text">100 / 100</span></div>
@@ -46,7 +47,7 @@
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="menu-title">
     <section id="menu" class="menu"><p class="eyebrow">ENTERING THE HOLLOW</p><h1 id="menu-title">Loading the grimoire…</h1></section>
   </div>
-  <aside id="power-hud" hidden><div class="power-title"><strong id="form-label">DEMON ESSENCE</strong><span id="form-text">0 / 100</span></div><div class="bar"><i id="form-fill"></i></div><button id="demon-button" type="button" disabled aria-describedby="demon-preview">F · NEED 100 ESSENCE</button><small id="demon-preview">Collect jewels. Transform when you choose.</small><div class="special-row"><button id="special-button" aria-label="Hold for charged special ability">☽ SPECIAL</button><button id="cycle-special" aria-label="Cycle special ability (Z)">Z ↻</button></div><small id="special-text">RIGHT CLICK / Q · READY</small></aside>
+  <aside id="power-hud" hidden><div class="power-title"><strong id="form-label">DEMON ESSENCE</strong><span id="form-text">0 / 100</span></div><div class="bar"><i id="form-fill"></i></div><button id="demon-button" type="button" disabled aria-describedby="demon-preview">F · NEED 100 ESSENCE</button><small id="demon-preview">Collect jewels. Transform when you choose.</small><div class="aegis-control"><button id="shield-button" type="button" aria-describedby="shield-text">E · AEGIS</button><span id="shield-text">READY</span><div class="bar"><i id="shield-fill"></i></div></div><div class="special-row"><button id="special-button" aria-label="Hold for charged special ability">☽ SPECIAL</button><button id="cycle-special" aria-label="Cycle special ability (Z)">Z ↻</button></div><small id="special-text">RIGHT CLICK / Q · READY</small></aside>
   <div id="touch-zone" aria-label="Touch movement control"><div id="touch-knob"></div></div>
   <button id="dash-button" aria-label="Dash">»<small>DASH</small></button>
   <noscript>This game requires JavaScript. Enable it and reopen index.html.</noscript>

@@ -32,7 +32,7 @@
     pilgrim:{name:'Pilgrim oath',icon:'»',text:'+8% movement speed for the next wave.'},
     fortune:{name:'Fortune oath',icon:'◈',text:'+20% earned gold for the next wave.'}
   });
-  N.newProgression=p=>({equipped:N.SPELL_IDS.filter(id=>(p.weapons[id]||0)>0),talents:Object.fromEntries(Object.keys(N.TALENTS).map(id=>[id,0])),mastery:Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),arsenal:{slash:1,frostfall:1,soulstorm:1},special:'slash',essence:0,demonTime:0,demonDuration:12,demonPower:1.8,demonSpeed:1.45,specialRemaining:0,preparedOath:null,activeOath:null,shield:0,xpCarry:0,goldCarry:0});
+  N.newProgression=p=>({equipped:N.SPELL_IDS.filter(id=>(p.weapons[id]||0)>0),talents:Object.fromEntries(Object.keys(N.TALENTS).map(id=>[id,0])),mastery:Object.fromEntries(N.SPELL_IDS.map(id=>[id,0])),arsenal:{slash:1,frostfall:1,soulstorm:1},special:'slash',essence:0,demonTime:0,demonDuration:12,demonPower:1.8,demonSpeed:1.45,specialRemaining:0,aegis:0,aegisMax:0,aegisTime:0,aegisRemaining:0,preparedOath:null,activeOath:null,shield:0,xpCarry:0,goldCarry:0});
   N.validProgression=(q,p)=>{
     if(!q||!Array.isArray(q.equipped)||q.equipped.length<1||q.equipped.length>N.SPELL_IDS.length||new Set(q.equipped).size!==q.equipped.length||!q.equipped.every(id=>N.SPELL_IDS.includes(id)&&(p.weapons[id]||0)>0))return false;
     if(!q.talents||!Object.keys(N.TALENTS).every(id=>Number.isInteger(q.talents[id])&&q.talents[id]>=0&&Number.isSafeInteger(q.talents[id])))return false;
@@ -44,6 +44,8 @@
     if(q.essence!==undefined&&q.essence>Number.MAX_SAFE_INTEGER)return false;
     if(['demonDuration','demonPower','demonSpeed'].some(k=>q[k]!==undefined&&(!Number.isFinite(q[k])||q[k]<=0)))return false;
     if(q.demonDuration!==undefined&&q.demonTime>q.demonDuration)return false;
+    const aegisKeys=['aegis','aegisMax','aegisTime','aegisRemaining'];
+    if(aegisKeys.some(k=>q[k]!==undefined)&&(!aegisKeys.every(k=>Number.isFinite(q[k])&&q[k]>=0)||q.aegis>q.aegisMax||q.aegisTime>2.5||q.aegisRemaining>8||q.aegisTime===0&&q.aegis>0))return false;
     return Number.isFinite(q.shield)&&q.shield>=0&&q.shield<=35&&['xpCarry','goldCarry'].every(k=>Number.isFinite(q[k])&&q[k]>=0&&q[k]<1);
   };
   N.outgoingMultiplier=(p,e,source)=>{

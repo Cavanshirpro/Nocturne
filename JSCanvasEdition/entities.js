@@ -79,8 +79,10 @@
     hurt(amount){
       if(this.invulnerable>0||this.game.state!=='playing')return;
       let damage=amount/(1+this.armor);
+      let warded=0;const q=this.progress;
+      if(q.aegisTime>0&&q.aegis>0){warded=Math.min(q.aegis,damage);q.aegis-=warded;damage-=warded;if(q.aegis===0)q.aegisTime=0;}
       const absorbed=Math.min(this.progress.shield,damage);this.progress.shield-=absorbed;damage-=absorbed;
-      if(absorbed>0)this.game.combat.effect('ring',this.x,this.y-10,0,0,38,'#d4dce5',.25);
+      if(absorbed+warded>0)this.game.combat.effect('ring',this.x,this.y-10,0,0,38,'#d4dce5',.25);
       if(damage<=0){this.invulnerable=.4;this.game.combat.number(this.x,this.y-45,'BLOCK','#c7daee');this.game.combat.sound('lock');return;}
       const actual=Math.min(this.hp,damage);
       this.hp=Math.max(0,this.hp-damage);this.invulnerable=.85;
@@ -171,6 +173,7 @@
       }
       if(this.type==='reaper'&&!this.terrified&&this.frozen<=0){this.attackTimer-=dt;if(this.attackTimer<=0&&len<220){this.game.combat.hazard(p.x,p.y,66,.9,this.damage,.35);this.castTimer=.3;this.attackTimer=3.2;}}
       if(this.boss&&this.frozen<=0){
+        if(this.guardian)N.FinalGuardian.update(this.game,this,dt);else{
         if(this.type==='overlord'){this.summonTimer-=dt;if(this.summonTimer<=0){this.summonTimer=6;this.game.summonMinions(this);this.castTimer=.4;}}
         this.attackTimer-=dt;
         if(this.attackTimer<=0){
@@ -185,7 +188,9 @@
           this.attackTimer=angry?1.7:2.6;this.game.shake=Math.max(this.game.shake,2);
           this.castTimer=.3;
         }
+        }
         if(len<190)movement*=.3;
+        if(this.guardian?.windup>0)movement=0;
       }
       if(this.terrified)movement=-Math.abs(movement)*1.15;else if(this.boss&&p.progress.demonTime>0&&len<360)movement*=.9;
       const moveAngle=Math.atan2(dy*(this.terrified?-1:1),dx*(this.terrified?-1:1));this.facing=DIRECTIONS[(Math.round(moveAngle/(Math.PI/4))+8)%8];
@@ -200,6 +205,7 @@
       if(!this.alive||this.spawnDelay>0)return;
       damage*=N.outgoingMultiplier(this.game.player,this,source);
       if(this.trait==='armored'&&!crit&&source!=='lance')damage*=.82;
+      damage=N.FinalGuardian.absorb(this.game,this,damage);if(damage<=0)return;
       this.lastHit=2;
       const dealt=Math.min(this.hp,damage);this.game.stats.damage+=dealt;
       this.game.stats.weapons[source]=(this.game.stats.weapons[source]||0)+dealt;
@@ -244,6 +250,7 @@
       if(!window.NOCTURNE_ENEMY_ATLAS?.rows&&this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
       N.drawEnemy(c,this.game.images,this,-40*s,-99*s+bob,80*s,107*s);
       c.restore();
+      N.FinalGuardian.draw(this.game,this,c);
       if(this.castTimer>0){c.globalCompositeOperation='lighter';c.strokeStyle='#d3b3d288';c.beginPath();c.arc(this.x,this.y-35*s,12+this.castTimer*30,0,Math.PI*2);c.stroke();c.globalCompositeOperation='source-over';}
       if(this.hp<this.maxHp&&!this.boss){
         c.fillStyle='#101617';c.fillRect(this.x-15,this.y-75*s,30,3);c.fillStyle=this.elite?'#d7b579':'#b8a293';c.fillRect(this.x-15,this.y-75*s,30*Math.max(0,this.hp/this.maxHp),3);

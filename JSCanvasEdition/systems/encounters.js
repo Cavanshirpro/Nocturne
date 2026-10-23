@@ -17,10 +17,10 @@
       if(s.phase==='waiting'&&N.dist2(g.player,s)<=s.radius**2){
         // A surviving invasion boss becomes the final guardian; never duplicate it.
         if(!g.boss?.alive)g.spawnBoss(g.wave%5===0,true);
-        const b=g.boss;b.x=s.x;b.y=s.y;b.spawnDelay=1.2;
+        const b=g.boss;N.FinalGuardian.promote(g,b);b.x=s.x;b.y=s.y;b.spawnDelay=1.2;
         b.windup=b.charge=b.knockX=b.knockY=0;
         s.bossId=b.id;s.phase='fighting';g.bossSpawned=true;g.bossDefeated=false;
-        g.ui.banner('BREAK THE FINAL SEAL',b.type==='overlord'?'ASH OVERLORD':'HOLLOW WARDEN');
+        g.ui.banner('BREAK THE FINAL SEAL','THE FINAL SOVEREIGN · E TO RAISE YOUR AEGIS');
       }
       if(s.phase==='fighting'){
         const b=g.enemies.find(e=>e.id===s.bossId);

@@ -13,7 +13,7 @@
     schema:1,sanctum:g.sanctum?{...g.sanctum}:null,worldOrigin:{...g.worldOrigin},waveTime:g.waveTime,spawnClock:g.spawnClock,threatClock:g.threatClock,autosaveClock:0,nextId:g.nextId,
     overlordSpawned:!!g.overlordSpawned,bossSpawned:g.bossSpawned,bossDefeated:g.bossDefeated,waveKills:g.waveKills,waveDamage:g.waveDamage,
     player:take(g.player,PLAYER_TRANSIENT),facing:g.player.facing,
-    enemies:g.enemies.filter(e=>e.alive).map(e=>({...take(e,[...ENEMY_FIELDS,...EXTRA_ENEMY_FIELDS]),type:e.type,elite:e.elite,tier:e.tier,trait:e.trait,burnSource:e.burnSource,facing:e.facing,summonTimer:e.summonTimer})),
+    enemies:g.enemies.filter(e=>e.alive).map(e=>({...take(e,[...ENEMY_FIELDS,...EXTRA_ENEMY_FIELDS]),type:e.type,elite:e.elite,tier:e.tier,trait:e.trait,burnSource:e.burnSource,facing:e.facing,summonTimer:e.summonTimer,guardian:e.guardian?{...e.guardian}:undefined})),
     loot:g.loot.filter(e=>e.alive).map(e=>({...take(e,['x','y','value','age','phase']),type:e.type,magnet:e.magnet})),
     projectiles:g.combat.projectiles.active.map(b=>({...take(b,SHOT_FIELDS),crit:b.crit,pierce:b.pierce,evolved:b.evolved,source:b.source,color:b.color,blast:b.blast,freeze:b.freeze,expose:b.expose,hitIds:[...b.hitIds]})),
     hostile:g.combat.hostile.active.map(b=>take(b,SHOT_FIELDS)),hazards:g.combat.hazards.active.map(h=>take(h,HAZARD_FIELDS)),
@@ -33,6 +33,8 @@
     if(!finite(w.spellTimers,['lightning','nova']))return false;
     if(!Array.isArray(w.enemies)||w.enemies.length>320||!w.enemies.every(e=>finite(e,ENEMY_FIELDS)&&['slime','skeleton','gargoyle','hound','cultist','warden','wraith','reaper','overlord'].includes(e.type)&&typeof e.elite==='boolean'&&e.hp>0&&e.hp<=e.maxHp&&e.radius>0&&e.damage>=0&&e.speed>=0&&Number.isSafeInteger(e.id)&&e.id>0&&e.id<=w.nextId))return false;
     if(w.enemies.some(e=>e.level!==undefined&&(!Number.isSafeInteger(e.level)||e.level<1||!['fodder','regular','veteran','warden','overlord','minion'].includes(e.tier)||!Object.hasOwn(N.ENEMY_TRAITS,e.trait)||!finite(e,EXTRA_ENEMY_FIELDS)||!N.SPELL_IDS.includes(e.burnSource))))return false;
+    if(w.enemies.some(e=>e.guardian!==undefined&&!N.FinalGuardian.valid(e.guardian,e)))return false;
+    if(w.enemies.filter(e=>e.guardian).length>1||w.enemies.some(e=>e.guardian&&w.sanctum?.bossId!==e.id))return false;
     if(w.areas!==undefined&&(!Array.isArray(w.areas)||w.areas.length>4096||!w.areas.every(a=>['meteor','thorn','rift','veil'].includes(a.kind)&&finite(a,['x','y','radius','delay','duration','damage','rank','weight','age','tick','pulses'])&&a.radius>0&&a.duration>0&&a.delay>=0&&a.damage>=0&&Number.isSafeInteger(a.rank)&&a.rank>=1&&a.weight>0&&a.age>=0&&typeof a.evolved==='boolean')))return false;
     if(['meteor','lance','thorn','rift','rapid','cannon','burst','glacier'].some(id=>w.spellTimers[id]!==undefined&&!Number.isFinite(w.spellTimers[id])))return false;
     if(w.overlordSpawned!==undefined&&typeof w.overlordSpawned!=='boolean')return false;
@@ -52,6 +54,7 @@
     g.autosaveClock=0;Object.assign(g.player,w.player);g.player.facing=w.facing;
     g.enemies=w.enemies.map(data=>{const e=new N.Enemy(g,data.type,data.x,data.y,data.id,data.elite);Object.assign(e,data);return e;});
     g.boss=g.enemies.find(e=>e.boss)||null;
+    if(g.sanctum?.phase==='fighting'&&g.boss?.id===g.sanctum.bossId&&!g.boss.guardian)N.FinalGuardian.promote(g,g.boss,true);
     g.loot=w.loot.map(data=>Object.assign(new N.Loot(g,data.type,data.x,data.y,data.value),data));
     for(const data of w.projectiles){const b=g.combat.projectiles.acquire();b.reset(data.x,data.y,data.vx,data.vy,data.damage,data.crit,data.pierce,data.evolved);b.life=data.life;b.radius=data.radius;for(const k of ['source','color','blast','freeze','expose'])if(data[k]!==undefined)b[k]=data[k];for(const id of data.hitIds)b.hitIds.add(id);}
     for(const [name,entries] of [['hostile',w.hostile],['hazards',w.hazards]])for(const data of entries)Object.assign(g.combat[name].acquire(),data);

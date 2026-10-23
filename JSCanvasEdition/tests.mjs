@@ -17,7 +17,7 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/abilities.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/abilities.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
@@ -128,7 +128,7 @@ test('restart clears progression, retained shop items and effects',()=>{
 });
 test('five-wave fixed-step integration stays finite, defeats Warden and respects caps',()=>{
   const g=create();g.reset();g.player.maxHp=g.player.hp=100000;
-  g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};g.player.damage=55;
+  g.player.weapons={bolt:4,orbit:4,lightning:4,nova:4};g.player.relics={mirror:true,cinder:true,conductor:true,permafrost:true};g.player.damage=600;
   let steps=0,shops=0;
   while(shops<5 && steps<20000){
     if(g.state==='levelup'){g.ui.chooseLevel(0);continue;}
@@ -222,16 +222,12 @@ test('hound advertises a fixed charge line and cultist fires at range',()=>{
   g.player.y=160;h.update(.4);assert.ok(h.charge>0);h.update(.1);assert.ok(h.x<x-20);assert.equal(h.chargeX,heading);
   const c=new N.Enemy(g,'cultist',300,0,2);c.attackTimer=.5;c.update(.01);assert.ok(c.windup>0);c.update(.6);assert.equal(g.combat.hostile.active.length,1);
 });
-test('final guardian spawns once, alternates attacks and gates fifth-wave completion',()=>{
+test('final guardian appears once and gates fifth-wave completion',()=>{
   const g=create();g.reset();g.wave=5;g.startWave(true);g.player.hp=g.player.maxHp=10000;
-  g.waveTime=g.waveDuration;g.update(.02);assert.equal(g.sanctum.phase,'waiting');g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.02);assert.equal(g.bossSpawned,true);const boss=g.boss;boss.spawnDelay=0;
-  g.update(.02);assert.equal(g.enemies.filter(e=>e.boss).length,1);
-  boss.x=g.player.x+100;boss.y=g.player.y;boss.attackTimer=0;boss.update(.01);assert.equal(g.combat.hazards.active.length,1);
-  boss.attackTimer=0;boss.update(.01);assert.equal(g.combat.hostile.active.length,7);
-  boss.hp=boss.maxHp*.4;boss.attackTimer=0;boss.update(.01);assert.ok(g.combat.hazards.active.length>=3);
-  g.waveTime=g.waveDuration;g.update(.01);assert.equal(g.state,'playing');
-  boss.hit(100000,false,0,0,'bolt');assert.equal(g.bossDefeated,true);assert.equal(g.stats.bosses,1);
-  g.update(.02);assert.ok(['levelup','shop'].includes(g.state));
+  g.waveTime=g.waveDuration;g.update(.02);assert.equal(g.sanctum.phase,'waiting');g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.02);
+  const boss=g.boss;assert.ok(boss.guardian);assert.equal(g.enemies.filter(e=>e.boss).length,1);boss.spawnDelay=0;
+  boss.guardian.cooldown=0;boss.update(.01);assert.equal(boss.guardian.action,'salvo');assert.equal(g.combat.hostile.active.length,0);
+  g.update(.01);assert.equal(g.state,'playing');boss.hit(100000,false,0,0,'bolt');assert.equal(g.bossDefeated,true);g.update(.02);assert.ok(['levelup','shop'].includes(g.state));
 });
 test('wave checkpoint resumes exact stats without healing or multiplying gold',()=>{
   const g=create();g.reset('storm');g.player.gold=77;g.player.hp=50;g.player.weapons.nova=2;g.player.relics.mirror=true;
@@ -259,10 +255,10 @@ test('blocked local storage never prevents startup, shopping or gameplay',()=>{
   const old=sandbox.localStorage;sandbox.localStorage={getItem(){throw new Error('blocked');},setItem(){throw new Error('blocked');}};
   try{const g=create();assert.equal(g.save.available,false);g.reset();g.ui.openShop();assert.equal(g.state,'shop');assert.equal(g.checkpoint('shop'),false);g.startWave();g.update(1/60);assert.equal(g.state,'playing');}finally{sandbox.localStorage=old;}
 });
-test('settings and achievements persist; death records once and clears checkpoint',()=>{
+test('settings and achievements persist; death records once and preserves a same-wave retry',()=>{
   const g=create();g.reset();g.combat.soundEnabled=true;g.reducedMotion=true;g.quality='low';g.saveSettings();
   const before=g.save.data.profile.achievements.length;g.unlock('test_unique');g.unlock('test_unique');assert.equal(g.save.data.profile.achievements.length,before+1);
-  const runs=g.save.data.profile.runs;g.wave=4;g.player.kills=42;g.time=120;g.die();g.die();assert.equal(g.save.data.profile.runs,runs+1);assert.equal(g.save.data.checkpoint,null);
+  const runs=g.save.data.profile.runs;g.wave=4;g.player.kills=42;g.time=120;g.die();g.die();assert.equal(g.save.data.profile.runs,runs+1);assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));assert.equal(g.save.data.checkpoint.wave,4);
   const loaded=create();assert.equal(loaded.quality,'low');assert.equal(loaded.reducedMotion,true);assert.equal(loaded.combat.soundEnabled,true);assert.ok(loaded.save.data.profile.achievements.includes('test_unique'));
 });
 test('grimoire returns to the same level choices or merchant without rerolling',()=>{
@@ -773,9 +769,9 @@ test('every ordinary wave creates a stable distant sanctum and cannot end on the
   const g=create();g.reset();g.waveTime=g.waveDuration-.02;g.update(.01);assert.equal(g.sanctum,null);g.update(.02);assert.equal(g.state,'playing');assert.equal(g.sanctum.phase,'waiting');assert.ok(Math.abs(Math.sqrt(N.dist2(g.player,g.sanctum))-1050)<1e-6);const position=JSON.stringify(g.sanctum);g.update(.1);assert.equal(JSON.stringify(g.sanctum),position);assert.equal(g.boss,null);
 });
 test('sanctum approach summons exactly one guardian and only its death ends the wave',()=>{
-  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);assert.equal(g.sanctum.phase,'fighting');assert.equal(g.boss.type,'warden');assert.equal(g.boss.spawnDelay,1.2-0.01);g.update(.01);assert.equal(g.enemies.filter(e=>e.boss).length,1);assert.equal(g.state,'playing');g.boss.spawnDelay=0;g.boss.hit(1e9);assert.equal(g.sanctum.phase,'cleared');g.update(.01);assert.ok(['shop','levelup'].includes(g.state));
+  const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);assert.equal(g.sanctum.phase,'fighting');assert.equal(g.boss.type,'overlord');assert.ok(g.boss.guardian);assert.equal(g.boss.spawnDelay,1.2-0.01);g.update(.01);assert.equal(g.enemies.filter(e=>e.boss).length,1);assert.equal(g.state,'playing');g.boss.spawnDelay=0;g.boss.hit(1e9);assert.equal(g.sanctum.phase,'cleared');g.update(.01);assert.ok(['shop','levelup'].includes(g.state));
 });
-test('every fifth sanctum is an Overlord and ordinary spawns stop during the final hunt',()=>{
+test('every sanctum has a Final Sovereign and ordinary spawns stop during the final hunt',()=>{
   const g=create();g.reset();g.wave=5;g.startWave(true);g.waveTime=g.waveDuration;g.spawnClock=-10;g.update(.01);assert.equal(g.enemies.length,0);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;g.update(.01);assert.equal(g.boss.type,'overlord');assert.equal(g.enemies.length,1);
 });
 test('a surviving invasion becomes the final guardian without duplicate bosses',()=>{
@@ -808,6 +804,119 @@ test('radar adapts its grid for distant objectives without an unbounded draw loo
 });
 test('Demon HUD shows real stacks, previews growth and keeps meter widths within bounds',()=>{
   const g=create();g.reset();g.abilities.jewel(425);g.ui.hudFrame=3;g.ui.updateHUD();assert.ok(elements.get('form-text').textContent.includes('4 CHARGES'));assert.equal(elements.get('form-fill').style.width,'100%');assert.ok(elements.get('demon-preview').textContent.includes('36s'));assert.equal(elements.get('demon-button').disabled,false);g.abilities.transform();g.ui.hudFrame=3;g.ui.updateHUD();assert.equal(elements.get('form-fill').style.width,'100%');assert.equal(elements.get('demon-button').disabled,true);
+});
+
+
+function finalFight(level=1,wave=1){
+ const g=create();g.reset();g.player.level=level;g.wave=wave;g.startWave(true);g.waveTime=g.waveDuration;N.Sanctum.create(g);g.player.x=g.sanctum.x-200;g.player.y=g.sanctum.y;N.Sanctum.update(g);g.boss.spawnDelay=0;return g;
+}
+function guardianTick(g,seconds){for(let left=seconds;left>1e-9;left-=.01)N.FinalGuardian.update(g,g.boss,Math.min(.01,left));}
+test('Final Sovereign has exactly five times same-level Overlord vitality and base damage',()=>{
+ for(const level of [1,25,100,500])for(const wave of [1,7,20]){
+  const g=finalFight(level,wave),b=g.boss,ref=new N.Enemy(g,'overlord',0,0,100,false,{level:b.level,tier:'overlord',trait:'none'});
+  assert.ok(Math.abs(b.maxHp/(ref.maxHp*5)-1)<1e-12);assert.ok(Math.abs(b.damage-ref.damage*5)<1e-8);assert.ok(b.level>level);assert.equal(b.guardian.schema,1);
+ }
+});
+test('final stats lock at encounter start and never mirror subsequent player damage',()=>{
+ const g=finalFight(100,10),b=g.boss,hp=b.maxHp,damage=b.damage;b.hp-=50;g.player.damage=1e8;g.player.level=1000;N.FinalGuardian.promote(g,b);guardianTick(g,.1);assert.equal(b.maxHp,hp);assert.equal(b.damage,damage);assert.equal(b.hp,hp-50);
+});
+test('an invasion ascends once into a fully healed Sovereign without duplicating its entity',()=>{
+ const g=create();g.reset();g.wave=7;g.startWave(true);g.spawnBoss(true,false);const b=g.boss,id=b.id;b.hp=1;g.waveTime=g.waveDuration;N.Sanctum.create(g);g.player.x=g.sanctum.x;g.player.y=g.sanctum.y;N.Sanctum.update(g);assert.equal(g.boss.id,id);assert.equal(b.hp,b.maxHp);assert.ok(b.guardian);const hp=b.hp;b.hp-=100;N.Sanctum.update(g);assert.equal(b.hp,hp-100);assert.equal(g.enemies.filter(e=>e.boss).length,1);
+});
+test('ordinary invasion Overlords retain their original stats and attack behavior',()=>{
+ const g=create();g.reset();g.wave=7;g.spawnBoss(true,false);assert.equal(g.boss.guardian,undefined);g.boss.spawnDelay=0;g.boss.attackTimer=0;g.boss.update(.01);assert.equal(g.combat.hazards.active.length,1);
+});
+test('Hellfire Salvo has a warning before ten rapid, finite projectiles',()=>{
+ const g=finalFight(),b=g.boss,q=b.guardian;q.cooldown=0;guardianTick(g,.01);assert.equal(q.action,'salvo');assert.equal(g.combat.hostile.active.length,0);guardianTick(g,.8);assert.equal(g.combat.hostile.active.length,0);guardianTick(g,1.6);assert.equal(g.combat.hostile.active.length,10);assert.ok(g.combat.hostile.active.every(s=>s.damage===b.damage*.1&&Number.isFinite(s.vx)&&Number.isFinite(s.vy)));
+});
+test('enraged Sovereign increases its salvo to fourteen shots and shortens recovery',()=>{
+ const g=finalFight(),q=g.boss.guardian;g.boss.hp=g.boss.maxHp*.39;q.cooldown=0;guardianTick(g,1);assert.equal(q.salvo+g.combat.hostile.active.length,14);assert.equal(q.cooldown,2.8);guardianTick(g,1.8);assert.equal(g.combat.hostile.active.length,14);
+});
+test('Ash Meteors warn at fixed target positions before their damage becomes active',()=>{
+ const g=finalFight(),b=g.boss,q=b.guardian;q.next=1;q.cooldown=0;guardianTick(g,.01);assert.equal(q.action,'meteors');assert.equal(g.combat.hazards.active.length,3);assert.ok(g.combat.hazards.active.every(h=>h.delay===1.15));const x=g.combat.hazards.active[0].x;g.player.invulnerable=0;g.combat.cooldown=99;const hp=g.player.hp;g.combat.update(1);assert.equal(g.player.hp,hp);g.combat.update(.16);assert.ok(g.player.hp<hp);assert.equal(g.combat.hazards.active[0].x,x);
+});
+test('Soul Reaping is directional: sidestepping the warned arc avoids its damage',()=>{
+ const g=finalFight(),b=g.boss,q=b.guardian;g.player.x=b.x+150;g.player.y=b.y;q.next=2;N.FinalGuardian.begin(g,b);g.player.x=b.x-150;g.player.invulnerable=0;const hp=g.player.hp;q.windup=0;N.FinalGuardian.cast(g,b);assert.equal(g.player.hp,hp);
+ g.player.x=b.x+150;q.next=2;N.FinalGuardian.begin(g,b);q.windup=0;N.FinalGuardian.cast(g,b);assert.ok(g.player.hp<hp);
+});
+test('Dread Aegis absorbs player spells, expires, and does not heal the guardian',()=>{
+ const g=finalFight(),b=g.boss,q=b.guardian;q.next=3;N.FinalGuardian.begin(g,b);q.windup=0;N.FinalGuardian.cast(g,b);assert.equal(q.ward,q.wardMax);const hp=b.hp,ward=q.ward;b.hit(50);assert.equal(b.hp,hp);assert.equal(q.ward,ward-50);guardianTick(g,3);assert.equal(q.ward,0);b.hit(50);assert.equal(b.hp,hp-50);
+});
+test('guardian windups, partial wards and salvo clocks freeze during pause',()=>{
+ const g=finalFight(),q=g.boss.guardian;q.cooldown=0;guardianTick(g,.01);const before=JSON.stringify(q);g.state='paused';g.update(50);assert.equal(JSON.stringify(q),before);
+});
+test('guardian attack, aim, partial ward and health survive an exact world save',()=>{
+ const g=finalFight(100,5),q=g.boss.guardian;q.next=0;q.cooldown=0;guardianTick(g,1.2);q.ward=123;q.wardTime=1.75;g.boss.hp-=150;const before=JSON.stringify(q),hp=g.boss.hp,id=g.boss.id;g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));assert.ok(g.continueRun());assert.equal(JSON.stringify(g.boss.guardian),before);assert.equal(g.boss.hp,hp);assert.equal(g.boss.id,id);
+});
+test('v5.1.0 fighting guardian upgrades once while preserving health fraction and identity',()=>{
+ const g=finalFight(20,5);g.checkpoint('wave');const c=g.save.data.checkpoint,b=c.world.enemies.find(e=>e.id===c.world.sanctum.bossId);delete b.guardian;b.type='warden';b.maxHp=800;b.hp=300;const id=b.id;assert.ok(g.save.validCheckpoint(c));g.continueRun();assert.equal(g.boss.id,id);assert.ok(g.boss.guardian);assert.ok(Math.abs(g.boss.hp/g.boss.maxHp-.375)<1e-10);const hp=g.boss.hp;g.checkpoint('wave');g.continueRun();assert.equal(g.boss.hp,hp);
+});
+test('corrupt guardian state is rejected instead of bypassing attack or ward recovery',()=>{
+ const g=finalFight();g.checkpoint('wave');const raw=JSON.stringify(g.save.data.checkpoint);
+ for(const bad of [{salvo:15},{next:-1},{action:'unknown'},{windup:-1},{cooldown:Infinity},{ward:1e20},{targetX:NaN}]){const c=JSON.parse(raw);Object.assign(c.world.enemies.find(e=>e.guardian).guardian,bad);assert.equal(g.save.validCheckpoint(c),false);}
+});
+test('floating origin rebases stored guardian aim with the arena and player',()=>{
+ const g=finalFight(),q=g.boss.guardian;q.cooldown=0;guardianTick(g,.01);const dx=q.targetX-g.boss.x;g.player.x+=1e6;g.boss.x+=1e6;g.sanctum.x+=1e6;q.targetX+=1e6;g.rebaseWorld();assert.ok(Math.abs(q.targetX-g.boss.x-dx)<1e-8);
+});
+test('player Aegis scales with vitality and level without consuming essence or gold',()=>{
+ const g=create();g.reset();g.player.level=100;g.player.maxHp=g.player.hp=400;g.player.gold=90;g.abilities.jewel(425);assert.ok(g.abilities.shield());const q=g.player.progress;assert.equal(q.aegis,500);assert.equal(q.aegisMax,500);assert.equal(q.aegisTime,2.5);assert.equal(q.aegisRemaining,8);assert.equal(q.essence,425);assert.equal(g.player.gold,90);
+});
+test('Aegis absorbs damage after armor and before a Stone oath; overflow hits vitality',()=>{
+ const g=create();g.reset();g.abilities.shield();const p=g.player,q=p.progress;p.invulnerable=0;p.armor=1;q.aegis=20;q.shield=10;p.hurt(100);assert.equal(p.hp,90);assert.equal(q.aegis,0);assert.equal(q.aegisTime,0);assert.equal(q.shield,0);assert.equal(g.stats.damageTaken,20);
+});
+test('Aegis blocks a rapid burst while respecting per-hit immunity and its finite charge',()=>{
+ const g=finalFight(),p=g.player;g.abilities.shield();p.invulnerable=0;const hp=p.hp,capacity=p.progress.aegis;
+ for(let i=0;i<10;i++){p.hurt(g.boss.damage*.1);g.abilities.update(.12);p.update(.12);}
+ assert.equal(p.hp,hp);assert.ok(p.progress.aegis<capacity);assert.ok(p.progress.aegis>0);assert.equal(g.stats.damageTaken,0);
+});
+test('Aegis expires at 2.5s and cannot be raised again until its eight-second recovery ends',()=>{
+ const g=create();g.reset();g.abilities.shield();g.abilities.update(2.5);assert.equal(g.player.progress.aegis,0);assert.equal(g.player.progress.aegisTime,0);assert.equal(g.abilities.shield(),false);g.abilities.update(5.49);assert.equal(g.abilities.shield(),false);g.abilities.update(.02);assert.equal(g.abilities.shield(),true);
+});
+test('Aegis charge and cooldown persist without a free refill on continue or pause',()=>{
+ const g=create();g.reset();g.abilities.shield();g.player.invulnerable=0;g.player.hurt(20);g.abilities.update(1);const before=JSON.stringify(g.player.progress);g.checkpoint('wave');g.continueRun();assert.equal(JSON.stringify(g.player.progress),before);assert.equal(g.abilities.shield(),false);g.state='paused';g.update(20);assert.equal(JSON.stringify(g.player.progress),before);
+});
+test('shield activation is inert in menus, on death, and during recovery',()=>{
+ const g=create();g.reset();for(const state of ['paused','shop','dead','levelup','title']){g.state=state;assert.equal(g.abilities.shield(),false);}g.state='playing';assert.equal(g.abilities.shield(),true);assert.equal(g.abilities.shield(),false);assert.equal(g.stats.shields,1);
+});
+test('corrupt shield capacity or timers are rejected while missing legacy shield fields migrate',()=>{
+ const g=create();g.reset();g.abilities.shield();g.checkpoint('wave');const raw=JSON.stringify(g.save.data.checkpoint);
+ for(const bad of [{aegis:1e8},{aegisTime:3},{aegisRemaining:9},{aegisTime:0},{aegisMax:-1}]){const c=JSON.parse(raw);Object.assign(c.player.progress,bad);assert.equal(g.save.validCheckpoint(c),false);}
+ const c=JSON.parse(raw);for(const k of ['aegis','aegisMax','aegisTime','aegisRemaining'])delete c.player.progress[k];g.save.data.checkpoint=c;assert.ok(g.continueRun());assert.equal(g.player.progress.aegis,0);assert.equal(g.player.progress.aegisRemaining,0);
+});
+test('Aegis HUD previews capacity and displays active charge and recovery within bounds',()=>{
+ const g=create();g.reset();g.ui.hudFrame=3;g.ui.updateHUD();assert.ok(elements.get('shield-text').textContent.includes('READY'));assert.equal(elements.get('shield-button').disabled,false);g.abilities.shield();g.ui.hudFrame=3;g.ui.updateHUD();assert.equal(elements.get('shield-button').disabled,true);assert.equal(elements.get('shield-fill').style.width,'100%');
+});
+test('death preserves the chapter and build, retains floor(gold/2), and saves a same-wave retry',()=>{
+ const g=finalFight(20,7),p=g.player,slot=g.save.active.id;p.gold=101;p.xp=5;p.weapons.bolt=9;p.progress.talents.kindling=3;p.progress.essence=425;p.progress.demonTime=7;g.abilities.shield();p.hp=0;g.die();g.die();
+ const c=g.save.data.checkpoint;assert.ok(g.save.validCheckpoint(c));assert.equal(g.save.active.id,slot);assert.equal(g.save.data.slots.length,1);assert.equal(c.wave,7);assert.equal(c.player.gold,50);assert.equal(g.deathSummary.lostGold,51);assert.equal(c.player.hp,c.player.maxHp);assert.equal(c.player.weapons.bolt,9);assert.equal(c.player.progress.talents.kindling,3);assert.equal(c.player.progress.essence,425);assert.equal(c.player.progress.demonTime,0);assert.equal(c.player.progress.aegis,0);assert.equal(c.world,undefined);assert.equal(g.save.data.profile.runs,1);
+ assert.ok(g.retryWave());assert.equal(g.wave,7);assert.equal(g.waveTime,0);assert.equal(g.enemies.length,0);assert.equal(g.loot.length,0);assert.equal(g.player.hp,g.player.maxHp);assert.equal(g.player.gold,50);assert.equal(g.player.xp,5);assert.equal(g.player.progress.essence,425);assert.equal(g.sanctum,null);assert.equal(g.retryWave(),false);assert.equal(g.player.gold,50);
+});
+test('closing on the death screen and reloading retains the retry without a second penalty',()=>{
+ const g=create();g.reset();g.wave=6;g.player.gold=77;g.die();const loaded=create();assert.ok(loaded.continueRun());assert.equal(loaded.wave,6);assert.equal(loaded.waveTime,0);assert.equal(loaded.player.gold,38);assert.equal(loaded.save.data.profile.runs,1);assert.equal(loaded.player.hp,loaded.player.maxHp);
+});
+test('each distinct death halves the current wallet once, including odd or empty wallets',()=>{
+ for(const gold of [0,1,2,99,100,101]){const g=create();g.reset();const runs=g.save.data.profile.runs;g.player.gold=gold;g.die();g.die();assert.equal(g.player.gold,Math.floor(gold/2));assert.equal(g.deathSummary.lostGold,Math.ceil(gold/2));g.retryWave();assert.equal(g.player.gold,Math.floor(gold/2));g.die();assert.equal(g.player.gold,Math.floor(Math.floor(gold/2)/2));assert.equal(g.save.data.profile.runs,runs+2);}
+});
+test('fatal enemy contact, projectiles and floor hazards all preserve a valid recovery checkpoint',()=>{
+ for(const source of ['contact','projectile','hazard']){const g=create();g.reset();g.player.hp=1;g.player.gold=20;g.player.invulnerable=0;g.combat.cooldown=99;
+  if(source==='contact'){const e=new N.Enemy(g,'slime',0,0,1);g.enemies=[e];e.update(.01);}
+  else if(source==='projectile'){g.combat.enemyShot(0,-12,0,-12,1,100);g.combat.update(.01);}
+  else {g.combat.hazard(0,0,30,0,100,1);g.combat.update(.01);}
+  assert.equal(g.state,'dead');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));assert.ok(g.retryWave());assert.equal(g.player.gold,10);assert.ok(g.combat.hostile.active.every(Boolean));assert.ok(g.combat.hazards.active.every(Boolean));
+ }
+});
+test('pending level-up gifts survive death and are offered before replaying the wave',()=>{
+ const g=create();g.reset();g.addXP(8);assert.equal(g.player.pendingLevels,1);g.die();assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));g.retryWave();assert.equal(g.state,'levelup');assert.equal(g.player.level,2);assert.equal(g.player.pendingLevels,1);g.ui.chooseLevel(0);assert.equal(g.state,'playing');assert.equal(g.wave,1);assert.equal(g.waveTime,0);assert.equal(g.player.pendingLevels,0);
+});
+test('death only updates the active save slot and preserves other chapters byte-for-byte',()=>{
+ const g=create();g.reset();const first=g.save.active.id,original=JSON.stringify(g.save.active);g.newRitual();g.player.gold=101;g.die();assert.equal(g.player.gold,50);assert.equal(JSON.stringify(g.save.data.slots.find(s=>s.id===first)),original);assert.equal(g.save.data.slots.length,2);
+});
+test('storage failure still allows a same-session retry with exactly one gold deduction',()=>{
+ const g=create();g.reset();const old=sandbox.localStorage;sandbox.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};
+ try{g.player.gold=100;g.die();assert.equal(g.save.available,false);assert.ok(g.retryWave());assert.equal(g.player.gold,50);assert.equal(g.waveTime,0);}finally{sandbox.localStorage=old;}
+});
+test('retry retains the current oath, prepared oath and merchant locks without consuming a second oath',()=>{
+ const g=create();g.reset();g.player.gold=200;g.player.progress.activeOath='stone';g.player.progress.shield=3;g.player.progress.preparedOath='fortune';g.ui.rollSlot(g.ui.slots[0]);g.ui.slots[0].locked=true;const id=g.ui.slots[0].item.id,price=g.ui.slots[0].price;g.die();g.retryWave();assert.equal(g.player.progress.activeOath,'stone');assert.equal(g.player.progress.shield,35);assert.equal(g.player.progress.preparedOath,'fortune');assert.equal(g.ui.slots[0].item.id,id);assert.equal(g.ui.slots[0].price,price);assert.equal(g.ui.slots[0].locked,true);
 });
 
 console.log(`\n${passed} test groups passed.`);

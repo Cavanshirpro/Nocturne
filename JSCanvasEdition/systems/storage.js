@@ -84,7 +84,7 @@
       if(p.hp<=0||p.maxHp<1||p.hp>p.maxHp||p.speed<1||p.damage<1||p.attackInterval<=0)return false;
       if(p.armor<0||p.critChance<0||p.regen<0||p.dashCooldown<=0||p.projectileSpeed<1||p.critMultiplier<1||p.pickupRadius<1)return false;
       if(!['projectileCount','level','gold','kills','xp','xpNeeded','pendingLevels','pierce'].every(k=>Number.isSafeInteger(p[k])&&p[k]>=0))return false;
-      if(p.projectileCount<1||p.level<1||p.xpNeeded<1||p.xp>=p.xpNeeded||p.pendingLevels!==0)return false;
+      if(p.projectileCount<1||p.level<1||p.xpNeeded<1||p.xp>=p.xpNeeded||p.pendingLevels>p.level-1)return false;
       if(!p.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isInteger(p.weapons[k])&&p.weapons[k]>=0&&Number.isSafeInteger(p.weapons[k]))||p.weapons.bolt<1)return false;
       if(!N.SPELL_IDS.filter(id=>!['bolt','orbit','lightning','nova'].includes(id)).every(id=>p.weapons[id]===undefined||Number.isSafeInteger(p.weapons[id])&&p.weapons[id]>=0))return false;
       if(p.progress&&!N.validProgression(p.progress,p))return false;

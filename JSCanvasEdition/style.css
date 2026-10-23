@@ -136,3 +136,7 @@ input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @media(max-height:600px){#power-hud{bottom:94px;padding:8px;width:180px}#power-hud>small{margin-top:5px}#power-hud .special-row{margin-top:6px}#demon-button{min-height:28px;padding:6px;margin-top:6px}}
 
 @media(max-height:600px) and (min-width:701px){#power-hud{right:auto;left:24px}#ritual-hud{display:none}#boss-hud{top:120px;width:240px;right:230px;left:auto;transform:none}}
+
+/* 5.1.1 · Active Aegis and the Final Sovereign. */
+.aegis-control{margin-top:10px;border:1px solid #9ccce449;background:#1a303d88;padding:7px;display:grid;grid-template-columns:auto 1fr;gap:7px;align-items:center}.aegis-control button{min-height:31px;background:#2e5368;border:1px solid #a4daef77;color:#daf5ff;font:bold 9px Arial;padding:5px 8px}.aegis-control>span{text-align:right;font:8px/1.5 Arial;color:#b4dced}.aegis-control .bar{grid-column:1 / -1}.aegis-control .bar i{background:#9fd5f5}.aegis-control button:not(:disabled):hover{background:#3f6b83}#guardian-ward{display:block;margin-top:8px!important}#guardian-ward-text{font:8px Arial;color:#cdbdf3;letter-spacing:1px}#guardian-ward-fill{background:#ba9de9}#guardian-ward .bar{height:3px;margin-top:5px}
+@media(max-height:600px){#power-hud #demon-preview{display:none}.aegis-control{margin-top:6px;padding:5px;gap:4px}.aegis-control button{min-height:26px;font-size:8px}.aegis-control>span{font-size:7px}}

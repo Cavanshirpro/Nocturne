@@ -7,7 +7,7 @@
   class Pool {
     constructor(factory,limit){this.factory=factory;this.limit=limit;this.free=[];this.active=[];this.created=0;}
     acquire(){let item=this.free.pop();if(!item){if(this.created>=this.limit)return null;item=this.factory();this.created++;}this.active.push(item);return item;}
-    release(index){const a=this.active,item=a[index];a[index]=a[a.length-1];a.pop();this.free.push(item);}
+    release(index){const a=this.active;if(index<0||index>=a.length)return;const item=a[index];a[index]=a[a.length-1];a.pop();this.free.push(item);}
     clear(){while(this.active.length)this.free.push(this.active.pop());}
   }
   class Projectile {

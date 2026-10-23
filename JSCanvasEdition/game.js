@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.1.0';
+  N.VERSION = '5.1.1';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -84,6 +84,7 @@
         if(e.code==='KeyQ'){game.abilities?.begin();game.abilities?.release();}
         if(e.code==='KeyZ')game.abilities?.cycle();
         if(e.code==='KeyF')game.abilities?.transform();
+        if(e.code==='KeyE')game.abilities?.shield();
         if (e.code === 'KeyI') game.ui?.toggleGrimoire();
         if (/^Digit[123]$/.test(e.code) && game.state === 'levelup') game.ui.chooseLevel(Number(e.code.slice(-1)) - 1);
       });
@@ -98,6 +99,7 @@
       document.getElementById('special-button')?.addEventListener('pointercancel',()=>game.abilities?.cancel());
       document.getElementById('cycle-special')?.addEventListener('click',()=>game.abilities?.cycle());
       document.getElementById('demon-button')?.addEventListener('click',()=>game.abilities?.transform());
+      document.getElementById('shield-button')?.addEventListener('click',()=>game.abilities?.shield());
       game.canvas.addEventListener?.('wheel',e=>{if(game.state!=='playing')return;e.preventDefault();game.setZoom(game.userZoom-Math.sign(e.deltaY)*.08);},{passive:false});
       window.addEventListener('keyup', e => this.keys.delete(e.code));
       window.addEventListener('blur', () => { this.clear();game.combat?.audioEngine.setForeground(false); if (game.state === 'playing') game.ui.pause(); });
@@ -197,7 +199,7 @@
       const ox=p.x,oy=p.y;this.worldOrigin.x+=ox;this.worldOrigin.y+=oy;p.x=p.y=0;this.camera.x=this.camera.y=0;
       const lists=[this.enemies,this.loot,...['projectiles','hostile','hazards','areas','effects','remnants','numbers'].map(key=>this.combat[key].active)];
       for(const list of lists)for(const item of list){
-        item.x-=ox;item.y-=oy;if(item.kind!=='slash'&&Number.isFinite(item.x2))item.x2-=ox;if(item.kind!=='slash'&&Number.isFinite(item.y2))item.y2-=oy;
+        item.x-=ox;item.y-=oy;if(item.guardian)N.FinalGuardian.rebase(item,ox,oy);if(item.kind!=='slash'&&Number.isFinite(item.x2))item.x2-=ox;if(item.kind!=='slash'&&Number.isFinite(item.y2))item.y2-=oy;
         if(item.trailX)for(let i=0;i<5;i++){item.trailX[i]-=ox;item.trailY[i]-=oy;}
       }
       if(this.sanctum){this.sanctum.x-=ox;this.sanctum.y-=oy;}
@@ -221,17 +223,21 @@
       this.hurtFlash=0;
       this.player.dashTimer=0;this.player.dashRemaining=0;this.combat.clear();this.combat.cooldown = .1;
       this.state = 'playing'; this.input.clear(); this.ui.hide();
-      this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%5===0?'SURVIVE, THEN SEEK THE OVERLORD SANCTUM':this.wave === 1 ? 'SURVIVE, THEN FOLLOW THE SANCTUM' : this.biome().name.toUpperCase());
+      this.ui.banner(`WAVE ${String(this.wave).padStart(2,'0')}`, this.wave%5===0?'THE FINAL SOVEREIGN AWAITS':this.wave === 1 ? 'SURVIVE, THEN FOLLOW THE SANCTUM' : this.biome().name.toUpperCase());
       this.checkpoint('wave');
       this.combat.sound('wave');
     }
     biome(){return [{name:'The Hollow',color:'#7e9b8030',accent:'#b7c09d'}, {name:'Ember Mire',color:'#97584a27',accent:'#d1a18a'}, {name:'Moonlit Ruins',color:'#7274aa2c',accent:'#b7a9db'}][Math.floor(Math.max(0,this.wave-1)/3)%3];}
-    checkpoint(phase){
-      if(this.player.pendingLevels>0||this.player.hp<=0)return false;
+    checkpoint(phase,recovery=false){
+      if((this.player.pendingLevels>0&&!recovery)||(this.player.hp<=0&&!recovery))return false;
       const player={};for(const k of N.PLAYER_FIELDS)player[k]=this.player[k];
       player.weapons={...this.player.weapons};player.relics={...this.player.relics};player.upgrades=[...this.player.upgrades];player.rules=5;player.progress=JSON.parse(JSON.stringify(this.player.progress));
+      if(recovery){
+        player.hp=player.maxHp;player.x=player.y=0;
+        Object.assign(player.progress,{demonTime:0,specialRemaining:0,aegis:0,aegisMax:0,aegisTime:0,aegisRemaining:0,shield:player.progress.activeOath==='stone'?35:0});
+      }
       this.save.data.checkpoint={schema:2,phase,coven:this.player.coven,wave:this.wave,time:this.time,player,
-        world:phase==='wave'?N.captureWorld(this):undefined,
+        world:phase==='wave'&&!recovery?N.captureWorld(this):undefined,
         stats:JSON.parse(JSON.stringify(this.stats)),rolls:this.ui.rolls,slots:this.ui.slots.map(s=>({id:s.item?.id||null,locked:s.locked,price:s.price,sold:s.sold===true}))};
       return this.save.write();
     }
@@ -251,6 +257,7 @@
       this.ui.slots=c.slots.map(s=>({item:N.ITEMS.find(item=>item.id===s.id)||null,locked:s.locked,price:s.price,sold:s.sold??(s.id===null&&s.price>0)}));
       if(c.phase==='shop'){for(const slot of this.ui.slots)if(!slot.item&&!slot.sold)this.ui.rollSlot(slot);this.waveTime=this.waveDuration=30+Math.min(this.wave-1,6)*5;this.state='shop';this.ui.renderShop();}
       else {this.startWave(true);if(c.world)N.restoreWorld(this,c.world);this.checkpoint('wave');}
+      if(this.player.pendingLevels>0&&this.state==='playing'){this.ui.afterLevel='playing';this.ui.levelUp();}
       return true;
     }
     saveSettings(){
@@ -273,7 +280,6 @@
       const r=700;
       this.boss=new N.Enemy(this,overlord?'overlord':'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:Math.max(this.player.level+3,Math.ceil(this.player.level*(overlord?1.18:1.08))),tier:overlord?'overlord':'warden',trait:'none'});
       this.boss.spawnDelay=this.visible(this.boss.x,this.boss.y,60)?1.2:0;
-      if(this.sanctum?.phase==='waiting'&&this.wave<5){this.boss.maxHp*=.38+.1*this.wave;this.boss.hp=this.boss.maxHp;}
       this.enemies.push(this.boss);if(required)this.bossSpawned=true;else this.overlordSpawned=true;this.ui.banner(overlord?'THE ASH OVERLORD':'THE HOLLOW WARDEN',overlord?'BREAK THE SOVEREIGN CROWN':'BREAK THE SEAL');
       this.combat.sound('boss');
     }
@@ -315,11 +321,15 @@
       if (this.player.pendingLevels > 0) this.ui.levelUp();
       else this.ui.openShop();
     }
+    retryWave(){if(this.state!=='dead')return false;return this.continueRun();}
     die() {
-      if(this.state==='dead')return;
+      if(this.state!=='playing')return;
       this.state = 'dead'; this.input.clear();
       const p=this.save.data.profile;p.runs++;p.bestWave=Math.max(p.bestWave,this.wave);p.bestKills=Math.max(p.bestKills,this.player.kills);p.bestTime=Math.max(p.bestTime,this.time);
-      this.save.data.checkpoint=null;this.save.write();this.ui.gameOver();
+      const gold=this.player.gold;this.player.gold=Math.floor(gold/2);
+      this.deathSummary={wave:this.wave,lostGold:gold-this.player.gold,keptGold:this.player.gold};
+      // Store a fresh same-wave retry without mutating live collision pools.
+      this.checkpoint('wave',true);this.ui.gameOver();
     }
     update(dt) {
       if (this.state !== 'playing') return;

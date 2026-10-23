@@ -39,6 +39,12 @@
       }
       g.stats.specials=(g.stats.specials||0)+1;g.combat.sound(id);return true;
     }
+    shield(){
+      const g=this.game,p=g.player,q=p.progress;
+      if(g.state!=='playing'||q.aegisRemaining>0||q.aegisTime>0)return false;
+      q.aegis=q.aegisMax=p.maxHp*.75+p.level*2;q.aegisTime=2.5;q.aegisRemaining=8;
+      g.stats.shields=(g.stats.shields||0)+1;g.combat.effect('ring',p.x,p.y-20,0,0,58,'#a5e1ff',.35);g.combat.sound('lock');return true;
+    }
     jewel(value=34){
       if(!Number.isFinite(value)||value<=0)return;
       const q=this.game.player.progress;q.essence=Math.min(Number.MAX_SAFE_INTEGER,q.essence+value);
@@ -59,8 +65,10 @@
       const q=this.game.player.progress;q.specialRemaining=Math.max(0,q.specialRemaining-dt);
       if(this.charging)this.charge=Math.min(1.2,this.charge+dt);
       q.demonTime=Math.max(0,q.demonTime-dt);
+      q.aegisRemaining=Math.max(0,q.aegisRemaining-dt);q.aegisTime=Math.max(0,q.aegisTime-dt);if(q.aegisTime===0)q.aegis=0;
     }
     draw(c){const g=this.game,p=g.player,q=p.progress;if(g.state!=='playing'&&g.state!=='paused')return;
+      if(q.aegisTime>0&&q.aegis>0){c.save();c.strokeStyle='#acddff';c.fillStyle='#8ed2ff14';c.lineWidth=2;c.beginPath();c.ellipse(p.x,p.y-40,42,67,0,0,Math.PI*2);c.fill();c.stroke();c.restore();}
       if(q.demonTime>0){c.save();c.strokeStyle='#e5a6ce66';c.lineWidth=1.5;c.setLineDash([6,12]);c.beginPath();c.ellipse(p.x,p.y,360,280,0,0,Math.PI*2);c.stroke();c.restore();}
       if(!this.charging)return;const a=this.aim(),angle=Math.atan2(a.y-p.y,a.x-p.x),t=this.charge/1.2,id=q.special,r=170+q.arsenal[id]*10+t*110;
       c.save();c.strokeStyle=N.SPECIALS[id].color+'aa';c.fillStyle=N.SPECIALS[id].color+'12';c.lineWidth=2;

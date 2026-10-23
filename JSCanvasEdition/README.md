@@ -1,18 +1,17 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.1.0 · Final Sanctum**
+**Version 5.1.1 · Sovereign Reckoning**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.1.0
+## What's new in 5.1.1
 
-- **Readable vitality:** outlined red damage and green healing numbers above the witch, a temporary overhead vitality bar, and a persistent low-vitality warning. Shielded hits report actual vitality lost; full-health pickups do not show fake healing.
-- **Critical-health edges:** the screen edges turn red below 30% vitality. The warning grows stronger as health falls and clears after sufficient healing. It also works in low-quality and reduced-motion modes.
-- **Banked Demon Essence:** jewels no longer transform the witch automatically. Save essence, then press **F** or **UNLEASH** to spend it on a stronger, longer Demon Witch form.
-- **A final sanctum every wave:** when the survival timer expires, a marked ritual arena appears elsewhere in the world. Reach it, summon its guardian, and defeat that boss to open the merchant.
-- **Minimap:** a player-centered radar shows nearby enemies, bosses, the final sanctum, and a camera-footprint outline. It expands its range to keep a distant sanctum visible.
+- **Final Sovereign:** every final sanctum now has a level-scaled guardian with **5× the vitality and base attack power of a same-level Overlord**, replacing the weaker final Wardens. It uses warned Hellfire Salvo, Ash Meteors, Soul Reaping, and Dread Aegis, and enrages below 40% vitality.
+- **Player Aegis:** press **E** or the **AEGIS** button to raise a temporary shield. Charge and recovery are visible and persist through saves.
+- **Death recovery:** your save survives. Lose half your current gold, keep your character development, and restart the **same wave** with full vitality. The death screen and title-screen Continue both use this saved retry.
+- **Retained from 5.1.0:** clear damage/healing cues, red edges below 30% vitality, manually banked Demon Essence, the final sanctum, and minimap navigation.
 
 See [RELEASES.md](RELEASES.md) for version-specific changes and migration notes.
 
@@ -46,12 +45,13 @@ Then open **http://localhost:8000/**. Python is needed only for this optional se
 | `Q` | Cast the selected special immediately |
 | `Z` | Cycle unlocked specials; cooldown is shared |
 | **`F` / UNLEASH button** | Activate Demon Witch using banked essence |
+| **`E` / AEGIS button** | Raise the temporary player shield |
 | Mouse wheel / `+` / `−` | Adjust camera zoom |
 | `0` | Reset zoom |
 | `I` | Open the grimoire |
 | `Esc` / `P` | Pause or resume |
 | `1` / `2` / `3` | Choose a level-up gift |
-| Touch controls | Move, dash, charge specials, and activate Demon Witch |
+| Touch controls | Move, dash, charge specials, raise Aegis, and activate Demon Witch |
 
 Sound starts after an interaction. Volume, tonal ambience, low-quality rendering, and reduced motion are available in the pause menu. Tonal ambience defaults to off.
 
@@ -60,10 +60,36 @@ Sound starts after an interaction. Volume, tonal ambience, low-quality rendering
 1. Survive the timed swarm and collect XP, gold, healing, and rare Demon Jewels.
 2. Choose one of three gifts when leveling up; the world pauses while choosing.
 3. At the end of the timer, follow the **crimson diamond** on the minimap or the world-direction arrow to the **Final Sanctum**. Ordinary swarm spawning stops during this final hunt; surviving enemies and hazards remain dangerous.
-4. Enter the marked arena to summon its guardian. Most waves summon a Warden; every fifth wave summons an Overlord. The guardian stays within its arena and must be defeated before the merchant opens. A surviving Overlord invasion is reused as the guardian instead of creating a duplicate boss.
+4. Enter the marked arena to summon its guardian. Every final encounter summons a **Final Sovereign**, a crowned form of Overlord. It stays within its arena and must be defeated before the merchant opens. A surviving invasion boss ascends into the Sovereign and fully heals once; it keeps its identity and never duplicates.
 5. Buy upgrades, reroll or refill stock, lock offers, prepare an oath, then start the next wave.
 
 Overlords can also invade every seventh wave that is not a fifth-wave encounter. Ending the survival timer alone never completes a wave.
+
+## Final Sovereign and Aegis
+
+The final boss locks its level and stats when the encounter starts. Its level is at least `max(player level + 3, ceil(player level × 1.12))`, retaining a higher level if it ascends from an invasion. Its vitality and base attack value are **five times** those of a normal Overlord at that same level and wave. It does not copy later changes to your damage or constantly refill its health. Movement speed is adjusted separately so warned attacks remain avoidable.
+
+| Guardian power | Counterplay |
+| --- | --- |
+| **Hellfire Salvo** | A 0.9s aiming warning, then ten rapid shots along the locked aim direction; fourteen when enraged. Sidestep, dash, or shield. Each shot deals 10% of the boss's base attack value. |
+| **Ash Meteors** | Three fixed circles (four when enraged) warn for 1.15s before impact. Leave the marked ground. Each hit deals 16% of base attack value. |
+| **Soul Reaping** | A warned, directed 245-unit arc deals 22% of base attack value. Leave the arc or raise Aegis. |
+| **Dread Aegis** | A temporary 3s boss ward absorbs up to 4% of its maximum vitality. The ward has a separate HUD bar; it does not heal the boss. |
+
+The Sovereign also summons minions. Below **40% health**, its recovery windows shorten. The base attack multiplier is a reference stat, not a claim that every projectile deals a fivefold contact hit.
+
+**Your Aegis** is available from the start for all three covens. It lasts **2.5 seconds**, absorbs `0.75 × maximum vitality + 2 × character level` damage after armor, and has **8 seconds of recovery from activation**. Overflow reaches your Stone oath shield, then vitality. It costs no gold or Demon Essence. A depleted or expired barrier disappears; loading and pausing never refill it. Use movement and dash while it recovers.
+
+## Death and retry
+
+Death **does not delete or replace the active save slot**. It immediately stores a fresh retry for the same wave:
+
+- Retain `floor(current gold / 2)`; lose the remainder. **101 gold → 50 retained, 51 lost.** The loss happens once per death, not again when pressing Retry or loading.
+- Keep levels, collected XP, pending level-up gifts, spells, ranks, talents, relics, upgrades, unspent essence, records, and locked merchant offers.
+- Restart the current wave at time zero and the starting position, with full vitality. Enemies, boss progress, hazards and uncollected loot reset. Active Demon form ends; spent essence is not refunded.
+- Special/Aegis/dash recovery resets for the new attempt. The current wave oath remains in effect; a prepared next-wave oath is not consumed.
+
+Choose **RESTART WAVE** on the death screen or **CONTINUE** from the title after reopening the game. No new save slot is created by retrying. The chronicle counts fallen attempts. If browser storage is unavailable, the death screen says so; retry still works within the current session.
 
 ## Demon Essence
 
@@ -94,7 +120,7 @@ There are **24 independent local save slots**, with renaming and JSON backup exp
 
 Export a backup from **SAVES** before upgrading. Replace the edition's files together, then use the same browser, profile, and game address. Clearing site data, private browsing, a different localhost port, or a different browser can make local saves unavailable. Direct-file save behavior depends on the browser.
 
-v5.1.0 accepts existing v5.0 saves. It preserves banked essence, active form time, spells, gold, merchant state, and world snapshots. New snapshots also preserve the sanctum location, encounter phase, guardian identity/health, and stacked transformation bonuses. A legacy save already past its wave timer receives a final sanctum on resuming. Older supported v3/v4 data still uses the existing migration path.
+v5.1.1 accepts existing v5.1.0 and v5.0 saves. It preserves banked essence, active form time, spells, gold, merchant state, and world snapshots. New snapshots also preserve the sanctum location, encounter phase, guardian identity/health, and stacked transformation bonuses. New saves also preserve guardian attack/ward state and player Aegis timers. A v5.1.0 guardian already in combat upgrades once while retaining its health percentage and identity. A legacy save already past its wave timer receives a final sanctum on resuming. Older supported v3/v4 data still uses the existing migration path.
 
 ## Source layout
 
@@ -107,6 +133,7 @@ v5.1.0 accepts existing v5.0 saves. It preserves banked essence, active form tim
 | `ui.js` | Level-up choices, shop, saves, grimoire |
 | `systems/abilities.js` | Charged specials and banked Demon form |
 | `systems/encounters.js` | Final sanctum, guardian leash, minimap |
+| `systems/guardian.js` | Sovereign scaling, warned powers, temporary boss ward |
 | `systems/vitality.js` | Player health feedback and red screen edges |
 | Other `systems/*.js` | Progression, balance, encounter distribution, animation, audio, snapshots, storage |
 | `assets.js` | Embedded PNG assets and atlas metadata |

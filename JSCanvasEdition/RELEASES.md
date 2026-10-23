@@ -2,6 +2,50 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.1.1 — Sovereign Reckoning
+
+Release package prepared: **2026-10-23**.
+
+### Final boss overhaul
+
+- Every final sanctum now summons the **Final Sovereign**, a crowned Overlord ascension with **5× the vitality and base attack power of a normal Overlord at the same level and wave**. The earlier reduced-vitality final Warden is removed.
+- The guardian locks its level and stats at encounter start, at least `max(player level + 3, ceil(player level × 1.12))`. An invasion's higher level is preserved. Later changes to player damage do not constantly inflate its health.
+- **Hellfire Salvo:** a 0.9s warning, then ten fast shots along the locked direction; fourteen below 40% vitality. Individual shots deal 10% of its base attack value.
+- **Ash Meteors:** fixed, marked circles warn for 1.15s before impact; three circles normally and four when enraged. Each hit deals 16% of base attack value.
+- **Soul Reaping:** a warned directional arc deals 22% of base attack value; it can be dodged or shielded.
+- **Dread Aegis:** a separate 3s boss ward absorbs up to 4% of maximum vitality. A visible ward meter accompanies the boss health bar; the ward does not heal the boss.
+- Minion summons and shorter enraged recovery windows add pressure. Movement speed is balanced separately from the fivefold stat multiplier.
+- A surviving invasion ascends and fully heals **once** when the final encounter begins. Its identity is retained, so no duplicate boss is created.
+
+### Player Aegis
+
+- **E** or the new **AEGIS** button raises a barrier for **2.5 seconds**, with **8 seconds of recovery from activation**.
+- Capacity is `75% of maximum vitality + 2 per character level`, without a gold or essence cost.
+- Armor applies first; Aegis absorbs next, followed by a Stone oath shield, then vitality. Overflow and shield break work normally. The existing short hit-immunity window prevents rapid-fire damage from stacking every frame.
+- The shield has a visible halo, charge/recovery meter, and saved remaining capacity and timers. Pause, Continue and repeated activation do not refill it.
+
+### Death preserves the save
+
+- Death stores a **fresh restart of the current wave** instead of deleting the checkpoint. The active save slot and other chapters remain intact.
+- Keep `floor(gold / 2)`; lose the remainder. **101 → 50 retained, 51 lost.** The penalty is applied once per death, including if the game is closed before Retry.
+- **RESTART WAVE** and title-screen **CONTINUE** both resume that saved retry, with full vitality, the same wave number and time zero. Retrying creates no new slot and charges no additional gold.
+- Levels, collected XP, pending level-up gifts, spells, ranks, talents, relics, upgrades, unspent essence, records and locked merchant stock are preserved.
+- Enemies, boss progress, hazards and uncollected loot reset. Active Demon form ends without refunding spent essence. Combat cooldowns reset for the new attempt.
+- The current wave oath remains active, and a prepared next-wave oath is not consumed. The chronicle counts fallen attempts.
+- When browser storage is unavailable, the death screen explains the limitation; the in-memory retry still works in the current session.
+
+### Compatibility and validation
+
+- Existing v5.1.0 saves load normally. An already-fighting old guardian upgrades once while preserving its identity and health percentage. Existing player shields default to ready when the new Aegis fields are absent.
+- New world snapshots preserve guardian aim, warned ability, burst state, health, ward capacity and recovery, plus player Aegis state. Corrupt new state is rejected.
+- **167 logic/integration test groups passed**, including fivefold level scaling, special warnings, shield absorption/recovery, legacy migration, fatal contact/projectiles/hazards, same-wave retry, queued gifts and single-charge gold loss.
+- All **48 embedded PNG assets decoded** on native Canvas, and **five gameplay scenes rendered**, including Sovereign telegraphs, player Aegis, and retry. This checks Canvas rendering; it does not certify browser DOM/CSS layout or physical touch/audio output.
+- The included browser verification page has additional v5.1.1 keyboard, button, shield, guardian and retry checks. Real-browser checks were not run for this package.
+
+### Update
+
+Export a save backup, replace the complete `JSCanvasEdition` contents, then use the same browser/profile and game address. Open `index.html`. Only `JSCanvasEdition/` files are included; README, these notes, license and existing credits are retained.
+
 ## v5.1.0 — Final Sanctum
 
 Release package prepared: **2026-10-23**. These notes do not imply that a GitHub release or tag has already been published.
