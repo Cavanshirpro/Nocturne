@@ -226,6 +226,21 @@ run.onclick=async()=>{
     }
     check(signatures.size===38,'Sound recipes produced duplicate waveforms');
   });
+  test('5.2.2 right-click stays suppressed after a charging level-up',()=>{
+    setup();g.player.progress.specialRemaining=0;g.abilities.begin();check(g.abilities.charging,'Charge did not start');
+    g.player.pendingLevels=1;g.ui.afterLevel='playing';g.ui.levelUp();
+    const choice=doc.querySelector('[data-choice]')||doc.querySelector('.choice');check(choice,'Level choice missing');
+    const event=new win.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
+    choice.dispatchEvent(event);check(event.defaultPrevented,'Native context menu was not blocked above the canvas');
+    const editable=doc.createElement('textarea');doc.body.append(editable);
+    const editEvent=new win.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});editable.dispatchEvent(editEvent);editable.remove();check(!editEvent.defaultPrevented,'Editable clipboard menu was blocked');
+    check(!g.abilities.charging,'Charge survived the level-up modal');
+  });
+  test('5.2.2 radar clamps distant targets while retaining local scale',()=>{
+    setup();const before=N.radarLayout(g).scale;g.sanctum={x:1e9,y:-1e9,radius:330,phase:'waiting'};
+    const layout=N.radarLayout(g),point=N.radarPoint(g,g.sanctum,layout);check(layout.scale===before&&point.offscreen,'Distant target collapsed map scale');
+    check(point.x>=layout.x&&point.x<=layout.x+layout.size&&point.y>=layout.y&&point.y<=layout.y+layout.size,'Target left the minimap');g.draw();
+  });
   output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
   present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;
   run.disabled=false;

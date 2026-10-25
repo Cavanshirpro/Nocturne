@@ -1,158 +1,155 @@
-"""v5.2.1 volume-enhanced character rig: layered cloth, jointed limbs, face, hair and Demon armor.
+"""v5.2.2 sculpted rig: depth-sorted, lit solid meshes baked to offline sprites.
 
-All geometry is generated locally. The same 96x128 footprint and facing system
-are retained; costume attachments are projected by systems/appearance.js.
+No live 3D engine is required. Geometry has actual width AND depth; eight
+facings share a skeletal pose and a fixed camera-space studio light.
 """
 import math
 from PIL import Image, ImageDraw
 
 
 def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
-    scale=3
-    im=Image.new('RGBA',(96*scale,128*scale));d=ImageDraw.Draw(im)
-    a=math.radians(angle);front=math.cos(a)
+    S=3
+    im=Image.new('RGBA',(96*S,128*S));draw=ImageDraw.Draw(im)
+    a=math.radians(angle);co,si=math.cos(a),math.sin(a)
     cycle=phase if phase is not None else progress*math.tau
     stride=math.sin(cycle) if phase is not None else 0
     cast=math.sin(progress*math.pi) if action=='cast' else 0
-    hurt=(math.sin(progress*math.pi)*(1-.25*progress)+.12*progress) if action=='hurt' else 0
-    dash=(.25+.7*math.sin(progress*math.pi)+.05*progress) if action=='dash' else 0
-    breath=math.sin(cycle)*.7 if action=='idle' else 0
-    body_bob=abs(stride)*1.2+breath
-    ink='#141927';cloth='#302a46' if not demon else '#462139';edge='#b7a1c2' if not demon else '#eca8b4'
-    metal='#b69b79' if not demon else '#bd7986';skin='#dcc1ad' if not demon else '#d5abc2'
-    glow='#b8e7ee' if not demon else '#ffbbd7'
-
-    def p(x,y,z):
+    hurt=math.sin(progress*math.pi)*.8+progress*.12 if action=='hurt' else 0
+    dash=.25+.7*math.sin(progress*math.pi)+progress*.05 if action=='dash' else 0
+    breath=math.sin(cycle)*.65 if action=='idle' else 0
+    bob=abs(stride)*1.1+breath
+    faces=[]
+    cloth=(66,65,100) if not demon else (106,44,78)
+    dark=(30,36,56) if not demon else (51,25,48)
+    light=(107,112,151) if not demon else (158,80,116)
+    gold=(188,156,107) if not demon else (195,125,150)
+    skin=(224,184,157) if not demon else (219,165,199)
+    hair=(48,39,64) if not demon else (158,123,163)
+    glow=(153,225,230) if not demon else (255,153,202)
+    def world(v):
+        x,y,z=v
         if z>15:
             y+=(cast*4-hurt*6-dash*9)*min(z/70,1)
-            z+=body_bob*min(z/60,1)
-        xx=x*math.cos(a)-y*math.sin(a);yy=x*math.sin(a)+y*math.cos(a)
-        return ((48+xx)*scale,(116+yy*.46-z*.85)*scale)
-    def poly(pts,col):d.polygon([p(*v) for v in pts],fill=col)
-    def line(pts,col,width=1):d.line([p(*v) for v in pts],fill=col,width=max(1,round(width*scale)),joint='curve')
-    def orb(x,y,z,rx,rz,col):
-        px,py=p(x,y,z);d.ellipse((px-rx*scale,py-rz*scale,px+rx*scale,py+rz*scale),fill=col)
-    def volume_head(x,y,z,rx,ry,rz,body,highlight):
-        # Side silhouette derives from actual skull depth, not a flat bitmap.
-        xx,yy=p(x,y,z)
-        wide=math.hypot(rx*math.cos(a),ry*math.sin(a))
-        d.ellipse((xx-wide*scale,yy-rz*scale,
-                   xx+wide*scale,yy+rz*scale),fill=body)
-        shine=max(2.5,wide*.57)
-        offset=-wide*.18 if math.cos(a)>=0 else wide*.18
-        d.ellipse((xx+(offset-shine)*scale,yy-rz*.73*scale,
-                   xx+(offset+shine)*scale,yy+rz*.44*scale),fill=highlight)
-
-    def sculpted_brim(rx,ry,z):
-        # A pitched ellipse with separate upper surface and raised outer lip.
-        # Its depth (ry) stays visible when the witch faces E or W.
-        n=24
-        vertices=[(rx*math.cos(i*math.tau/n),ry*math.sin(i*math.tau/n),
-                   z+1.2*math.sin(i*math.tau/n)) for i in range(n)]
-        poly(vertices,ink)
-        inner=[(v[0]*.89,v[1]*.86,v[2]+1.7) for v in vertices]
-        poly(inner,cloth)
-        for i in range(n):
-            j=(i+1)%n
-            line([vertices[i],vertices[j]],edge if i%4==0 else metal,.5)
-        poly([(v[0]*.56,v[1]*.59,v[2]+2.6) for v in vertices],
-             '#463748' if demon else '#4b4155')
-
-    def limb(pts,width,col):
-        line(pts,ink,width+2);line(pts,col,width)
-        for x,y,z in pts[1:-1]:orb(x,y,z,width*.6,width*.6,metal)
-
-    # Ragged, independently breathing back mantle with a raised collar.
-    for j in range(7):
-        x=(j-3)*5.8;wind=math.sin(cycle+j*.65)*(1.5+abs(stride)*2)+dash*8
-        poly([(x*.55,-7,64),(x*.78,-11,45),(x+wind,-13-dash*9,10+abs(j-3)*2),(x-5+wind,-13,14),(x*.55-3,-7,63)],ink)
-        line([(x*.55,-8,61),(x*.85+wind*.4,-12,31),(x+wind,-13,13+abs(j-3)*2)],metal,.7)
+            z+=bob*min(z/60,1)
+        return (x*co-y*si,x*si+y*co,z)
+    def project(v):
+        x,y,z=v
+        return ((48+x)*S,(116+y*.46-z*.85)*S)
+    def face(verts,color,emissive=False):
+        vs=[world(v) for v in verts]
+        u=[vs[1][i]-vs[0][i] for i in range(3)]
+        v=[vs[2][i]-vs[0][i] for i in range(3)]
+        n=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+        length=math.sqrt(sum(x*x for x in n)) or 1
+        # Two-sided cloth; faceted meshes keep a coherent camera-space light.
+        lum=1 if emissive else .56+.44*max(0,(-n[0]*.45+n[1]*.35+n[2]*.82)/length)
+        col=tuple(min(255,max(0,round(c*lum))) for c in color)+(255,)
+        depth=sum(v[1]*.85+v[2]*.46 for v in vs)/len(vs)
+        faces.append((depth,[project(v) for v in vs],col))
+    def rings(levels,color,segments=16):
+        # Each level: center x/y/z, x/y radius. Flat ends are solid caps.
+        rr=[]
+        for x,y,z,rx,ry in levels:
+            rr.append([(x+rx*math.cos(i*math.tau/segments),y+ry*math.sin(i*math.tau/segments),z) for i in range(segments)])
+        for j in range(len(rr)-1):
+            for i in range(segments):
+                k=(i+1)%segments
+                face([rr[j][i],rr[j][k],rr[j+1][k],rr[j+1][i]],color)
+        face(list(reversed(rr[0])),color);face(rr[-1],color)
+    def ellipsoid(x,y,z,rx,ry,rz,color):
+        levels=[]
+        for j in range(9):
+            t=-math.pi/2+j*math.pi/8
+            r=max(.025,math.cos(t))
+            levels.append((x,y,z+rz*math.sin(t),rx*r,ry*r))
+        rings(levels,color,16)
+    def limb(start,end,r,color):
+        # Oriented circular cross sections, not a screen-facing thick line.
+        dv=[end[i]-start[i] for i in range(3)];length=math.sqrt(sum(v*v for v in dv)) or 1
+        axis=[v/length for v in dv];ref=(0,1,0) if abs(axis[1])<.9 else (1,0,0)
+        u=[axis[1]*ref[2]-axis[2]*ref[1],axis[2]*ref[0]-axis[0]*ref[2],axis[0]*ref[1]-axis[1]*ref[0]]
+        norm=math.sqrt(sum(v*v for v in u));u=[v/norm for v in u]
+        v=[axis[1]*u[2]-axis[2]*u[1],axis[2]*u[0]-axis[0]*u[2],axis[0]*u[1]-axis[1]*u[0]]
+        rr=[]
+        for point,size in ((start,r),(end,r*.8)):
+            rr.append([tuple(point[k]+size*(u[k]*math.cos(i*math.tau/10)+v[k]*math.sin(i*math.tau/10)) for k in range(3)) for i in range(10)])
+        for i in range(10):
+            k=(i+1)%10;face([rr[0][i],rr[0][k],rr[1][k],rr[1][i]],color)
+        face(rr[1],color)
+    def gem(x,y,z,size,color):
+        points=[(x-size*.75,y,z),(x,y+size*.55,z),(x+size*.75,y,z),(x,y-size*.55,z)]
+        for i in range(4):
+            face([points[i],points[(i+1)%4],(x,y,z+size)],color,True)
+            face([points[(i+1)%4],points[i],(x,y,z-size)],tuple(int(c*.6) for c in color))
+    # Split leather boots, rounded toes, separate legs and raised gold cuffs.
     for side in (-1,1):
-        leg=stride*side
-        # Opposing heel depths keep two distinct boots readable in profile.
-        heel_depth=side*3.5
-        limb([(side*6,0,35),(side*7,leg*5+heel_depth*.55,20),(side*8,leg*10+heel_depth,4+max(0,-leg)*3)],4,'#504252' if not demon else '#6a334e')
-        poly([(side*8-4,leg*10+heel_depth-4,15),(side*8+4,leg*10+heel_depth-4,15),(side*8+5,leg*10+heel_depth+8,3),(side*8-5,leg*10+heel_depth+8,3)],ink)
-        line([(side*8-3,leg*10+heel_depth+7,5),(side*8+4,leg*10+heel_depth+7,5)],metal,1)
-        for z in (8,12):line([(side*8-3,leg*10+heel_depth+1,z),(side*8+3,leg*10+heel_depth+1,z)],'#8c7080',.6)
-
-    # Sculpted brocade robe with thirteen actual panels, a corset and split front.
-    faces=[]
-    for i in range(14):
-        t=i*math.tau/14;u=(i+1)*math.tau/14
-        sw=math.sin(cycle+t)*1.4+stride*1.6
-        col=int(40+13*math.cos(t+a-.65))
-        pts=[(22*math.cos(t)+sw,18*math.sin(t),10+stride*math.cos(t)*2),(22*math.cos(u)+sw,18*math.sin(u),10+stride*math.cos(u)*2),(10*math.cos(u),11*math.sin(u),57),(10*math.cos(t),11*math.sin(t),57)]
-        faces.append((math.sin(t+a),pts,(col+10 if demon else col,col-9 if demon else col-5,col+16,255)))
-    for _,pts,col in sorted(faces):poly(pts,col)
+        step=stride*side
+        foot=(side*7,step*9+side*2,5+max(0,-step)*4)
+        knee=(side*7,step*4,24)
+        limb((side*6,0,40),knee,4.1,dark);limb(knee,foot,3.7,dark)
+        x,y,z=foot
+        ellipsoid(x,y+3,z,5,8,3.5,dark)
+        rings([(x,y,z,4.8,5.2),(x,y,z+12,4.1,4.5)],dark)
+        rings([(x,y,z+10,4.3,4.7),(x,y,z+12.2,4.3,4.7)],gold)
+    # A thick sculpted coat: rounded front/back, inset waist and flared hem.
+    sway=stride*1.1
+    rings([(sway,0,12,22,18),(sway*.6,0,29,17,15),(0,0,46,10,10),(0,0,58,12,10),(0,0,65,14,10)],cloth)
+    # Raised side panels have a filled center, replacing thin ornamental ticks.
     for side in (-1,1):
-        line([(side*8,8,53),(side*12+stride,12,30),(side*18+stride,12,12)],metal,1)
-        for j,z in enumerate((17,25,33,41)):
-            x=side*(17-z*.18);poly([(x,12,z+2),(x+1.4,12,z),(x,12,z-2),(x-1.4,12,z)],glow)
-    if front>-.1:
-        poly([(-8,8,58),(8,8,58),(7,10,39),(-7,10,39)],'#191c2c')
-        for z in range(42,58,4):line([(-5,11,z),(5,11,z+3)],metal,.65)
-        poly([(-12,9,40),(12,9,40),(12,9,44),(-12,9,44)],metal)
-        orb(0,12,42,3,3,ink);orb(0,13,42,1.5,2,glow)
-    else:line([(0,-9,56),(0,-11,18)],metal,1)
-    # Two asymmetric sleeves; elbow and wrist move separately during casts.
-    left=(-20-cast*7,5+cast*13-stride*4,44+cast*24)
-    right=(20+cast*2,6+stride*3,45+cast*7)
-    for side,hand in [(-1,left),(1,right)]:
-        hx,hy,hz=hand
-        # Shoulder joints project across the torso's real front/back depth.
-        limb([(side*10,-3,62),(side*17,hy*.3-3,52+cast*6),(hx,hy,hz)],6,cloth)
-        poly([(side*7,0,67),(side*18,0,63),(side*20,3,56),(side*11,5,57)],metal)
-        line([(side*10,1,65),(side*17,2,61)],edge,.8)
-        orb(hx,hy,hz,3.2,3.7,skin)
-        line([(hx-4,hy,hz+4),(hx+4,hy,hz+4)],metal,2)
-        if side==-1 and cast>.2:
-            for finger in (-1,0,1):line([(hx+finger*1.4,hy,hz),(hx+finger*2.8,hy+3,hz+5)],skin,.8)
-            orb(hx,hy,hz+9,3+cast*2,3+cast*2,glow)
-    # A forked, filigree-tipped staff replaces the plain straight rod.
-    sx=23+stride+cast*5;sy=5+stride*3+cast*6
-    line([(21-stride,4,5),(sx,sy,89)],ink,4)
-    line([(21-stride,4,5),(sx,sy,89)],metal,2)
-    for z in (16,28,40,52,64):line([(22-2,6,z),(24+2,6,z+3)],edge,.8)
-    for side in (-1,1):line([(sx,sy,80),(sx+side*6,sy,88),(sx+side*4,sy,97)],metal,1.5)
-    orb(sx,sy,90,4,6,glow);orb(sx-1,sy+1,92,1.5,2.5,'#fff2db')
-    # Face plane, ears, eyebrows, eyes and moving locks remain correct in rear views.
-    volume_head(0,0,76,11.2,10.6,14.5,ink,
-                '#4c394b' if not demon else '#6e405c')
+        face([(side*6,10,44),(side*11,14,30),(side*18+sway,14,13),(side*10+sway,18,14)],light)
+        face([(side*6.3,10.3,44),(side*7.4,10.8,43),(side*13,17,15),(side*11.8,17.5,14)],gold)
+        # Broad back mantle with curved, offset depth and a single gold hem.
+        wind=math.sin(cycle+side*.8)*1.5+dash*6
+        face([(side*5,-11,64),(side*17,-11,60),(side*26+wind,-17,16),(side*10+wind,-20,11)],dark)
+        face([(side*10+wind,-20.3,11),(side*26+wind,-17.3,16),(side*25+wind,-17.3,19),(side*10+wind,-20.3,14)],gold)
+    # Chest, articulated shoulder caps, belt and a substantial center buckle.
+    ellipsoid(0,3,56,10,10,11,dark)
+    rings([(0,0,41,11.2,11.3),(0,0,44,11.2,11.3)],gold)
+    gem(0,12,43,3.4,glow)
     for side in (-1,1):
-        hair=math.sin(cycle+side)*1.7+stride*2
-        poly([(side*7,-1,84),(side*13,-3,77),(side*14+hair,-4,53),(side*9+hair,-1,56),(side*6,0,71)],'#766375' if not demon else '#d8b9d0')
-        line([(side*9,-3,78),(side*11+hair,-3,59)],edge,.6)
-    if front>-.15:
-        width=max(3,7.5*abs(front));orb(0,7,77,width,10,skin)
-        if abs(front)<.42:
-            # A projecting brow, cheek and nose readable from the side.
-            poly([(-2,9,84),(2,12,83),(2,14,76),(-1,11,71)],skin)
-            line([(0,12,77),(2,14,76),(0,12,74)],'#9e7882',.6)
-        poly([(-8,6,84),(0,9,86),(6,8,82),(-2,9,79)],'#463844' if not demon else '#d2b6d1')
-        if front>.6:
-            for side in (-1,1):
-                line([(side*2,9,79),(side*5,8,80)],ink,.8)
-                orb(side*3.8,9,77.5,1.1,1.3,glow)
-            line([(-1.5,9,72),(1.5,9,72)],'#8c6570',.7)
-        else:orb(-4 if math.sin(a)>0 else 4,9,78,1.1,1.4,glow)
+        shoulder=(side*13,0,62)
+        elbow=(side*(17+cast*2),3-side*stride*3,51+cast*(9 if side<0 else 3))
+        hand=(side*(20+cast*(5 if side<0 else 1)),7-side*stride*4,43+cast*(22 if side<0 else 7))
+        limb(shoulder,elbow,5.4,cloth);limb(elbow,hand,4.2,cloth)
+        ellipsoid(*shoulder,7.2,9,4.5,gold)
+        ellipsoid(*hand,3.3,3.4,4,skin)
+        cuff=tuple(hand[k]*.88+elbow[k]*.12 for k in range(3))
+        ellipsoid(*cuff,4.6,4.5,2.3,gold)
+        if side<0 and cast>.12:
+            gem(hand[0],hand[1]+1,hand[2]+9,3+cast*2,glow)
+    # The face is an ellipsoid, with a physical nose and swept hair lobes.
+    limb((0,0,63),(0,0,70),4,skin)
+    ellipsoid(0,0,77,10.2,10,12.2,hair)
+    ellipsoid(0,6,77,7.8,6.2,9.5,skin)
+    ellipsoid(0,12,76.5,1.6,2.4,2.5,skin)
+    for side in (-1,1):
+        wind=math.sin(cycle+side)*.8+stride*.7
+        ellipsoid(side*8.5,-2,70,3.4,5,13,hair)
+        limb((side*9,-3,68),(side*10+wind,-4,55),2.5,hair)
+        ellipsoid(side*3.4,11.7,79,1.3,.65,1.1,dark)
+        gem(side*3.4,12.1,79,.65,glow)
+    ellipsoid(-2,6.4,84,8,4,3.2,hair)
+    # Forged staff, thick spearhead and emissive inset gem.
+    sx=23+stride+cast*3;sy=5+stride*2+cast*4
+    limb((21-stride,4,5),(sx,sy,90),1.8,gold)
+    for z in (26,52,77):ellipsoid(sx,sy,z,2.8,2.8,1.2,dark)
+    for side in (-1,1):
+        limb((sx,sy,81),(sx+side*5,sy,90),1.2,gold)
+        limb((sx+side*5,sy,90),(sx+side*3,sy,97),1,gold)
+    gem(sx,sy+1,90,5,glow)
     if demon:
-        # A plated diadem, cheek guards and swept horns: a distinct head model.
-        poly([(-12,1,90),(0,4,95),(12,1,90),(9,5,84),(0,7,88),(-9,5,84)],metal)
-        orb(0,7,91,2.3,3.5,glow)
+        # Rounded armored diadem and swept volumetric horns.
+        rings([(0,0,86,10.5,10.5),(0,0,91,10.2,10)],gold)
+        gem(0,11,90,3.5,glow)
         for side in (-1,1):
-            poly([(side*8,0,90),(side*17,-1,104),(side*15,-3,116),(side*24,-3,105),(side*18,1,88)],'#532a44')
-            line([(side*10,1,91),(side*18,-2,106),(side*16,-3,113)],edge,1)
-            poly([(side*10,7,80),(side*13,6,73),(side*7,8,69)],metal)
+            limb((side*8,0,90),(side*16,-2,103),3.8,dark)
+            limb((side*16,-2,103),(side*14,-4,115),2.6,gold)
     else:
-        # Sculpted asymmetric hat, raised seams, crescent brooch and dangling gems.
-        sculpted_brim(29,18.5,94)
-        poly([(-16,-7,95),(16,-7,95),(7,-4,114),(-1,3,126),(-5,4,123),(-1,4,109)],cloth)
-        poly([(1,4,97),(16,8,95),(7,2,114),(-1,3,126),(3,5,111)],'#5a4a65')
-        line([(-16,-7,95),(-5,4,123),(-1,3,126)],edge,.8)
-        poly([(-15,3,96),(15,3,96),(12,3,101),(-12,3,101)],metal)
-        orb(3,5,99,3.5,3.5,glow);orb(4.5,5,100,2.8,3,cloth)
-        for side in (-1,1):
-            line([(side*20,2,93),(side*22,3,86+math.sin(cycle)*1.5)],metal,.7)
-            poly([(side*22,3,88),(side*24,3,84),(side*22,3,82),(side*20,3,84)],glow)
+        # The brim is a filled 3D elliptical disc with a substantial side wall.
+        rings([(0,0,92,28,22),(0,0,95,28,22)],dark,24)
+        rings([(0,0,94,27.4,21.4),(0,0,95.2,27.4,21.4)],gold,24)
+        rings([(0,0,95,16,13),(1,0,104,12,10),(0,0,113,8,7),(-5,1,120,4.5,4),(-10,2,123,.6,.8)],cloth,18)
+        rings([(0,0,96,15.7,12.8),(0,0,100,14.2,11.7)],dark,18)
+        gem(1,13,98,3.5,glow)
+    for _,verts,color in sorted(faces,key=lambda f:f[0]):draw.polygon(verts,fill=color)
     return im.resize((96,128),Image.Resampling.LANCZOS)

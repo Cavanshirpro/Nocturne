@@ -1,3 +1,17 @@
+# Sculpted Realms — v5.2.2 art guide
+
+The current player artwork comes from `witch_models.py`: a small offline mesh renderer with depth-sorted surfaces, a fixed orthographic camera and camera-space shading. Ellipsoids, oriented limb tubes and thick ring profiles give the body and clothing real depth before baking. The game still uses Canvas 2D and embedded PNG atlases; it does not require WebGL.
+
+`systems/volumetric_regalia.js` now draws fitted, filled spell fixtures and compact gems. It no longer covers the base artwork with a second robe or hat outline. The chest, staff/bracer and boots carry training, while twelve independent school fixtures retain rank, evolution and mastery marks. The existing descriptor and save data remain authoritative.
+
+`systems/encounters.js` draws the compass minimap. Its local range does not expand when the objective moves farther away; clamped markers retain an interior margin. Ordinary enemies share 4-pixel cells and at most 180 ordinary markers are drawn. Bosses and elite enemies draw afterward. The map reads HUD bounds for docking and never writes gameplay state.
+
+Rebuild embedded assets with `python generate_assets.py` (Pillow). Rebuild the 48-frame player/direction/enemy/boss galleries and static minimap example with `node scripts/render_visuals.cjs` (optional `@napi-rs/canvas`). No rebuild is required for play.
+
+The following sections document the earlier visual passes and the underlying gameplay-to-equipment mapping; their historical flat-panel descriptions are superseded by the implementation above.
+
+---
+
 # Living Regalia — v5.2.x art guide
 
 ## v5.2.1: Sculpted Silhouettes

@@ -51,6 +51,21 @@ class AssetTests(unittest.TestCase):
                 solid=sum(alpha.getpixel((x,y))>220 for x in range(11) for y in range(11))
                 self.assertGreater(solid,100,(variant,direction))
 
+    def test_side_body_retains_solid_depth(self):
+        # Measure filled body span, not the hat, staff tip or a decorative outline.
+        for variant in ('witch','demon'):
+            widths={}
+            for direction in ('S','E','W'):
+                alpha=png(variant+'_atlas_'+direction).crop((0,0,96,128)).getchannel('A')
+                rows=[]
+                for y in range(78,98):
+                    xs=[x for x in range(20,75) if alpha.getpixel((x,y))>220]
+                    rows.append(max(xs)-min(xs)+1 if xs else 0)
+                widths[direction]=sum(rows)/len(rows)
+            for direction in ('E','W'):
+                self.assertGreater(widths[direction],27,(variant,direction))
+                self.assertGreater(widths[direction]/widths['S'],.55,(variant,direction))
+
     def test_eight_distinct_walk_frames_per_facing(self):
         for direction in DIRS:
             sheet=png("witch_atlas_"+direction)

@@ -49,33 +49,65 @@
       c.restore();
     }
   };
+  // Fixed local scale: a distant objective no longer shrinks nearby threats.
   N.radarLayout=g=>{
-    const size=g.width<701?108:160,s=g.sanctum;
-    const range=Math.max(850,s?Math.hypot(s.x-g.player.x,s.y-g.player.y)+400:0);
-    return {size,x:g.width-size-(g.width<701?14:36),y:g.width<701?166:140,range,scale:(size/2-12)/range};
+    const compact=g.width<701,short=g.height<520,size=short?96:compact?120:176;
+    const range=compact||short?950:1200;
+    let x=g.width-size-(compact?14:28),y=short?96:compact?150:136;
+    // HUD panels have different heights in portrait, landscape and small windows.
+    // Read their existing layout; never move gameplay state or persist UI geometry.
+    const rect=id=>{const el=document.getElementById(id);if(!el||el.hidden)return null;const r=el.getBoundingClientRect?.();return r&&Number.isFinite(r.top)&&Number.isFinite(r.bottom)?r:null;};
+    const power=rect('power-hud'),boss=rect('boss-hud');
+    if(power&&x+size+6>power.left&&x-6<power.right&&y+size+42>power.top&&y-25<power.bottom){
+      if(!compact)x=Math.max(14,power.left-size-20);
+      else y=Math.max(y,150);
+    }
+    if(boss&&x+size+6>boss.left&&x-6<boss.right&&y-25<boss.bottom&&y+size+42>boss.top)y=boss.bottom+35;
+    return {size,x,y,range,scale:(size/2-20)/range};
+  };
+  N.radarPoint=(g,point,layout=N.radarLayout(g))=>{
+    const dx=point.x-g.player.x,dy=point.y-g.player.y,distance=Math.hypot(dx,dy),radius=layout.size/2-20;
+    const factor=distance>layout.range?radius/distance:layout.scale;
+    return {x:layout.x+layout.size/2+dx*factor,y:layout.y+layout.size/2+dy*factor,distance,angle:Math.atan2(dy,dx),offscreen:distance>layout.range};
   };
   N.drawRadar=(g,c)=>{
     if(!['playing','paused','levelup'].includes(g.state))return;
-    const {size,x,y,range,scale}=N.radarLayout(g),cx=x+size/2,cy=y+size/2;
-    c.save();c.fillStyle='#111d23ed';c.fillRect(x,y,size,size);c.strokeStyle='#a6bba055';c.lineWidth=1;c.strokeRect(x,y,size,size);
-    c.beginPath();c.rect(x+2,y+2,size-4,size-4);c.clip();
-    const grid=500*Math.max(1,2**Math.ceil(Math.log2(range/1000))),step=grid*scale;c.strokeStyle='#8eaa9b20';
-    for(let i=-Math.ceil(size/step);i<=Math.ceil(size/step);i++){
-      const gx=cx+i*step-(g.player.x%grid)*scale,gy=cy+i*step-(g.player.y%grid)*scale;
-      c.beginPath();c.moveTo(gx,y);c.lineTo(gx,y+size);c.moveTo(x,gy);c.lineTo(x+size,gy);c.stroke();
+    const l=N.radarLayout(g),{size,x,y,range,scale}=l,cx=x+size/2,cy=y+size/2,r=size/2-7,small=size<140;
+    const circle=(px,py,rr,fill,stroke=null)=>{c.beginPath();c.arc(px,py,rr,0,Math.PI*2);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.stroke();}};
+    const diamond=(px,py,rr,col)=>{c.beginPath();c.moveTo(px,py-rr);c.lineTo(px+rr,py);c.lineTo(px,py+rr);c.lineTo(px-rr,py);c.closePath();c.fillStyle=col;c.fill();};
+    const objective=g.sanctum|| (g.boss?.alive?g.boss:null);
+    c.save();c.fillStyle='#0a151deb';c.fillRect(x-6,y-25,size+12,size+67);c.strokeStyle='#bca07166';c.lineWidth=1;c.strokeRect(x-6,y-25,size+12,size+67);
+    c.textAlign='left';c.font='bold 9px Arial';c.fillStyle='#dfc899';c.fillText('HOLLOW · '+Math.round(range)+'u',x+3,y-10);
+    c.lineWidth=1;circle(cx,cy,r,'#152b30','#7d928777');circle(cx,cy,r-4,null,'#d3b88c40');
+    c.save();c.beginPath();c.arc(cx,cy,r-5,0,Math.PI*2);c.clip();
+    // Local world grid with a bounded number of lines even at extreme origins.
+    const grid=500,step=grid*scale;c.strokeStyle='#9fb8a51c';
+    for(let i=-3;i<=3;i++){const gx=cx+i*step-(g.player.x%grid)*scale,gy=cy+i*step-(g.player.y%grid)*scale;c.beginPath();c.moveTo(gx,y);c.lineTo(gx,y+size);c.moveTo(x,gy);c.lineTo(x+size,gy);c.stroke();}
+    circle(cx,cy,r*.5,null,'#91b6a125');
+    // Camera footprint is distinct from radar range and responds only to zoom.
+    c.strokeStyle='#c6e7dc30';c.strokeRect(cx-g.viewWidth*scale/2,cy-g.viewHeight*scale/2,g.viewWidth*scale,g.viewHeight*scale);
+    let markers=0;
+    for(const prop of g.landmarks?.values?.()||[]){const p=N.radarPoint(g,prop,l);if(p.offscreen)continue;c.fillStyle='#83948955';c.fillRect(p.x-1.5,p.y-1.5,3,3);if(++markers>=80)break;}
+    for(const drop of g.loot){if(drop.type!=='jewel'&&drop.type!=='heal')continue;const p=N.radarPoint(g,drop,l);if(p.offscreen)continue;if(drop.type==='jewel')diamond(p.x,p.y,2.3,'#e6a0cd');else{c.fillStyle='#b9e2bc';c.fillRect(p.x-2,p.y-.7,4,1.4);c.fillRect(p.x-.7,p.y-2,1.4,4);}if(++markers>=120)break;}
+    // One marker per screen cell for ordinary swarms, bounded canvas work.
+    const cells=new Set();let ordinary=0;
+    for(const e of g.enemies){if(!e.alive||e.boss||e.elite||e.tier==='veteran')continue;const p=N.radarPoint(g,e,l);if(p.offscreen)continue;const key=Math.floor(p.x/4)+','+Math.floor(p.y/4);if(cells.has(key))continue;cells.add(key);circle(p.x,p.y,1.35,'#ce8f80');if(++ordinary>=180)break;}
+    // Priority markers draw after the swarm; bosses off radar get edge arrows.
+    for(const e of g.enemies){if(!e.alive||(!e.boss&&!e.elite&&e.tier!=='veteran'))continue;const p=N.radarPoint(g,e,l);if(p.offscreen&&!e.boss)continue;diamond(p.x,p.y,e.boss?4:2.7,e.boss?'#ffd084':'#ecaccd');if(e.boss)circle(p.x,p.y,6,null,'#ffd08488');}
+    if(g.sanctum){const s=g.sanctum,p=N.radarPoint(g,s,l),color=s.phase==='cleared'?'#a1dec1':s.phase==='fighting'?'#ffbb80':'#f59ba7';
+      if(!p.offscreen){c.strokeStyle=color+'55';c.beginPath();c.arc(p.x,p.y,Math.min(r*2,s.radius*scale),0,Math.PI*2);c.stroke();}
+      diamond(p.x,p.y,5,color);circle(p.x,p.y,7.5,null,color+'66');
+      if(p.offscreen){c.save();c.translate(p.x,p.y);c.rotate(p.angle);c.fillStyle=color;c.beginPath();c.moveTo(6,0);c.lineTo(-3,-3);c.lineTo(-3,3);c.closePath();c.fill();c.restore();}
     }
-    c.strokeStyle='#c3d0bb33';c.strokeRect(cx-g.viewWidth*scale/2,cy-g.viewHeight*scale/2,g.viewWidth*scale,g.viewHeight*scale);
-    for(const e of g.enemies)if(e.alive){
-      const px=cx+(e.x-g.player.x)*scale,py=cy+(e.y-g.player.y)*scale;
-      c.fillStyle=e.boss?'#ffd17f':e.tier==='veteran'?'#efa1be':'#b8a597';c.beginPath();c.arc(px,py,e.boss?3.5:1.3,0,Math.PI*2);c.fill();
-    }
-    if(g.sanctum){
-      const s=g.sanctum,px=cx+(s.x-g.player.x)*scale,py=cy+(s.y-g.player.y)*scale;
-      c.strokeStyle='#ff919c';c.lineWidth=2;c.beginPath();c.moveTo(px,py-6);c.lineTo(px+5,py);c.lineTo(px,py+6);c.lineTo(px-5,py);c.closePath();c.stroke();
-    }
-    c.fillStyle='#b9f3e4';c.beginPath();c.arc(cx,cy,3,0,Math.PI*2);c.fill();
-    c.restore();c.save();c.textAlign='left';c.fillStyle='#cbd9c9';c.font='9px Arial';c.fillText('N ↑  ·  HOLLOW MAP',x,y-8);
-    c.fillStyle='#e7c0b7';c.font='9px Arial';c.fillText(g.sanctum?'◆ SANCTUM · '+N.fmt(Math.round(Math.sqrt(N.dist2(g.player,g.sanctum))))+'u':'◆ SANCTUM AT WAVE END',x,y+size+14);
+    c.restore();
+    // Fixed north-up compass, with a separate player heading needle.
+    c.font='bold 8px Arial';c.textAlign='center';c.fillStyle='#d3c49f';c.fillText('N',cx,y+9);
+    const heading={S:Math.PI/2,SW:Math.PI*.75,W:Math.PI,NW:-Math.PI*.75,N:-Math.PI/2,NE:-Math.PI*.25,E:0,SE:Math.PI*.25}[g.player.facing]??0;
+    c.save();c.translate(cx,cy);c.rotate(heading);c.fillStyle='#d6fff1';c.strokeStyle='#143b3c';c.lineWidth=1.5;c.beginPath();c.moveTo(6,0);c.lineTo(-4,-3.5);c.lineTo(-2,0);c.lineTo(-4,3.5);c.closePath();c.fill();c.stroke();c.restore();
+    c.textAlign='left';c.font=(small?'8':'9')+'px Arial';c.fillStyle='#d6dfcd';
+    const target=objective?N.radarPoint(g,objective,l):null;
+    c.fillText(target?(g.sanctum?.phase==='cleared'?'SEAL BROKEN':g.sanctum?.phase==='fighting'?'SOVEREIGN':'SANCTUM')+' · '+N.fmt(Math.round(target.distance))+'u':'SURVIVE · FIND THE SEAL',x+2,y+size+13);
+    c.fillStyle='#9daea6';c.font='8px Arial';c.fillText(small?'◆ TARGET  ·  ● FOE':'◆ TARGET   ● FOE   + VITALITY',x+2,y+size+28);
     c.restore();
   };
 })();

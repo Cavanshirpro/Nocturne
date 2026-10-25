@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const elements=new Map();
+const docEvents=new Map();
 function element(){return {hidden:false,style:{},dataset:{},innerHTML:'',textContent:'',classList:{add(){},remove(){}},addEventListener(){},querySelector(){return null;},querySelectorAll(){return [];},focus(){},contains(){return false;},getBoundingClientRect(){return {left:0,top:0,width:106,height:106};}};}
 const gradient={addColorStop(){}};
 const context=new Proxy({createPattern:()=>({}),createRadialGradient:()=>gradient},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});
@@ -14,7 +15,7 @@ let seed=271828;
 const seededMath=Object.create(Math);
 seededMath.random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
 const memory=new Map();
-const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
+const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(type,fn,options){if(!docEvents.has(type))docEvents.set(type,[]);docEvents.get(type).push({fn,options});},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
 for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
@@ -799,7 +800,7 @@ test('floating origin rebases sanctum, guardian and radar objective together',()
 });
 test('radar includes the sanctum on phone and desktop independently of camera zoom',()=>{
   const g=create();g.reset();g.waveTime=g.waveDuration;g.update(.01);
-  for(const width of [390,844,1440]){g.width=width;for(const zoom of [.65,1.55]){g.setZoom(zoom);const r=N.radarLayout(g),px=r.size/2+(g.sanctum.x-g.player.x)*r.scale,py=r.size/2+(g.sanctum.y-g.player.y)*r.scale;assert.ok(px>=6&&px<=r.size-6&&py>=6&&py<=r.size-6);assert.ok(r.x>=0&&r.x+r.size<=width);N.drawRadar(g,context);}}
+  for(const width of [390,844,1440]){g.width=width;for(const zoom of [.65,1.55]){g.setZoom(zoom);const r=N.radarLayout(g),point=N.radarPoint(g,g.sanctum,r),px=point.x-r.x,py=point.y-r.y;assert.ok(px>=6&&px<=r.size-6&&py>=6&&py<=r.size-6);assert.ok(r.x>=0&&r.x+r.size<=width);N.drawRadar(g,context);}}
 });
 test('radar adapts its grid for distant objectives without an unbounded draw loop',()=>{
   const g=create();g.reset();g.sanctum={x:1e12,y:-1e12,radius:330,phase:'waiting',bossId:null};let lines=0;const old=context.lineTo;context.lineTo=()=>lines++;try{N.drawRadar(g,context);}finally{context.lineTo=old;}assert.ok(lines<100);
@@ -1158,5 +1159,24 @@ test('5.2.1 sprite blending respects quality and motion without changing animati
  a.draw(c,images,'E',0,0,80,107,'witch',null,'high');assert.equal(calls.length,2);assert.equal(c.globalAlpha,.6);assert.equal(JSON.stringify(a),before);
  calls.length=0;a.draw(c,images,'E',0,0,80,107,'witch',null,'low');assert.equal(calls.length,1);
  a.reduced=true;calls.length=0;a.draw(c,images,'E',0,0);assert.equal(calls.length,1);assert.equal(calls[0][1],clip.start*96);
+});
+test('5.2.2 context menu capture survives charging level-up and preserves editable menus',()=>{
+ const g=create();g.reset();g.state='playing';g.abilities.begin();assert.ok(g.abilities.charging);g.player.pendingLevels=1;g.ui.afterLevel='playing';g.ui.levelUp();assert.equal(g.abilities.charging,false);
+ const listener=docEvents.get('contextmenu').at(-1);assert.equal(listener.options,true);
+ for(const state of ['playing','levelup','paused']){g.state=state;const e={target:{closest:()=>null},defaultPrevented:false,preventDefault(){this.defaultPrevented=true;}};listener.fn(e);assert.equal(e.defaultPrevented,true,state);}
+ const edit={target:{closest:()=>({})},preventDefault(){throw Error('Blocked text editing context menu');}};listener.fn(edit);
+});
+test('5.2.2 radar remains local, clamps distant goals and respects short screens',()=>{
+ const g=create();g.reset();g.state='playing';
+ for(const [width,height] of [[390,844],[844,390],[1440,900]]){g.width=width;g.height=height;const layout=N.radarLayout(g),before=layout.scale;g.sanctum={x:1e12,y:-1e12,radius:330,phase:'waiting'};const point=N.radarPoint(g,g.sanctum);assert.equal(N.radarLayout(g).scale,before);assert.ok(point.offscreen);assert.ok(point.x>=layout.x&&point.x<=layout.x+layout.size);assert.ok(point.y>=layout.y&&point.y<=layout.y+layout.size);assert.ok(layout.y+layout.size+42<=height);const snapshot=JSON.stringify(g.sanctum);N.drawRadar(g,context);assert.equal(JSON.stringify(g.sanctum),snapshot);}
+});
+test('5.2.2 minimap marker work stays bounded for dense swarms',()=>{
+ const g=create();g.reset();g.state='playing';g.enemies=Array.from({length:10000},(_,i)=>({alive:true,x:i%50,y:i%30}));let dots=0;const c=new Proxy({save(){},restore(){},arc(){dots++;}},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});N.drawRadar(g,c);assert.ok(dots<200,dots);
+});
+test('5.2.2 every permanent upgrade category changes actual drawn equipment',()=>{
+ const g=create();g.reset();g.player.facing='S';
+ const trace=p=>{const out=[];const c=new Proxy({save(){},restore(){}},{get:(o,k)=>k in o?o[k]:(...a)=>out.push([k,...a]),set:(o,k,v)=>{out.push([k,v]);o[k]=v;return true;}});N.Appearance.playerFront(c,p);return JSON.stringify(out);};
+ const before=trace(g.player);
+ for(const [key,value] of [['damage',10000],['attackInterval',.01],['projectileCount',100],['critChance',8],['critMultiplier',20],['projectileSpeed',10000],['armor',100],['maxHp',10000],['regen',100],['speed',3000],['dashCooldown',.1],['pickupRadius',3000],['pierce',100]]){const p=Object.assign(Object.create(g.player),{[key]:value});assert.notEqual(trace(p),before,key+' has no visible equipment effect');}
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;

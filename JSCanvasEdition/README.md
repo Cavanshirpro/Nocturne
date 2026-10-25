@@ -1,12 +1,24 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.1 · Sculpted Silhouettes**
+**Version 5.2.2 · Sculpted Realms**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.2.1
+## What's new in 5.2.2
+
+- **Solid sculpted characters:** the Witch and Demon are rebuilt from shaded, depth-sorted meshes baked into all eight directional sprite atlases. Rounded shoulders, thick sleeves, faces, boots, fitted coats and a solid hat brim replace the earlier flat panels.
+- **Fitted equipment:** twelve different solid spell fixtures, a chest cuirass, focus bracer, boot fittings and compact inset ornaments preserve progression without stacking long floating outlines. All thirteen permanent training categories have visible effects.
+- **Tactical compass minimap:** fixed local scale, player heading, north, separate boss/elite markers, valuable pickups, sanctum boundaries and a distance label. Distant targets stay visible at the edge. Dense swarms share map cells to limit marker drawing. Responsive placement avoids the boss and power panels.
+- **Right-click modal fix:** the browser context menu is suppressed even if a level-up menu appears while charging. Editable text fields retain their clipboard menus.
+- **Complete offline package:** regenerated artwork, animated eight-direction gallery, map examples and all source files are included. Runtime version and versioned script URLs identify this build as 5.2.2.
+
+Open [visual-gallery.html](visual-gallery.html) for the new player, direction and minimap galleries.
+
+## Previous visual work (5.2.1)
+
+
 
 - Deeper robe, skull, hat and boot geometry keeps side views solid in all eight directions. This is lightweight 2.5D artwork rendered with Canvas, not a real-time 3D engine.
 - Permanent upgrades form three readable equipment groups: offensive focus, defensive cuirass and mobility fittings. All twelve spell attachments, mastery, evolutions, talents and relics remain represented.

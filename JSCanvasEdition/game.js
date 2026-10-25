@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.2.0';
+  N.VERSION = '5.2.2';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -93,7 +93,11 @@
       game.canvas.addEventListener?.('pointerdown',e=>{aim(e);if(e.button===2){e.preventDefault();game.abilities?.begin();}});
       window.addEventListener('pointerup',e=>{if(e.button===2)game.abilities?.release();});
       window.addEventListener('pointercancel',()=>game.abilities?.cancel());
-      game.canvas.addEventListener?.('contextmenu',e=>e.preventDefault());
+      // The level-up overlay can replace the canvas under a held right button.
+      // Capture at document level so the eventual menu event is still blocked.
+      document.addEventListener('contextmenu',e=>{
+        if(!e.target?.closest?.('input, textarea, select, [contenteditable=true]'))e.preventDefault();
+      },true);
       document.getElementById('special-button')?.addEventListener('pointerdown',e=>{e.preventDefault();e.currentTarget.setPointerCapture?.(e.pointerId);game.abilities?.begin();});
       document.getElementById('special-button')?.addEventListener('pointerup',e=>{e.preventDefault();game.abilities?.release();});
       document.getElementById('special-button')?.addEventListener('pointercancel',()=>game.abilities?.cancel());

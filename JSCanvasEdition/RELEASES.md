@@ -2,6 +2,17 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.2.2 — Sculpted Realms
+
+Full source package prepared: **2026-10-25**. No GitHub tag or release is created by this archive.
+
+- Replaced the character generator with real depth-sorted, lit mesh geometry baked into the same 96×128 atlas cells. All five animation clips and both forms retain eight directions.
+- Replaced the thin overlay pass with filled equipment fixtures, restrained inset mastery/level marks and thicker, shaded Demon wings. Permanent stat categories retain individual visual responses.
+- Rebuilt the minimap as a north-up compass with a fixed local scale, heading needle, priority threats, heal/jewel pickups, local sanctum radius, edge-clamped distant targets, distance/status footer and responsive HUD docking.
+- Capture-level context-menu suppression fixes right-button release over level-up cards; text editing menus remain available.
+- Updated the in-game version to 5.2.2, added asset URL versioning and refreshed generated galleries.
+- Damage, hitboxes, AI, cooldowns, progression and save schema remain unchanged. Input ownership and presentation are the scope of this release.
+
 ## v5.2.1 — Sculpted Silhouettes
 
 Full source package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
