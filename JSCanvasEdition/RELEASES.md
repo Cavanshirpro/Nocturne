@@ -2,6 +2,51 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.2.0 — Living Regalia
+
+Release package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
+
+### A visual minor release
+
+v5.2.0 introduces a costume-composition system, rebuilt character artwork, a dedicated Demon model, expanded boss animation and a current-costume portrait. Its scope is presentation: the v5.1.3 balance, AI, attacks, damage, spawn rules, timers, controls, collision and save schema remain intact.
+
+### Witch, equipment and Demon Ascendant
+
+- Rebuilt the witch's articulated model: layered brocade, split cloth, stitched boots, a fitted corset, moving hair, facial features, individual fingers, shoulder fittings, a sculpted hat and forked staff.
+- Added `systems/appearance.js`, a read-only costume composer. All **twelve learned spells** have different staff/bracer/shoulder/belt/mantle attachments and coexist without a visual equipment limit. Facing determines front/back layering.
+- Spell rank refines the equipment; mastery adds etching and evolutions add extra framing/endstones. Owned relics, all six talents, unlocked directed rituals, the selected ritual, active oath and banked essence have visible costume details.
+- Damage, haste, projectile count, criticals, range, armor, vitality, regeneration, speed, dash recovery, pickup radius and pierce contribute bounded equipment details. Level regalia grows at 8/20/40/80/160; exact player level appears below the model. Drawing grades do not cap gameplay progression.
+- **Demon Ascendant** has eight separate atlases and **192 dedicated frames**, replacing the old tinted witch. Its diadem, cheek armor, pale locks, swept horns and rose-metal clothing differ from the normal form. Runtime membrane wings, ribs, shoulder plates, antlers and crest stones grow with stacked form power. Learned equipment remains visible.
+- A large, read-only live-costume portrait and learned-spell labels appear in the grimoire. Opening it never alters character position, equipment or save data.
+
+### Creatures and Sovereign presentation
+
+- Renewed all nine enemy families: skull-core slime, plated skeleton, fractured gargoyle wings, ridged hound mane/collar, masked cultist, streaming moon-faced wraith, armored reaper/scythe, plated Warden and filigreed Overlord.
+- Level grades add regalia and armor. Elite crests, Armored plates, Swift fins, Mending rootwork and Volatile cores are physically distinct. Summoned commanders have a pennant; final Sovereigns gain wider regalia, crown teeth and shoulder stones by combat tier, plus enraged breastplate fractures.
+- Expanded from four shared ritual categories to **eleven distinct casting clips**: six frames × eight directions × two boss families = **1,056 boss-power frames**. Hands, body stance, staff position and power palette differ for each existing attack.
+- Added attack-bound body ornaments: firing prongs, raised ember crystals, blade trails, guard panels, constellation stones, phase traces, portal palms, descending stars, stacked rings and an eye seal. Existing world-space warnings retain their timing and geometry.
+- Replaced the floating outline crown with facing-aware crown regalia. Wards/Aegis show segmented facets proportional to remaining charge.
+- Projectile silhouettes now distinguish needles, shards, cannon cores, ice crystals and hostile embers; trajectories and collision radii are unchanged. High-haste player casting uses a display-only cycle so rapid attacks no longer pin the visible pose to the first frame.
+
+### Art atlas and compatibility
+
+- Added [visual-gallery.html](visual-gallery.html): **36 frames of actual runtime costume renderings** in three animated comparisons, with static alternatives, a pause control and reduced-motion support. No network assets are needed.
+- [VISUALS.md](VISUALS.md) documents every spell/stat/talent mapping, animation identities, model sources and bounded detail grades. Source model generators and optional gallery-render tooling are included.
+- The 58 embedded PNG assets include the new Demon sheets. Boss power sheets are packed into two rows per facing at **3168×2048**, keeping each texture below 4096 pixels in both dimensions. Ordinary enemy atlas dimensions remain unchanged.
+- Existing saves derive their appearance from already stored state. No cosmetic schema, equipment conversion or gameplay migration is introduced.
+
+### Validation
+
+- **230 logic/integration test groups passed**, including all twelve equipment pieces together, all eleven pose regions, finite geometry, balanced Canvas state, reduced-motion freezing, read-only drawing, fast casting and exact save restoration. Existing gameplay regression coverage remains.
+- **21 asset tests passed**, covering actual frame pixels, all directions, normal/Demon silhouettes, new power cells, border clipping, distinct animation poses and deterministic regeneration.
+- Scope verification against v5.1.3 found **11 gameplay-system files byte-identical**. Entity logic outside drawing, all combat simulation methods, 69 existing simulation/accessor methods, and every guardian rule outside drawing match their previous source. The game loop changed only its version label.
+- Native Canvas decoded all 58 PNGs, rendered all eleven warning scenes, a reinforced army, a narrow reduced-motion view and the real grimoire portrait; the portrait preserved player coordinates. Gallery frames also use the actual renderer.
+- Real-browser DOM/CSS, physical touch/audio and device performance checks were not run. Manual browser fixtures for the portrait and new atlases are included.
+
+### Install
+
+Replace the complete `JSCanvasEdition` folder and use the same browser/profile and game address. Open `index.html` to play or `visual-gallery.html` to inspect the art. Only JSCanvasEdition files are included, with README, release notes, license and preserved credits.
+
 ## v5.1.3 — Sovereign Dominion
 
 Release package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.

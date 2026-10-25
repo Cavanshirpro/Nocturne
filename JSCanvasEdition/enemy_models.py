@@ -16,10 +16,11 @@ CLIPS = {
     'death': {'start': 21, 'frames': 6, 'duration': .6},
     'fear': {'start': 27, 'frames': 6, 'duration': .45},
 }
+RITUALS=('salvo','meteors','slash','aegis','soulring','riftstep','lances','starfall','crossfire','shockwave','voidseal')
 
 
 def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
-    scale = 2
+    scale = 3
     im = Image.new('RGBA', (96*scale, 128*scale))
     d = ImageDraw.Draw(im)
     a = math.radians(angle)
@@ -30,6 +31,8 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
     if action == 'fear':
         gait = math.sin(progress*math.tau)*1.25
     strike = (progress/.42)*.25 if progress<.42 else .25+math.sin((progress-.42)/.58*math.pi)*.75
+    intent=action
+    action={'salvo':'sweep','meteors':'channel','slash':'sweep','aegis':'guard','soulring':'channel','riftstep':'blink','lances':'sweep','starfall':'channel','crossfire':'channel','shockwave':'guard','voidseal':'channel'}.get(action,action)
     ritual = action in ('channel','sweep','guard','blink')
     attack = strike if action == 'attack' or ritual else 0
     hurt = math.sin(progress*math.pi*1.5) if action == 'hurt' else 0
@@ -50,6 +53,8 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         'overlord': ('#342535', '#956d77', '#efafbf'),
     }
     dark, light, glow = palette[kind]
+    if intent in RITUALS:
+        glow={'salvo':'#ffc6a3','meteors':'#ffcb89','slash':'#ffd6ce','aegis':'#c6ddff','soulring':'#e8bbf8','riftstep':'#c6abff','lances':'#f8c6ef','starfall':'#ffdb97','crossfire':'#aaf0f2','shockwave':'#f0d8a2','voidseal':'#e4b0ff'}[intent]
 
     def project(x, y, z):
         if z > 15:
@@ -64,10 +69,10 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             z *= 1-death*.80
             y += death*4
         if ritual:
-            spread=.82 if action=='sweep' else .9
+            spread=.76 if action=='sweep' else .84
             x*=spread
             y*=spread
-            z*=.92
+            z*=.88
         xx = x*math.cos(a)-y*math.sin(a)
         yy = x*math.sin(a)+y*math.cos(a)
         return ((48+xx)*scale, (116-(3 if kind=='slime' else 0)-death*9+yy*.46-z*.89-bob*(1-death))*scale)
@@ -101,6 +106,14 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             faces.append((math.sin((t+u)/2+a), pts, color))
         for _, pts, color in sorted(faces):
             poly(pts, color)
+        # Layered scalloped brocade and engraved clasp, distinct from flat robes.
+        for side in (-1,1):
+            for j in range(4):
+                z=height-9-j*10;x=side*(9+j*2)
+                poly([(x,7,z+4),(x+side*8,8,z),(x+side*7,9,z-7),(x-side*2,10,z-4)],dark)
+                line([(x,9,z+3),(x+side*6,10,z-1),(x+side*5,10,z-6)],light,.8)
+            line([(side*11,5,height-1),(side*15,7,height-9),(0,11,height-15)],glow,.7)
+        oval(0,12,height-16,2.8,3.8,glow)
         for side in (-1, 1):
             line([(side*17+gait, 11, 10), (side*10, 9, height-10)], light, 1)
             for z in (18, 29, 40):
@@ -143,6 +156,12 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             t=i*math.tau/8
             oval(math.cos(t)*20, math.sin(t)*13, 5+math.sin(cycle+t)*2, 8, 5+math.sin(cycle+t)*.8, dark)
         oval(-5, 1, 27, 9, 11, '#4c7265')
+        # A suspended skull and reed-like dorsal growths give the slime a core.
+        oval(0,9,25,9,9,'#3d655d');oval(-1,11,27,7,6,'#afc7a4')
+        for side in (-1,1):
+            oval(side*3,13,28,1.8,2.4,'#263e39')
+            line([(side*17,-3,26),(side*20,-4,42+pulse*2),(side*16,-3,48+pulse)],'#779f81',1.3)
+        for x in (-3,0,3):line([(x,14,24),(x,14,20)],'#325047',1)
         if front > -.2:
             for side in (-1, 1):
                 oval(side*7, 16, 29+attack*7, 3.1, 4, glow)
@@ -165,6 +184,13 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
                 line([(pts[-1][0]+off*1.5, pts[-1][1], 3), (pts[-1][0]+off*2, pts[-1][1]+4, 2)], light, 1)
         oval(0, -2, 34, 16, 15, dark)
         oval(-2, 0, 39, 12, 13, light)
+        for j in range(8):
+            y=-16+j*4;roll=math.sin(cycle+j)*1.3
+            poly([(-9,y,38),(0,y-2,52+roll),(9,y,38),(0,y+2,40)],'#3c3546')
+            line([(-6,y,41),(0,y-1,49+roll),(6,y,41)],'#b99aa1',.8)
+        for side in (-1,1):
+            line([(side*7,17,47),(side*12,14,43),(side*13,8,41)],'#bda087',2)
+            oval(side*10,14,45,1.6,2,glow)
         for side in (-1, 1):
             for y in (-10, -2, 6):
                 line([(side*10, y, 43), (side*14, y-2, 35), (side*13, y+2, 30)], dark, 1)
@@ -188,10 +214,18 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         for side in (-1, 1):
             pts=[(side*9, -4, 68), (side*35, -7, 91+wing), (side*41, -4, 55+wing*.4), (side*30, -2, 60), (side*22, -1, 44), (side*13, 0, 56)]
             poly(pts, dark)
+            for j,(x,z) in enumerate(((35,91+wing),(30,60),(22,44))):
+                poly([(side*10,-4,67),(side*x,-5,z),(side*(x-4),-3,z-8)],'#6b506b' if kind=='overlord' else '#626875')
+                line([(side*(x-4),-3,z-8),(side*x,-5,z)],glow,.65)
             for x, z in ((35, 91+wing), (30, 60), (22, 44)):
                 line([(side*10, -3, 66), (side*x, -4, z)], light, 1)
 
     skeletal = kind in ('skeleton', 'reaper')
+    if skeletal:
+        for side in (-1,1):
+            wind=math.sin(cycle+side)*3
+            poly([(side*8,-6,68),(side*18,-8,62),(side*22+wind,-11,17),(side*11,-9,28)],'#343b49')
+            line([(side*10,-7,65),(side*17+wind,-11,23)],'#9c9393',.7)
     if kind in ('cultist', 'wraith', 'reaper', 'warden', 'overlord'):
         robe(67 if kind in ('warden', 'overlord') else 62, 24 if kind=='overlord' else 22)
         if kind=='wraith':
@@ -209,6 +243,9 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
                 for side in (-1, 1):
                     line([(0, 3, z+2), (side*11, 5, z), (side*12, 5, z-3), (side*3, 7, z-4)], light, 2)
             oval(0, 0, 41, 9, 5, light)
+            poly([(-10,6,63),(0,9,68),(10,6,63),(7,9,52),(0,11,48),(-7,9,52)],'#626a70')
+            line([(-8,8,62),(0,11,57),(8,8,62)],'#d3c5a6',1)
+            oval(0,12,57,2,3,glow)
         else:
             oval(0, 0, 55, 14, 22, dark)
             poly([(-12, 5, 66), (0, 9, 57), (12, 5, 66), (8, 5, 43), (-8, 5, 43)], light)
@@ -226,6 +263,19 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         if action=='guard': hand_z=65+math.sin(progress*math.pi)*7;hand_y=16;hand_x=side*(9+math.cos(progress*math.pi)*3)
         if action=='sweep': hand_z=60+side*math.sin(progress*math.tau)*18;hand_y=8+math.sin(progress*math.pi)*19;hand_x=side*28
         if action=='blink': hand_z=49+side*math.sin(progress*math.pi)*22;hand_y=-5+progress*14
+        # Each Sovereign power has a separate skeletal pose, not a recolored clip.
+        wave=math.sin(progress*math.pi)
+        if intent=='salvo':hand_z=62+(8*wave if side==1 else -12*wave);hand_y=14+wave*14;hand_x=side*(22+wave*5)
+        if intent=='meteors':hand_z=80+wave*17;hand_x=side*(23-wave*5);hand_y=5+wave*4
+        if intent=='slash':hand_z=59+side*math.sin(progress*math.tau)*21;hand_x=side*(27+wave*3);hand_y=5+wave*22
+        if intent=='aegis':hand_z=68+side*4;hand_x=-side*(7+wave*3);hand_y=16+wave*5
+        if intent=='soulring':hand_z=66+wave*8;hand_x=side*(30+wave*4);hand_y=3
+        if intent=='riftstep':hand_z=45+side*wave*23;hand_x=side*24;hand_y=-10+progress*13
+        if intent=='lances':hand_z=69+side*8;hand_x=side*(16+wave*9);hand_y=18+wave*9
+        if intent=='starfall':hand_z=91+wave*10 if side==1 else 40+wave*8;hand_x=side*22;hand_y=6
+        if intent=='crossfire':hand_z=66+side*wave*21;hand_x=side*(27+wave*4);hand_y=-3+side*5
+        if intent=='shockwave':hand_z=49-wave*22;hand_x=side*(23+wave*4);hand_y=10+wave*8
+        if intent=='voidseal':hand_z=83 if side==1 else 61+wave*13;hand_x=8 if side==1 else -26;hand_y=13+wave*9
         limb([(side*12, 0, 65), (side*(20+attack*4), 2, 51+attack*10), (hand_x, hand_y, hand_z)], 3 if skeletal else 5)
         oval(hand_x, hand_y, hand_z, 3, 3.5, light)
         for finger in (-1, 0, 1):
@@ -236,6 +286,9 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         if kind in ('warden', 'overlord'):
             poly([(side*9, 0, 70), (side*23, 0, 69), (side*24, 1, 56), (side*13, 3, 58)], light)
             line([(side*12, 2, 67), (side*21, 2, 65)], glow, 1)
+            for j in range(3):
+                poly([(side*12,4,62-j*5),(side*23,3,62-j*5),(side*22,6,56-j*5),(side*14,7,54-j*5)],'#665865')
+                line([(side*14,6,61-j*5),(side*21,6,60-j*5)],'#c7b3ac',.7)
 
     if kind in ('cultist', 'wraith', 'reaper'):
         oval(0, -1, 80, 15, 20, dark)
@@ -249,6 +302,16 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
                     oval(side*4, 12, 81, 2, 1.4, glow)
         else:
             line([(0, -10, 94), (0, -12, 68)], dark, 1)
+        # Faceted masks and hanging seals make the three cloaked families distinct.
+        if kind=='cultist' and front>-.1:
+            poly([(-7,9,84),(0,12,88),(7,9,84),(5,11,73),(0,13,69),(-5,11,73)],'#bba0b1')
+            for side in (-1,1):
+                oval(side*3.5,14,81,2,1.8,'#241b34')
+                line([(side*2,14,81),(side*5,13,82)],glow,1)
+        if kind=='wraith':
+            for side in (-1,1):
+                for j in range(3):line([(side*(10+j*3),-5,57),(side*(22+j*3)+math.sin(cycle+j)*3,-9,31),(side*(13+j*2),-6,8+j*3)],'#9fcbd0',.9)
+            if front>-.1:oval(0,12,80,4,7,'#b8d5d7');oval(0,13,81,2,3,'#2b5262')
     else:
         skull(81, kind in ('gargoyle', 'warden', 'overlord'))
 
@@ -257,6 +320,10 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         if action=='guard':sx,sy=15,17
         if action=='sweep':sx,sy=math.cos(progress*math.pi)*25,15
         if action=='channel':sx,sy=28,2
+        if intent=='starfall':sx,sy=17,1
+        if intent=='voidseal':sx,sy=14,14
+        if intent=='crossfire':sx,sy=-24,4
+        if intent=='shockwave':sx,sy=28,19
         line([(23-attack*5, 4, 4), (sx, sy, 102)], '#6c5b51', 3)
         line([(24-attack*5, 4, 8), (sx+1, sy, 100)], '#bba17f', 1)
         oval(sx, sy, 102, 6, 8, light)
@@ -281,6 +348,24 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
                 z=58-j*12+math.sin(cycle+side+j)*2
                 poly([(side*(15+j*2),-6,z+9),(side*(23+j*2),-5,z+3),(side*(18+j*2),-3,z-6)], '#70556f')
                 line([(side*(16+j*2),-4,z+6),(side*(21+j*2),-4,z+2)], '#cf9cad', .8)
+        # Ribbed breastplate, filigree, temple chains and a segmented jaw crown.
+        for side in (-1,1):
+            for j in range(4):line([(side*4,12,65-j*6),(side*13,9,68-j*6),(side*16,7,63-j*6)],'#c4a1a9',1)
+            line([(side*8,5,94),(side*16,5,82),(side*12,8,72)],'#d6b690',.8)
+            oval(side*15,6,83,1.7,2.8,glow)
+    if kind=='warden':
+        for side in (-1,1):
+            poly([(side*9,4,72),(side*25,1,70),(side*27,2,60),(side*18,6,62)],'#7a8283')
+            line([(side*12,5,70),(side*22,4,68)],'#e6cf9e',1)
+        if front>-.1:
+            poly([(-7,8,87),(0,12,91),(7,8,87),(5,11,77),(0,13,73),(-5,11,77)],'#a9a99b')
+            for side in (-1,1):
+                oval(side*3,13,83,2.2,1.8,'#222e37')
+                oval(side*3,14,83,1.1,1,glow)
+            line([(0,14,80),(0,14,76)],'#3d515a',1)
+    if kind=='gargoyle':
+        for side in (-1,1):
+            for z in (43,55,67):line([(side*4,10,z),(side*10,8,z+3),(side*14,6,z-3)],glow,.65)
     if action=='fear':
         for side in (-1, 1):
             line([(side*12, 3, 99), (side*16, 3, 105), (side*18, 3, 102)], '#ecb9dc', 1)

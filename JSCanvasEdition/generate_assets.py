@@ -12,7 +12,8 @@ from pathlib import Path
 import random
 
 from PIL import Image, ImageDraw, ImageFilter
-from enemy_models import KINDS, DIRECTIONS, CLIPS, render_enemy
+from enemy_models import KINDS, DIRECTIONS, CLIPS, RITUALS, render_enemy
+from witch_models import render_witch
 
 ROOT = Path(__file__).resolve().parent
 S = 3
@@ -25,118 +26,7 @@ def encode(im):
 
 
 def witch(angle, phase=None, action="idle", progress=0):
-    """Rotate an entire model, including shoulders, robe, face and staff.
-
-    Local +Y is the character's front. Orthographic projection compresses depth
-    and raises Z. Sorting the robe panels gives a shaded, volumetric silhouette.
-    """
-    im = Image.new("RGBA", (96*S, 128*S))
-    d = ImageDraw.Draw(im)
-    a = math.radians(angle)
-    gait = math.sin(phase) if phase is not None else 0
-    sway = math.cos(phase)*1.3 if phase is not None else 0
-    lift = abs(math.sin(phase)) * 1.4 if phase is not None else 0
-    cast = math.sin(progress*math.pi) if action == "cast" else 0
-    reach = cast*(.3+.9*progress)
-    recoil = math.sin(progress*math.pi) if action == "hurt" else 0
-    lean = 5+progress*2 if action == "dash" else 0
-    if action == "dash":
-        gait=math.sin(progress*math.pi)*.7;lift=.5+math.sin(progress*math.pi)*.9
-    if action == "idle":
-        lift = math.sin(progress*math.tau)*.65
-
-    def p(x, y, z):
-        # Upper-body lean is independent of the planted feet. The hem, hands,
-        # boots and staff get their own gait offsets below, not a shifted bitmap.
-        if z > 12:
-            y -= 1.4+sway*.5 if phase is not None else 0
-            z += lift * min(1, z / 50)
-        if z>20:
-            y += (cast*2+reach*2-recoil*4-lean)*min(z/60,1)
-        xx = x*math.cos(a) - y*math.sin(a)
-        yy = x*math.sin(a) + y*math.cos(a)
-        # Leave headroom for the pointed tip and the lifted walking poses.
-        return ((48+xx)*S, (116+(2 if action=="dash" else 0)+yy*.48-z*.89)*S)
-
-    def poly(points, fill):
-        d.polygon([p(*v) for v in points], fill=fill)
-
-    def ellipse(x, y, z, rx, rz, fill):
-        cx, cy = p(x, y, z)
-        d.ellipse((cx-rx*S, cy-rz*S, cx+rx*S, cy+rz*S), fill=fill)
-
-    # Boots, flared robe: each vertical facet rotates with the torso.
-    boots = [(-8, 4+gait*10, 2+max(0,-gait)*3),
-             (8, 4-gait*10, 2+max(0,gait)*3)]
-    for x,y,z in sorted(boots, key=lambda v: v[0]*math.sin(a)+v[1]*math.cos(a)):
-        poly([(x-4,y-2,13),(x+4,y-2,13),(x+5,y+5,z),(x-5,y+5,z)], "#211c26")
-        ellipse(x, y, z, 6, 3.8, "#15121c")
-    panels = []
-    for i in range(12):
-        t, u = i*math.tau/12, (i+1)*math.tau/12
-        pts = [(23*math.cos(t)+gait*1.7, 14*math.sin(t), 8+gait*math.cos(t)*3),
-               (23*math.cos(u)+gait*1.7, 14*math.sin(u), 8+gait*math.cos(u)*3),
-               (11*math.cos(u), 8*math.sin(u), 59),
-               (11*math.cos(t), 8*math.sin(t), 59)]
-        dep = math.sin((t+u)/2+a)
-        shade = int(31 + 12*math.cos(t+a-.8))
-        panels.append((dep, pts, (shade, shade-2, shade+12, 255)))
-    for _, pts, color in sorted(panels):
-        poly(pts, color)
-    # A longitudinal opening and fitted belt make facing visible at diagonals.
-    front = math.cos(a)
-    if front > .08:
-        poly([(-5+gait*1.7,10,11-gait*2),(6+gait*1.7,10,11+gait*2),(5,8,54),(-5,8,54)], "#555060")
-    else:
-        # A back seam replaces the front opening on rear-facing views.
-        d.line([p(0, -10, 12), p(0, -7, 52)], fill="#45404d", width=S)
-    ellipse(0, 0, 56, 14, 8, "#292634")
-    if front > .08:
-        poly([(-12, 8, 47), (12, 8, 47), (12, 8, 51), (-12, 8, 51)], "#807052")
-        ellipse(0, 9, 49, 3, 2, "#c1a772")
-    # Embroidered trim follows the rotated robe geometry.
-    for side in (-1,1):
-        d.line([p(side*7,9,48),p(side*11+gait*1.7,12,27),p(side*16+gait*1.7,13,12)],fill="#8e7857",width=S)
-        for z in (18,28,38):
-            ellipse(side*(15-z*.16),12,z,1.15,1.7,"#b19b6b")
-    # The free hand rises and opens during a real cast, while the staff tilts.
-    hand_x,hand_y,hand_z=-18-cast*8,5+cast*11+reach*7-gait*5,38+cast*30
-    poly([(-12,0,61),(hand_x-5,hand_y-4,hand_z+5),(hand_x+4,hand_y+3,hand_z-3),(-6,3,59)], "#433d51")
-    ellipse(hand_x,hand_y,hand_z,3.2,3.2,"#d0b497")
-    if cast>.2:
-        for i in (-1,0,1):
-            d.line([p(hand_x+i*1.6,hand_y,hand_z),p(hand_x+i*2.6,hand_y+cast*3,hand_z+5)],fill="#d8bda1",width=S)
-        ellipse(hand_x,hand_y,hand_z+9,2+cast*3,2+cast*3,(210,228,255,180))
-        ellipse(hand_x,hand_y,hand_z+9,1.5,1.5,"#ffffff")
-    poly([(12,0,61),(21,3+gait*4,43+cast*7),(16,8+gait*4,40+cast*7),(6,3,59)], "#4d445b")
-    ellipse(18,6+gait*4,42+cast*7,3,3,"#cbb093")
-    staff_x,staff_y,staff_z=23+gait+cast*7+reach*3,6+gait*3+cast*4+reach*3,84+cast*5
-    d.line([p(23-gait-cast*4,6+gait*5,6),p(staff_x,staff_y,staff_z)],fill="#a48a61",width=2*S)
-    ellipse(staff_x,staff_y,staff_z,5,7,"#897caa")
-    ellipse(staff_x-1,staff_y,staff_z+1,3,5,"#c6c7eb")
-    ellipse(staff_x-1,staff_y,staff_z+3,1.4,2.5,"#fff5e4")
-    # Hair behind the head; never draw a face on the back-facing sprite.
-    ellipse(0, 0, 72, 11, 16, "#241e24")
-    if front > -.12:
-        face_x, face_y = p(0, 7, 75)
-        width = max(3, 8*abs(front)) * S
-        d.ellipse((face_x-width, face_y-10*S, face_x+width, face_y+7*S), fill="#b8a08b")
-        if front > .65:
-            d.line((face_x-4*S, face_y-1*S, face_x-2*S, face_y-1*S), fill="#332a30", width=S)
-            d.line((face_x+2*S, face_y-1*S, face_x+4*S, face_y-1*S), fill="#332a30", width=S)
-        else:
-            ellipse(-4 if math.sin(a)>0 else 4, 8, 75, 1, 1, "#352934")
-    # Broad tilted brim, cone with bent tip, and restrained metal ornament.
-    ellipse(0, 0, 88, 30, 8, "#1a1923")
-    ellipse(0, 0, 90, 28, 7, "#393442")
-    poly([(-17, 0, 91), (17, 0, 91), (5, 0, 120), (-4, 1, 125), (-3, 0, 113)], "#282532")
-    poly([(0, -1, 93), (17, 0, 91), (5, 0, 120), (3, 0, 112)], "#494153")
-    poly([(-16, 2, 92), (16, 2, 92), (13, 2, 97), (-13, 2, 97)], "#7b684e")
-    ellipse(4, 3, 95, 3, 2, "#cfb778")
-    # Thin moonlit edges preserve the silhouette against the forest.
-    d.line([p(-17,0,91),p(-4,1,125),p(5,0,120)],fill="#8a7d98",width=S)
-    ellipse(4,3,95,1,1,"#f8e5b6")
-    return im.resize((96, 128), Image.Resampling.LANCZOS)
+    return render_witch(angle,phase,action,progress)
 
 
 def enemy(kind, phase=None, action="idle", progress=0, angle=0):
@@ -232,6 +122,13 @@ def main():
                 t=i/(clip["frames"]-1) if not clip["loop"] else i/clip["frames"]
                 frames.append(walk_frames[name][i] if state=="walk" else witch(angle,action=state,progress=t))
         assets["witch_atlas_"+name]=encode(sheet(frames))
+    for name,angle in dirs.items():
+        frames=[]
+        for state,clip in clips.items():
+            for i in range(clip['frames']):
+                t=i/(clip['frames']-1) if not clip['loop'] else i/clip['frames']
+                frames.append(render_witch(angle,i*math.tau/8 if state=='walk' else None,state,t,demon=True))
+        assets['demon_atlas_'+name]=encode(sheet(frames))
     for name in KINDS:
         assets["enemy_walk_"+name]=encode(sheet([enemy(name,i*math.tau/4) for i in range(4)]))
     enemy_clips=CLIPS
@@ -244,13 +141,15 @@ def main():
                     pose=enemy(name,t*math.tau if state=='walk' else None,action=state,progress=t,angle=angle)
                     atlas.paste(pose,((clip['start']+i)*96,row*128))
         assets['enemy_atlas_'+name]=encode(atlas)
-    ritual_states=('channel','sweep','guard','blink')
+    ritual_states=RITUALS
     for name in ('warden','overlord'):
-        atlas=Image.new('RGBA',(96*24,128*8))
+        # Two rows per facing keep every texture below 4096px on either axis.
+        atlas=Image.new('RGBA',(96*33,128*16))
         for row,(direction,angle) in enumerate(DIRECTIONS.items()):
             for state_index,state in enumerate(ritual_states):
                 for i in range(6):
-                    atlas.paste(render_enemy(name,angle=angle,action=state,progress=i/5),((state_index*6+i)*96,row*128))
+                    frame=state_index*6+i
+                    atlas.paste(render_enemy(name,angle=angle,action=state,progress=i/5),((frame%33)*96,(row*2+frame//33)*128))
         assets['enemy_ritual_'+name]=encode(atlas)
     for name in ("tree","arch","tomb"):assets["prop_"+name]=encode(prop(name))
     output="// Generated by generate_assets.py; embedded PNGs, zero runtime requests.\n"
@@ -258,7 +157,7 @@ def main():
     output+='window.NOCTURNE_ANIMATIONS = Object.freeze({witch:{frames:8,width:96,height:128},enemy:{frames:8,width:96,height:128}});\n'
     output+='window.NOCTURNE_ATLAS = Object.freeze('+json.dumps({"version":1,"width":96,"height":128,"totalFrames":cursor,"clips":clips})+');\n'
     output+='window.NOCTURNE_ENEMY_ATLAS = Object.freeze('+json.dumps({'version':2,'width':96,'height':128,'rows':8,'directions':list(DIRECTIONS),'totalFrames':33,'clips':enemy_clips})+');\n'
-    output+='window.NOCTURNE_RITUAL_ATLAS = Object.freeze('+json.dumps({'width':96,'height':128,'rows':8,'directions':list(DIRECTIONS),'clips':{s:{'start':i*6,'frames':6} for i,s in enumerate(ritual_states)}})+');\n'
+    output+='window.NOCTURNE_RITUAL_ATLAS = Object.freeze('+json.dumps({'width':96,'height':128,'rows':16,'columns':33,'rowStride':2,'directions':list(DIRECTIONS),'clips':{**{s:{'start':i*6,'frames':6} for i,s in enumerate(ritual_states)},**{alias:{'start':ritual_states.index(target)*6,'frames':6} for alias,target in {'channel':'meteors','sweep':'slash','guard':'aegis','blink':'riftstep'}.items()}}})+');\n'
     (ROOT/"assets.js").write_text(output,encoding="utf-8")
     previews=[]
     for i in range(8):
@@ -302,7 +201,7 @@ def main():
     for i in range(12):
         preview=Image.new('RGB',(800,380),'#182429');draw=ImageDraw.Draw(preview)
         for row,name in enumerate(('warden','overlord')):
-            for col,state in enumerate(ritual_states):
+            for col,state in enumerate(('channel','sweep','guard','blink')):
                 pose=render_enemy(name,angle=315,action=state,progress=(i%6)/5).resize((144,192),Image.Resampling.NEAREST)
                 preview.paste(pose,(col*200+28,row*175-4),pose);draw.text((col*200+50,row*175+155),name+' '+state,fill='#e9cbde')
         rituals.append(preview)

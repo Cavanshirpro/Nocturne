@@ -1,21 +1,24 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.1.3 · Sovereign Dominion**
+**Version 5.2.0 · Living Regalia**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.1.3
+## What's new in 5.2.0
 
-- **Sovereign combat tiers:** whole-build strength now controls attack cadence, burst size, wards, arena size, reinforcements and attack selection, alongside the retained vitality budget.
-- **Eleven powers:** strong guardians add Hunter Starfall, Twin Gates, Crown Shockwaves and Void Seal to their seven existing powers. Ground warnings, distinct casting poses and staff glyphs show the incoming attack.
-- **Range counterplay:** larger sanctums, longer lances and player-position attacks. Leaving the outer boundary activates a visible 90% guardian damage reduction; it never heals or resets the encounter.
-- **Stronger armies:** high-tier guardians summon Overlord commanders; commanders and invasion Overlords summon soldiers. Whole-build health/damage budgets, spawn warnings, depth limits and global caps keep reinforcements useful and bounded.
-- **More frequent invasions:** high-pressure builds can encounter an Overlord on consecutive waves. One saved roll and one primary invasion per wave remain.
-- **Reactive movement and defense:** bosses read incoming projectile paths, signal a sidestep, then move; no dodge invulnerability. Strong wards can react to concentrated damage with a recovery period.
-- **Boss animation:** four new articulated ritual clips in eight directions, moving mantle shards and attack-specific glyphs. Casting poses take priority over repeated hurt reactions from fast fire.
-- **Retained:** E/Aegis, same-wave retries with half-gold loss, manual banked Demon Essence, vitality cues, red screen edges, final sanctums and the minimap.
+- **Living Regalia:** learned spells become visible staff, bracer, shoulder, belt and mantle equipment. All twelve spell pieces coexist; mastery, evolutions, relics, talents, directed rituals, oath and permanent upgrades refine the costume.
+- **Rebuilt player model:** layered brocade, jointed arms, fingers, individual boots, moving hair, a face plane, a sculpted hat and a forked staff. Coven palettes and five level milestones change the regalia.
+- **Demon Ascendant:** a separate eight-direction model with 192 frames, plus articulated wings, antlers and armor that grow with stacked form power. Your learned equipment stays visible.
+- **Nine renewed enemy families:** engraved armor, masks, manes, spectral ribbons, wing facets, skull cores and articulated weapons. Level, traits, elite status and commander identity appear on their bodies.
+- **Eleven distinct boss casting rigs:** 1,056 directional power frames, supported by attack-specific body effects. No generic casting pose shared by all eleven attacks.
+- **Readable magic:** different projectile shapes, charge-sensitive ward facets and a large, read-only current-costume portrait in the grimoire. High-haste casting remains visibly animated.
+- **Visual release:** v5.1.3 damage, AI, difficulty, summons, timers, hitboxes, controls, progression and save rules are retained.
+
+![Living Regalia player progression](previews/player-regalia.png)
+
+Open **[visual-gallery.html](visual-gallery.html)** for animated player/enemy/boss comparisons. See **[VISUALS.md](VISUALS.md)** for the complete equipment mapping and art notes.
 
 See [RELEASES.md](RELEASES.md) for version-specific changes and migration notes.
 
@@ -145,7 +148,7 @@ There are **24 independent local save slots**, with renaming and JSON backup exp
 
 Export a backup from **SAVES** before upgrading. Replace the edition's files together, then use the same browser, profile, and game address. Clearing site data, private browsing, a different localhost port, or a different browser can make local saves unavailable. Direct-file save behavior depends on the browser.
 
-v5.1.3 accepts the supported v5.1.2/v5.1.1/v5.1.0/v5.0 saves. Player progression, essence, merchant stock, health, sanctums, attacks and cooldowns remain. A fighting v5.1.2 guardian receives tactics once **without changing its current or maximum vitality**; its ward percentage and attack clocks remain, and the arena expands. Earlier guardians follow their existing vitality migration. New snapshots preserve army ownership/depth, the primary guardian's identity, sidestep clocks, suppression, ring gaps and seal warnings. Saves made after migration load exactly without repeating it. Older supported v3/v4 data still follows the existing migration path.
+v5.2.0 accepts the supported v5.1.3/v5.1.2/v5.1.1/v5.1.0/v5.0 saves. Player progression, essence, merchant stock, health, sanctums, attacks and cooldowns remain. A fighting v5.1.2 guardian receives tactics once **without changing its current or maximum vitality**; its ward percentage and attack clocks remain, and the arena expands. Earlier guardians follow their existing vitality migration. Snapshots preserve army ownership/depth, the primary guardian's identity, sidestep clocks, suppression, ring gaps and seal warnings. Appearance is derived from existing state; v5.2.0 needs no cosmetic save migration. Saves made after migration load exactly without repeating it. Older supported v3/v4 data still follows the existing migration path.
 
 ## Source layout
 
@@ -159,6 +162,9 @@ v5.1.3 accepts the supported v5.1.2/v5.1.1/v5.1.0/v5.0 saves. Player progression
 | `systems/abilities.js` | Charged specials and banked Demon form |
 | `systems/encounters.js` | Final sanctum, guardian leash, minimap |
 | `systems/guardian.js` | Sovereign scaling, warned powers, temporary boss ward |
+| `systems/appearance.js` | Read-only costume composition, progression regalia and spell equipment |
+| `witch_models.py` | Articulated witch and dedicated Demon model |
+| `visual-gallery.html`, `previews/`, `VISUALS.md` | Animated art atlas and complete visual mapping |
 | `systems/warfare.js` | Combat tiers, arena sizing, armies, silence and predictive sidesteps |
 | `systems/difficulty.js` | Whole-build assessment, saved wave plans, encounter budgets |
 | `systems/vitality.js` | Player health feedback and red screen edges |

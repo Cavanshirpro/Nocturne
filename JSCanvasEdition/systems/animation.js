@@ -17,7 +17,10 @@
       this.reduced=reduced;
     }
     get frame(){const c=window.NOCTURNE_ATLAS.clips[this.state];if(this.reduced)return c.start+(this.state==='cast'?2:0);return c.start+Math.min(c.frames-1,Math.floor((c.loop?this.time%c.duration:Math.min(this.time,c.duration-.00001))/c.duration*c.frames));}
-    draw(c,images,facing,x,y,w=80,h=107){const a=window.NOCTURNE_ATLAS;c.drawImage(images['witch_atlas_'+facing],this.frame*a.width,0,a.width,a.height,x,y,w,h);}
+    draw(c,images,facing,x,y,w=80,h=107,variant='witch',visualClock=null){const a=window.NOCTURNE_ATLAS,clip=a.clips.cast;
+      const frame=visualClock!==null&&!this.reduced&&this.state==='cast'?clip.start+Math.floor((visualClock%1)*clip.frames):this.frame;
+      c.drawImage(images[variant+'_atlas_'+facing]||images['witch_atlas_'+facing],frame*a.width,0,a.width,a.height,x,y,w,h);
+    }
   }
   N.EnemyMotion={
     ritual(e){
@@ -69,7 +72,7 @@
     if(!sheet||!atlas){c.drawImage(images[enemy.type],x,y,w,h);return;}
     const q=enemy.guardian;
     const ritual=state===null&&progress===null?N.EnemyMotion.ritual(enemy):null;
-    if(ritual&&images['enemy_ritual_'+enemy.type]){atlas=window.NOCTURNE_RITUAL_ATLAS;sheet=images['enemy_ritual_'+enemy.type];state=ritual.style;progress=ritual.t;}
+    if(ritual&&images['enemy_ritual_'+enemy.type]){atlas=window.NOCTURNE_RITUAL_ATLAS;sheet=images['enemy_ritual_'+enemy.type];state=atlas.clips[ritual.action]?ritual.action:ritual.style;progress=ritual.t;}
     if(!state){state=enemy.terrified?'fear':q?.windup>0||q?.salvo>0||enemy.windup>0||enemy.charge>0?'attack':enemy.hitSquash>0?'hurt':enemy.castTimer>0?'attack':enemy.frozen>0||enemy.moving===false?'idle':'walk';}
     const clip=atlas.clips[state];let t=progress;
     if(t===null){
@@ -79,7 +82,7 @@
     }
     t=N.clamp(t,0,.999999);const position=t*clip.frames,index=Math.floor(position);
     const row=atlas.rows?Math.max(0,atlas.directions.indexOf(enemy.facing||'S')):0;
-    const draw=i=>c.drawImage(sheet,(clip.start+i)*atlas.width,row*atlas.height,atlas.width,atlas.height,x,y,w,h);
+    const draw=i=>{const frame=clip.start+i,columns=atlas.columns||Infinity;c.drawImage(sheet,(frame%columns)*atlas.width,(row*(atlas.rowStride||1)+Math.floor(frame/columns))*atlas.height,atlas.width,atlas.height,x,y,w,h);};
     if(enemy.game.reducedMotion){draw(0);return;}
     draw(index);
     // Only prominent/uncrowded actors blend; low quality keeps a single atlas draw.

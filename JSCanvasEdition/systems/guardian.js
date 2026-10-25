@@ -135,8 +135,7 @@
     draw(g,e,c){
       const q=e.guardian;if(!q)return;
       c.save();c.lineWidth=2;c.strokeStyle='#f3bbcf';c.fillStyle='#ed9bbc';
-      // A crown distinguishes the final guardian from an ordinary Overlord.
-      c.beginPath();c.moveTo(e.x-22,e.y-206);c.lineTo(e.x-27,e.y-223);c.lineTo(e.x-9,e.y-216);c.lineTo(e.x,e.y-232);c.lineTo(e.x+9,e.y-216);c.lineTo(e.x+27,e.y-223);c.lineTo(e.x+22,e.y-206);c.closePath();c.stroke();
+      // The crown is part of the facing-aware regalia; telegraphs stay in world space.
       if(q.ward>0){c.strokeStyle='#c7b4ef';c.fillStyle='#a99bdf18';c.beginPath();c.ellipse(e.x,e.y-88,83,119,0,0,Math.PI*2);c.fill();c.stroke();}
       if(q.windup>0){
         c.strokeStyle='#ffb0bb';c.fillStyle='#ef658422';c.setLineDash([9,5]);

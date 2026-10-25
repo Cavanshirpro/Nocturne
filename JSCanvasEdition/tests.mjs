@@ -17,15 +17,15 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
 let passed=0,failed=0;
 function test(name,fn){memory.clear();seed=271828;try{fn();passed++;console.log(`PASS ${name}`);}catch(error){failed++;console.error(`FAIL ${name}\n${error.stack}`);}}
 
-test('all 50 procedural PNG assets are real, encoded images',()=>{
-  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,50);
+test('all 58 procedural PNG assets are real, encoded images',()=>{
+  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,58);
   for(const src of Object.values(sandbox.NOCTURNE_ASSETS))assert.equal(Buffer.from(src.split(',')[1],'base64').subarray(1,4).toString(),'PNG');
   assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_atlas_')).map(([,v])=>v)).size,8);
 });
@@ -1105,5 +1105,49 @@ test('high-tier attack floors retain pressure against huge armor while respectin
 });
 test('rapid impacts cannot pin a guardian or shift its main attack warning',()=>{
  const g=strongFight(),b=g.boss,q=b.guardian;for(let i=0;i<30;i++)b.hit(1,false,1,0);assert.ok(b.knockX<=45);q.next=6;N.FinalGuardian.begin(g,b);const x=b.x,y=b.y;b.update(.01);assert.equal(b.x,x);assert.equal(b.y,y);
+});
+test('v5.2 appearance is read-only across fully upgraded player, enemies and all eleven boss poses',()=>{
+ const g=strongFight(),p=g.player;p.level=160;for(const id of N.SPELL_IDS){p.weapons[id]=8;p.relics[N.WEAPONS[id].relic]=true;p.progress.mastery[id]=20;}for(const id of Object.keys(N.TALENTS))p.progress.talents[id]=8;p.progress.demonTime=5;p.progress.demonPower=3;p.progress.demonDuration=30;
+ const before=JSON.stringify(N.captureWorld(g)),player=JSON.stringify(Object.fromEntries(N.PLAYER_FIELDS.map(k=>[k,p[k]]))),progress=JSON.stringify(p.progress),random=seed;
+ for(let i=0;i<4;i++){p.draw(context);for(const e of g.enemies)e.draw(context);N.Appearance.player(p);N.Appearance.enemy(g.boss);}
+ assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.equal(JSON.stringify(p.progress),progress);assert.equal(JSON.stringify(Object.fromEntries(N.PLAYER_FIELDS.map(k=>[k,p[k]]))),player);assert.equal(seed,random);
+});
+test('all twelve learned spells coexist as distinct model attachments including evolutions and mastery',()=>{
+ const g=create();g.reset();g.player.level=160;for(const id of N.SPELL_IDS){g.player.weapons[id]=8;g.player.relics[N.WEAPONS[id].relic]=true;g.player.progress.mastery[id]=10;}
+ const d=N.Appearance.player(g.player);assert.equal(d.spells.length,12);assert.equal(new Set(d.spells.map(s=>s.slot.join(','))).size,12);assert.ok(d.spells.every(s=>s.evolved&&s.mastery>0));
+ let parts=[];const original=N.Appearance.spellPart;N.Appearance.spellPart=function(c,b,r,p){parts.push(p.id);return original.call(this,c,b,r,p);};try{g.player.draw(context);}finally{N.Appearance.spellPart=original;}assert.equal(new Set(parts).size,12);assert.equal(parts.length,12);
+});
+test('model appearance updates after a real shop upgrade and exact save without cosmetic save fields',()=>{
+ const g=create();g.reset();const before=N.Appearance.player(g.player);g.player.gold=10000;g.ui.openShop();g.ui.slots[0].item=N.ITEMS.find(i=>i.id==='damage')||g.ui.slots[0].item;g.ui.slots[0].price=1;g.ui.buy(0);g.player.weapons.glacier=4;g.player.relics.iceheart=true;g.checkpoint('shop');const d=JSON.stringify(N.Appearance.player(g.player));assert.ok(g.continueRun());assert.equal(JSON.stringify(N.Appearance.player(g.player)),d);assert.ok(!Object.hasOwn(g.save.data.checkpoint.player,'appearance'));assert.ok(before.spells.length<N.Appearance.player(g.player).spells.length);
+});
+test('all thirteen permanent stat categories affect bounded visible equipment grades',()=>{
+ const g=create();g.reset();const base=N.Appearance.player(g.player).stats;
+ for(const [key,value,visual] of [['damage',10000,'damage'],['attackInterval',.01,'haste'],['projectileCount',100,'projectiles'],['critChance',8,'critical'],['critMultiplier',20,'criticalPower'],['projectileSpeed',10000,'range'],['armor',100,'armor'],['maxHp',10000,'vitality'],['regen',100,'regen'],['speed',3000,'speed'],['dashCooldown',.1,'dash'],['pickupRadius',3000,'pickup'],['pierce',100,'pierce']]){const p=Object.assign(Object.create(g.player),{[key]:value});const d=N.Appearance.player(p);assert.ok(d.stats[visual]>base[visual],visual);assert.ok(Object.values(d.stats).every(v=>v>=0&&v<=5));}
+});
+test('level regalia, all talents, relics and unlocked specials remain visible together',()=>{
+ const g=create();g.reset();g.player.level=160;for(const id of Object.keys(N.TALENTS))g.player.progress.talents[id]=4;for(const id of Object.keys(g.player.relics))g.player.relics[id]=true;const d=N.Appearance.player(g.player);assert.equal(d.stage,5);assert.equal(d.talents.length,6);assert.equal(d.relics.length,12);assert.equal(d.specials.length,3);assert.equal(d.specials.filter(x=>x.selected).length,1);g.player.draw(context);
+});
+test('Demon form selects its own model atlas and stronger forms produce greater regalia',()=>{
+ const g=create();g.reset();const calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);try{g.abilities.jewel(100);g.abilities.transform();const low=N.Appearance.player(g.player).demonStage;g.player.draw(context);assert.ok(calls.some(a=>a[0]===images.demon_atlas_S));g.player.progress.demonPower=3;assert.ok(N.Appearance.player(g.player).demonStage>low);}finally{context.drawImage=old;}
+});
+test('rapid player casting cycles visible frames without resetting simulation animation clocks',()=>{
+ const g=create();g.reset();g.player.attackInterval=.05;g.player.cast();const before=g.player.animator.time,calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);try{for(const time of [0,.08,.16,.24]){g.time=time;g.player.draw(context);}}finally{context.drawImage=old;}assert.ok(new Set(calls.filter(a=>a[0]===images.witch_atlas_S).map(a=>a[1])).size>=3);assert.equal(g.player.animator.time,before);
+});
+test('eleven attack intents select eleven distinct boss atlas regions despite continuous hurt',()=>{
+ const g=strongFight(),b=g.boss,q=b.guardian,regions=[],c={drawImage(...args){regions.push(args[1]+","+args[2]);},save(){},restore(){},globalAlpha:1};for(let i=0;i<11;i++){q.next=i;N.FinalGuardian.begin(g,b);b.hitSquash=.12;N.drawEnemy(c,images,b,0,0,96,128);}assert.equal(new Set(regions).size,11);
+});
+test('enemy traits, ranks and summoned roles produce distinct visible descriptors',()=>{
+ const g=create();g.reset();const e=new N.Enemy(g,'overlord',0,0,1);assert.equal(N.Appearance.enemy(e).role,'overlord');e.summonedBy=8;assert.equal(N.Appearance.enemy(e).role,'commander');e.level=160;e.elite=true;e.trait='mending';const d=N.Appearance.enemy(e);assert.equal(d.stage,5);assert.equal(d.trait,'mending');assert.equal(d.elite,true);e.draw(context);
+});
+test('full model drawing at all eight facings emits finite geometry with balanced canvas state',()=>{
+ const g=strongFight(),p=g.player;p.level=160;for(const id of N.SPELL_IDS)p.weapons[id]=8;p.progress.demonTime=5;p.progress.demonPower=3;
+ let depth=0;const c=new Proxy({globalAlpha:1,save(){depth++;},restore(){depth--;assert.ok(depth>=0);},drawImage(){}},{get:(o,k)=>k in o?o[k]:(...args)=>{for(const x of args)if(typeof x==='number')assert.ok(Number.isFinite(x),String(k));},set:(o,k,v)=>{o[k]=v;return true;}});
+ for(const dir of ['S','SW','W','NW','N','NE','E','SE']){p.facing=dir;p.draw(c);g.boss.facing=dir;g.boss.draw(c);assert.equal(depth,0);}
+});
+test('reduced motion freezes all added attachment geometry and retains every spell',()=>{
+ const g=create();g.reset();g.reducedMotion=true;g.player.level=160;for(const id of N.SPELL_IDS)g.player.weapons[id]=8;g.player.progress.demonTime=4;const trace=()=>{const out=[];const c=new Proxy({globalAlpha:1,save(){},restore(){},drawImage(){}},{get:(o,k)=>k in o?o[k]:(...a)=>out.push([k,...a]),set:(o,k,v)=>{o[k]=v;return true;}});N.Appearance.playerBack(c,g.player);N.Appearance.playerFront(c,g.player);return JSON.stringify(out);};const a=trace();g.time=400;assert.equal(trace(),a);g.quality='low';assert.equal(N.Appearance.player(g.player).spells.length,12);
+});
+test('ward facets consume no charge and the grimoire portrait never changes player coordinates',()=>{
+ const g=create();g.reset();g.abilities.shield();const charge=g.player.progress.aegis,x=g.player.x,y=g.player.y;g.player.draw(context);assert.equal(g.player.progress.aegis,charge);g.ui.toggleGrimoire();g.ui.drawRegaliaPortrait();assert.equal(g.player.x,x);assert.equal(g.player.y,y);
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;

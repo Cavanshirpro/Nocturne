@@ -1,5 +1,7 @@
 # v5.1.3 balance calibration
 
+Retained by the v5.2.0 visual release; gameplay tuning is unchanged.
+
 The objective is a readable challenge for both a lightly equipped character and a heavily upgraded merchant build at the **same character level**. Permanent upgrades are retained. Ordinary swarm pressure has limits; final-guardian vitality follows damage output beyond those limits.
 
 ## Model

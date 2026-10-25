@@ -29,10 +29,11 @@ def png(key):
 
 class AssetTests(unittest.TestCase):
     def test_all_embedded_images_are_valid(self):
-        self.assertEqual(len(data()),50)
+        self.assertEqual(len(data()),58)
         for key in data():
             im=png(key)
             self.assertGreater(im.width,0)
+            self.assertLessEqual(max(im.size),4096)
             self.assertGreater(im.getchannel("A").getextrema()[1],0)
 
     def test_eight_idle_facings(self):
@@ -145,21 +146,21 @@ class AssetTests(unittest.TestCase):
         subprocess.run([sys.executable,str(ROOT/"generate_assets.py")],check=True,stdout=subprocess.DEVNULL)
         self.assertEqual(before,[hashlib.sha256(p.read_bytes()).digest() for p in paths])
 
-    def test_boss_rituals_have_four_distinct_articulated_clips(self):
+    def test_boss_rituals_have_eleven_distinct_articulated_clips(self):
         for kind in ('warden','overlord'):
             im=png('enemy_ritual_'+kind)
-            self.assertEqual(im.size,(2304,1024))
-            for state in range(4):
-                frames=[im.crop(((state*6+i)*96,0,(state*6+i+1)*96,128)) for i in range(6)]
+            self.assertEqual(im.size,(3168,2048))
+            for state in range(11):
+                frames=[im.crop((((state*6+i)%33)*96,((state*6+i)//33)*128,((state*6+i)%33+1)*96,((state*6+i)//33+1)*128)) for i in range(6)]
                 self.assertGreaterEqual(len({f.tobytes() for f in frames}),5,(kind,state))
-            self.assertEqual(len({im.crop(((s*6+2)*96,0,(s*6+3)*96,128)).tobytes() for s in range(4)}),4)
+            self.assertEqual(len({im.crop((((s*6+2)%33)*96,((s*6+2)//33)*128,((s*6+2)%33+1)*96,((s*6+2)//33+1)*128)).tobytes() for s in range(11)}),11)
 
     def test_boss_ritual_frames_stay_inside_every_directional_cell(self):
         for kind in ('warden','overlord'):
             im=png('enemy_ritual_'+kind)
             for row in range(8):
-                for frame in range(24):
-                    alpha=im.crop((frame*96,row*128,(frame+1)*96,(row+1)*128)).getchannel('A').point(lambda v:255 if v>90 else 0)
+                for frame in range(66):
+                    alpha=im.crop(((frame%33)*96,(row*2+frame//33)*128,(frame%33+1)*96,(row*2+frame//33+1)*128)).getchannel('A').point(lambda v:255 if v>90 else 0)
                     box=alpha.getbbox()
                     self.assertTrue(box and box[0]>0 and box[1]>0 and box[2]<96 and box[3]<128,(kind,row,frame,box))
 
@@ -168,6 +169,22 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(gif.n_frames,12)
             self.assertEqual(gif.size,(800,380))
             self.assertEqual(gif.info['loop'],0)
+
+    def test_demon_uses_eight_dedicated_atlases_distinct_from_the_witch(self):
+        for direction in DIRS:
+            im=png('demon_atlas_'+direction)
+            self.assertEqual(im.size,(2304,128))
+            self.assertNotEqual(im.tobytes(),png('witch_atlas_'+direction).tobytes())
+            for start,count in [(0,4),(4,8),(12,6),(18,3),(21,3)]:
+                poses=[im.crop(((start+i)*96,0,(start+i+1)*96,128)).tobytes() for i in range(count)]
+                self.assertGreaterEqual(len(set(poses)),min(count,3),(direction,start))
+
+    def test_demon_frames_have_unclipped_horns_boots_and_staff(self):
+        for direction in DIRS:
+            im=png('demon_atlas_'+direction)
+            for frame in range(24):
+                box=im.crop((frame*96,0,(frame+1)*96,128)).getchannel('A').point(lambda v:255 if v>90 else 0).getbbox()
+                self.assertTrue(box and box[0]>0 and box[1]>0 and box[2]<96 and box[3]<128,(direction,frame,box))
 
 
 if __name__=="__main__":
