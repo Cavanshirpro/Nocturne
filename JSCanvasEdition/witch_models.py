@@ -12,12 +12,12 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     im=Image.new('RGBA',(96*S,128*S));draw=ImageDraw.Draw(im)
     a=math.radians(angle);co,si=math.cos(a),math.sin(a)
     cycle=phase if phase is not None else progress*math.tau
-    stride=math.sin(cycle) if phase is not None else 0
+    stride=math.sin(cycle)*1.35 if phase is not None else 0
     cast=math.sin(progress*math.pi) if action=='cast' else 0
     hurt=math.sin(progress*math.pi)*.8+progress*.12 if action=='hurt' else 0
     dash=.25+.7*math.sin(progress*math.pi)+progress*.05 if action=='dash' else 0
     breath=math.sin(cycle)*.65 if action=='idle' else 0
-    bob=abs(stride)*1.1+breath
+    bob=abs(stride)*1.65+breath
     faces=[]
     cloth=(66,65,100) if not demon else (106,44,78)
     dark=(30,36,56) if not demon else (51,25,48)
@@ -84,7 +84,7 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     # Split leather boots, rounded toes, separate legs and raised gold cuffs.
     for side in (-1,1):
         step=stride*side
-        foot=(side*7,step*9+side*2,5+max(0,-step)*4)
+        foot=(side*7,step*11+side*2,5+max(0,-step)*4)
         knee=(side*7,step*4,24)
         limb((side*6,0,40),knee,4.1,dark);limb(knee,foot,3.7,dark)
         x,y,z=foot
@@ -92,7 +92,7 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         rings([(x,y,z,4.8,5.2),(x,y,z+12,4.1,4.5)],dark)
         rings([(x,y,z+10,4.3,4.7),(x,y,z+12.2,4.3,4.7)],gold)
     # A thick sculpted coat: rounded front/back, inset waist and flared hem.
-    sway=stride*1.1
+    sway=stride*1.8
     rings([(sway,0,12,22,18),(sway*.6,0,29,17,15),(0,0,46,10,10),(0,0,58,12,10),(0,0,65,14,10)],cloth)
     # Raised side panels have a filled center, replacing thin ornamental ticks.
     for side in (-1,1):
@@ -109,7 +109,7 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     for side in (-1,1):
         shoulder=(side*13,0,62)
         elbow=(side*(17+cast*2),3-side*stride*3,51+cast*(9 if side<0 else 3))
-        hand=(side*(20+cast*(5 if side<0 else 1)),7-side*stride*4,43+cast*(22 if side<0 else 7))
+        hand=(side*(20+cast*(5 if side<0 else 1)),7-side*stride*4,43+cast*(29 if side<0 else 12))
         limb(shoulder,elbow,5.4,cloth);limb(elbow,hand,4.2,cloth)
         ellipsoid(*shoulder,7.2,9,4.5,gold)
         ellipsoid(*hand,3.3,3.4,4,skin)

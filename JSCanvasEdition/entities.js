@@ -108,7 +108,7 @@
       // Rear cloth/equipment and front attachments share the model's facing rig.
       N.Appearance.playerBack(c,this,appearance);
       c.save();c.translate(this.x,this.y);
-      this.animator.draw(c,this.game.images,this.facing,-40,-99,80,107,appearance.demon?'demon':'witch',this.attackInterval<.28?this.game.time*3:null,this.game.quality);
+      this.animator.draw(c,this.game.images,this.facing,-40,-99,80,107,appearance.demon?'demon':'witch',null,this.game.quality,this);
       c.restore();N.Appearance.playerFront(c,this,appearance);c.restore();
     }
   }
@@ -155,7 +155,7 @@
         if(len<210)movement*=-.5;else if(len<310)movement=0;
         this.attackTimer-=dt;
         if(this.attackTimer<.65&&len<600)this.windup=Math.max(this.windup,.01);
-        if(this.attackTimer<=0&&len<600){this.game.combat.enemyShot(this.x,this.y-24,p.x,p.y-12,175,this.damage);this.attackTimer=2.7;this.windup=0;this.castTimer=.2;}
+        if(this.attackTimer<=0&&len<600){this.game.combat.enemyShot(this.x,this.y-24,p.x,p.y-12,175,this.damage,this,'hostile');this.attackTimer=2.7;this.windup=0;}
       }
       if(this.type==='hound'&&this.frozen<=0&&!this.terrified){
         this.attackTimer-=dt;
@@ -176,7 +176,7 @@
             if(angry)this.game.combat.hazard(p.x+N.rand(-180,180),p.y+N.rand(-140,140),85,1.4,this.damage,1.1);
           }else{
             const angle=Math.atan2(dy,dx),count=angry?9:7;
-            for(let i=0;i<count;i++)this.game.combat.enemyShot(this.x,this.y-25,this.x+Math.cos(angle+(i-(count-1)/2)*.19)*300,this.y-25+Math.sin(angle+(i-(count-1)/2)*.19)*300,angry?190:150,this.damage*.7);
+            for(let i=0;i<count;i++)this.game.combat.enemyShot(this.x,this.y-25,this.x+Math.cos(angle+(i-(count-1)/2)*.19)*300,this.y-25+Math.sin(angle+(i-(count-1)/2)*.19)*300,angry?190:150,this.damage*.7,this,'salvo');
           }
           this.attackTimer=angry?1.7:2.6;this.game.shake=Math.max(this.game.shake,2);
           this.tactics.lastAction=this.attackCount%2?'meteors':'salvo';this.tactics.releaseTime=.55;

@@ -1,12 +1,24 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.2 · Sculpted Realms**
+**Version 5.2.3 · Orbit & Flow**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.2.2
+## What's new in 5.2.3
+
+- **Passive circles, active satellites:** defence, movement and focus upgrades appear in restrained rings. Automatic spells have distinct orbiting emitter hulls instead of costume badges. Enemy armour/mending/swiftness and ranged/boss skills use the same system.
+- **Real emission points:** primary bolts, Rapid Fire, Heavy Cannon, Burst and Glacial Seed start at their visible satellite. Lightning and beams originate there; targeted fields have delivery trails. Twin Gates retain their warned remote portal origins.
+- **Clear body animation:** automatic fire leaves idle/walk animation alone. Deliberate directed rituals, Aegis, transformation, hurt and dash retain body poses. Ordinary ranged enemies and sustained guardian salvos follow the same separation.
+- **Motion and cloth:** longer strides, stronger hand gestures and speed-reactive lower-sprite bands suggest fabric movement without a live mesh, physics solver or WebGL. Two bands on low quality/dense ordinary crowds, at most six otherwise; reduced motion uses one static atlas draw.
+- **Readable growth:** hull facets, brighter tones and inset grade marks grow in five bounded grades. Gold fins mark evolution; small top insets mark mastery. Passive ring colour and thickness reflect their current grades. Exact ranks remain in the grimoire.
+- **Complete offline source:** regenerated directional sprites, an animated shared-system demonstration and a five-grade comparison are included.
+
+See [ORBITALS.md](ORBITALS.md) for the exact mapping and implementation boundaries. Open [visual-gallery.html](visual-gallery.html) for the actual renderings.
+
+## Previous changes in 5.2.2
+
 
 - **Solid sculpted characters:** the Witch and Demon are rebuilt from shaded, depth-sorted meshes baked into all eight directional sprite atlases. Rounded shoulders, thick sleeves, faces, boots, fitted coats and a solid hat brim replace the earlier flat panels.
 - **Fitted equipment:** twelve different solid spell fixtures, a chest cuirass, focus bracer, boot fittings and compact inset ornaments preserve progression without stacking long floating outlines. All thirteen permanent training categories have visible effects.

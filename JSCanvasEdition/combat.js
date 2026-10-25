@@ -40,8 +40,9 @@
       for(const e of this.game.enemies){if(!e.alive||e.spawnDelay>0||exclude?.has(e.id))continue;const d=N.dist2(origin,e);if(d<best){best=d;nearest=e;}}
       return nearest;
     }
+    emit(id,target=null){const p=this.game.player,o=N.Orbitals.emit(p,id);if(target&&['meteor','thorn','rift','nova'].includes(id))this.effect('delivery',o.x,o.y,target.x,target.y,0,N.WEAPONS[id].color,id==='meteor'?.6:.22);return o;}
     fire(target,volleys=1){
-      const p=this.game.player,ox=p.x,oy=p.y-18,angle=Math.atan2(target.y-12-oy,target.x-ox),logical=p.projectileCount;
+      const p=this.game.player,origin=this.emit('bolt'),ox=origin.x,oy=origin.y,angle=Math.atan2(target.y-12-oy,target.x-ox),logical=p.projectileCount;
       const count=Math.min(logical,this.game.quality==='low'?12:24),span=Math.min(Math.PI*1.4,(logical-1)*.105);
       const weight=logical/count*volleys;
       for(let i=0;i<count;i++){
@@ -52,28 +53,28 @@
         bullet.reset(ox,oy,Math.cos(theta)*p.projectileSpeed,Math.sin(theta)*p.projectileSpeed,damage,roll.crit,p.pierce+(p.evolved('bolt')?1:0),p.evolved('bolt'));
         bullet.life=N.boltTravel(p)/p.projectileSpeed;
       }
-      this.sound('fire');p.cast(target);this.effect('muzzle',ox,oy,0,0,21,p.evolved('bolt')?'#dfc2f4':'#e9e2ff',.18);
+      this.sound('fire');this.effect('muzzle',ox,oy,0,0,21,p.evolved('bolt')?'#dfc2f4':'#e9e2ff',.18);
     }
-    launchVolley({angle,count,span,damage,speed,range,pierce=0,source,color,blast=0,freeze=0,expose=0,closed=false,weight=1}){
+    launchVolley({angle,count,span,damage,speed,range,pierce=0,source,color,blast=0,freeze=0,expose=0,closed=false,weight=1,origin=null}){
       const p=this.game.player,visual=Math.min(count,this.game.quality==='low'?12:24),group=count/visual;
       for(let i=0;i<visual;i++){
         const roll=N.critRoll(p),power=p.damage*damage*roll.multiplier*weight*group,b=this.projectiles.acquire();
         if(!b){const existing=this.projectiles.active.find(b=>b.source===source);if(existing)existing.damage+=power*(visual-i);else {const target=this.nearest(p,range);if(target)target.hit(power*(visual-i),roll.crit,0,0,source);}break;}
         const theta=angle+(visual>1?(closed?i/visual:i/(visual-1)-.5)*span:0);
-        b.reset(p.x,p.y-18,Math.cos(theta)*speed,Math.sin(theta)*speed,power,roll.crit,pierce,false);
+        b.reset(origin?origin.x:p.x,origin?origin.y:p.y-18,Math.cos(theta)*speed,Math.sin(theta)*speed,power,roll.crit,pierce,false);
         Object.assign(b,{life:range/speed,source,color,blast,freeze,expose,radius:source==='cannon'?10:source==='rapid'?3:6});
       }
     }
     directedSpell(id,weight=1){
       const p=this.game.player,target=this.nearest(p,id==='burst'?285:N.boltRange(p)),rank=p.weapons[id];if(!target)return;
-      const angle=Math.atan2(target.y-p.y,target.x-p.x),evolved=p.evolved(id),count=p.projectileCount;
+      const origin=this.emit(id),angle=Math.atan2(target.y-12-origin.y,target.x-origin.x),evolved=p.evolved(id),count=p.projectileCount;
       const spec={
         rapid:{count,span:Math.min(1,(count-1)*.07),damage:.26+.035*rank,speed:p.projectileSpeed*(evolved?1.5:1.2),range:N.boltTravel(p),pierce:p.pierce+(evolved?2:0)},
         cannon:{count,span:Math.min(1.4,(count-1)*.1),damage:3.6+.6*rank,speed:p.projectileSpeed*.65,range:N.boltTravel(p)*1.15,pierce:p.pierce+2+rank,blast:evolved?65:0},
         burst:{count:(4+rank)*count,span:1.05,damage:.55+.08*rank,speed:p.projectileSpeed*.9,range:280+rank*8,pierce:p.pierce+(evolved?1:0),expose:evolved?2:0},
         glacier:{count,span:Math.min(1.2,(count-1)*.1),damage:.9+.16*rank,speed:p.projectileSpeed*.78,range:N.boltTravel(p),pierce:0,blast:70+rank*6,freeze:evolved?.6:0}
       }[id];
-      this.launchVolley({angle,...spec,source:id,color:N.WEAPONS[id].color,weight});p.cast(target);this.sound(id);this.effect('muzzle',p.x,p.y-18,0,0,id==='cannon'?32:18,N.WEAPONS[id].color,.18);
+      this.launchVolley({angle,...spec,source:id,color:N.WEAPONS[id].color,weight,origin});this.sound(id);this.effect('muzzle',origin.x,origin.y,0,0,id==='cannon'?32:18,N.WEAPONS[id].color,.18);
     }
     spellHit(enemy,multiplier,source){const p=this.game.player,roll=N.critRoll(p);enemy.hit(p.damage*multiplier*roll.multiplier,roll.crit,0,0,source);}
     effect(kind,x,y,x2,y2,radius,color,duration=.32){
@@ -97,19 +98,19 @@
     }
     lightning(weight=1){
       const p=this.game.player,rank=p.weapons.lightning,evolved=p.evolved('lightning'),seen=new Set();
-      let current=this.nearest(p,390+18*((p.weapons.lightning||1)-1)),from={x:p.x,y:p.y-28};
+      let current=this.nearest(p,390+18*((p.weapons.lightning||1)-1)),from=this.emit('lightning');
       for(let i=0;current&&i<2+rank+(evolved?2:0);i++){
         seen.add(current.id);this.effect('lightning',from.x,from.y,current.x,current.y-14,0,'#c4edf5',.23);
         this.spellHit(current,weight*(.65+.15*rank)*Math.max(.5,.88**i),'lightning');
         if(evolved&&current.alive)current.frozen=Math.max(current.frozen,current.boss?.04:.2);
         from=current;current=this.nearest(current,(evolved?210:170)+10*(rank-1),seen);
       }
-      if(seen.size){this.sound('lightning');p.cast();}
+      if(seen.size){this.sound('lightning');}
     }
     nova(weight=1){
       const p=this.game.player,rank=p.weapons.nova,radius=100+17*rank;
       this.effect('ring',p.x,p.y-6,0,0,radius,'#b6d6ef',.55);
-      this.sound('nova');p.cast();this.burst(p.x,p.y-6,12,'#bfdceb','frost');
+      this.sound('nova');this.emit('nova',{x:p.x,y:p.y-6});this.burst(p.x,p.y-6,12,'#bfdceb','frost');
       this.game.hash.query(p.x-radius-45,p.y-radius-45,p.x+radius+45,p.y+radius+45,this.areaCandidates);
       for(const e of this.areaCandidates)if(e.alive&&e.spawnDelay<=0&&N.dist2(p,e)<(radius+e.radius)**2){
         this.spellHit(e,weight*(.7+.2*rank),'nova');e.slow=1.35;if(p.evolved('nova'))e.frozen=e.boss?.1:.5;
@@ -133,16 +134,16 @@
       Object.assign(area,{kind,x,y,radius,delay,duration,damage,rank,evolved,weight,age:0,tick:0,pulses:0});return area;
     }
     meteor(weight=1){const p=this.game.player,target=this.nearest(p,370+12*(p.weapons.meteor-1));if(!target)return;
-      this.addArea('meteor',target.x,target.y,65+7*p.weapons.meteor,.65,.3,p.damage*(1.25+.22*p.weapons.meteor),p.weapons.meteor,p.evolved('meteor'),weight);p.cast(target);}
+      this.addArea('meteor',target.x,target.y,65+7*p.weapons.meteor,.65,.3,p.damage*(1.25+.22*p.weapons.meteor),p.weapons.meteor,p.evolved('meteor'),weight);this.emit('meteor',target);}
     lance(weight=1){
       const p=this.game.player,target=this.nearest(p,400+14*(p.weapons.lance-1));if(!target)return;
       const angle=Math.atan2(target.y-p.y,target.x-p.x),range=410+14*(p.weapons.lance-1),x=p.x+Math.cos(angle)*range,y=p.y+Math.sin(angle)*range,width=9+p.weapons.lance*2;
-      this.effect('lance',p.x,p.y-16,x,y-16,width,'#e4c4fc',.24);p.cast(target);this.sound('lance');
-      const enemies=this.game.enemies.filter(e=>e.alive&&e.spawnDelay<=0&&N.segmentDistance2(p.x,p.y,x,y,e.x,e.y)<(e.radius+width)**2).sort((a,b)=>N.dist2(p,a)-N.dist2(p,b));
+      const origin=this.emit('lance');this.effect('lance',origin.x,origin.y,x,y-16,width,'#e4c4fc',.24);this.sound('lance');
+      const enemies=this.game.enemies.filter(e=>e.alive&&e.spawnDelay<=0&&N.segmentDistance2(origin.x,origin.y,x,y-16,e.x,e.y-12)<(e.radius+width)**2).sort((a,b)=>N.dist2(p,a)-N.dist2(p,b));
       for(const e of enemies.slice(0,2+p.weapons.lance)){this.spellHit(e,weight*(.8+.14*p.weapons.lance),'lance');if(p.evolved('lance'))e.exposed=2;}
     }
-    thorn(weight=1){const p=this.game.player,rank=p.weapons.thorn;this.addArea('thorn',p.x-p.lastX*55,p.y-p.lastY*55,74+rank*6+(p.evolved('thorn')?15:0),.12,3.2,p.damage*(.25+.07*rank),rank,p.evolved('thorn'),weight);p.cast();this.sound('thorn');}
-    rift(weight=1){const p=this.game.player,target=this.nearest(p,350+10*(p.weapons.rift-1));if(!target)return;this.addArea('rift',target.x,target.y,90+p.weapons.rift*7,.2,2.2,p.damage*(.25+.08*p.weapons.rift),p.weapons.rift,p.evolved('rift'),weight);p.cast(target);this.sound('rift');}
+    thorn(weight=1){const p=this.game.player,rank=p.weapons.thorn;this.addArea('thorn',p.x-p.lastX*55,p.y-p.lastY*55,74+rank*6+(p.evolved('thorn')?15:0),.12,3.2,p.damage*(.25+.07*rank),rank,p.evolved('thorn'),weight);this.emit('thorn',{x:p.x-p.lastX*55,y:p.y-p.lastY*55});this.sound('thorn');}
+    rift(weight=1){const p=this.game.player,target=this.nearest(p,350+10*(p.weapons.rift-1));if(!target)return;this.addArea('rift',target.x,target.y,90+p.weapons.rift*7,.2,2.2,p.damage*(.25+.08*p.weapons.rift),p.weapons.rift,p.evolved('rift'),weight);this.emit('rift',target);this.sound('rift');}
     veilBloom(p){this.addArea('veil',p.x,p.y,42+8*p.progress.talents.veil,0,.7,0,1,false,1);}
     updateAreas(dt){
       const p=this.game.player;
@@ -163,8 +164,9 @@
         if(expires)this.areas.release(i);
       }
     }
-    enemyShot(x,y,tx,ty,speed,damage){
+    enemyShot(x,y,tx,ty,speed,damage,owner=null,module='hostile',remote=false){
       const b=this.hostile.acquire();if(!b)return false;
+      if(owner){const o=N.Orbitals.emit(owner,module);if(!remote){x=o.x;y=o.y;}}
       const d=Math.hypot(tx-x,ty-y)||1;Object.assign(b,{x,y,vx:(tx-x)/d*speed,vy:(ty-y)/d*speed,damage,life:7,radius:6});return true;
     }
     hazard(x,y,radius,delay,damage,duration,options={}){
@@ -294,7 +296,7 @@
         const count=Math.min(32,1+p.weapons.orbit),radius=70+p.weapons.orbit*4;c.strokeStyle='#bcb1d022';c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y-12,radius,radius*.78,0,0,Math.PI*2);c.stroke();
         for(let i=0;i<count;i++){
           const a=this.game.time*2.3+i*Math.PI*2/count,x=p.x+Math.cos(a)*radius,y=p.y-12+Math.sin(a)*radius*.78;
-          c.drawImage(this.game.images.orb,x-18,y-18,36,36);c.fillStyle=p.evolved('orbit')?'#e2a17a':'#c8bbdf';c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill();
+          N.Orbitals.wisp(c,p,x,y);
         }
       }
       for(const b of this.projectiles.active){
@@ -311,6 +313,7 @@
       for(const e of this.effects.active){
         c.globalAlpha=e.life/e.total;c.strokeStyle=e.color;c.lineWidth=2;
         if(e.kind==='slash'){const t=1-e.life/e.total;c.lineWidth=2+5*(1-t);for(let j=0;j<3;j++){c.beginPath();c.arc(e.x,e.y,Math.max(1,e.radius*(.55+t*.45)-j*10),e.x2-e.y2/2,e.x2+e.y2/2);c.stroke();}}
+        else if(e.kind==='delivery'){const t=1-e.life/e.total,x=e.x+(e.x2-e.x)*t,y=e.y+(e.y2-e.y)*t-Math.sin(t*Math.PI)*35;c.fillStyle=e.color;c.beginPath();c.arc(x,y,3,0,Math.PI*2);c.fill();c.lineWidth=1;c.beginPath();c.moveTo(x,y);c.lineTo(x-(e.x2-e.x)*.08,y-(e.y2-e.y)*.08);c.stroke();}
         else if(e.kind==='ring'){c.beginPath();c.ellipse(e.x,e.y,Math.max(1,e.radius*(1-e.life/e.total)),Math.max(1,e.radius*.85*(1-e.life/e.total)),0,0,Math.PI*2);c.stroke();}
         else if(e.kind==='lance'){c.lineWidth=Math.max(2,e.radius*.55);c.strokeStyle=e.color+'55';c.beginPath();c.moveTo(e.x,e.y);c.lineTo(e.x2,e.y2);c.stroke();c.lineWidth=2;c.strokeStyle='#fff4ff';c.stroke();}
         else if(e.kind==='lightning'){

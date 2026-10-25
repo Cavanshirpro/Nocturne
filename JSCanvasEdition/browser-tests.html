@@ -241,6 +241,18 @@ run.onclick=async()=>{
     const layout=N.radarLayout(g),point=N.radarPoint(g,g.sanctum,layout);check(layout.scale===before&&point.offscreen,'Distant target collapsed map scale');
     check(point.x>=layout.x&&point.x<=layout.x+layout.size&&point.y>=layout.y&&point.y<=layout.y+layout.size,'Target left the minimap');g.draw();
   });
+  test('5.2.3 automatic fire uses satellite origins and leaves body animation alone',()=>{
+    setup();const p=g.player;p.weapons.rapid=p.weapons.cannon=8;p.projectileCount=1;g.time=2;
+    g.enemies=[new N.Enemy(g,'warden',p.x+220,p.y,++g.nextId)];g.combat.clear();p.castTimer=0;p.animator.play('walk',{restart:true});
+    for(const id of ['rapid','cannon']){const origin=N.Orbitals.origin(p,id);g.combat.directedSpell(id);const shot=g.combat.projectiles.active.find(b=>b.source===id);check(shot&&shot.x===origin.x&&shot.y===origin.y,'Wrong satellite muzzle: '+id);}
+    check(p.castTimer===0&&p.animator.state==='walk','Automatic gun interrupted movement');g.draw();
+    g.abilities.cancel();p.progress.specialRemaining=0;g.abilities.begin();g.abilities.release();check(p.castTimer>0&&p.animator.state==='cast','Deliberate special lost its gesture');
+  });
+  test('5.2.3 common emitters, speed cloth and rank colours render on real Canvas',()=>{
+    setup();const e=new N.Enemy(g,'cultist',240,0,++g.nextId,false,{level:80,tier:'veteran',trait:'armored'});g.enemies=[e];g.combat.enemyShot(e.x,e.y,0,0,170,1,e,'hostile');const origin=N.Orbitals.origin(e,'hostile'),b=g.combat.hostile.active.at(-1);check(b.x===origin.x&&b.y===origin.y,'Hostile muzzle mismatch');
+    const p=g.player;p.moving=true;p.speed=1400;g.reducedMotion=false;check(N.Motion.profile(p).strength>1,'Fast cloth did not strengthen');g.draw();check(N.Orbitals.cacheSize()>0&&N.Orbitals.cacheSize()<=160,'Satellite cache is unbounded or unused');
+    check(N.Orbitals.color('cannon',1)!==N.Orbitals.color('cannon',5),'Rank colours are identical');g.reducedMotion=true;check(N.Motion.profile(p).strength===0,'Reduced motion did not stop cloth');g.draw();
+  });
   output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
   present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;
   run.disabled=false;

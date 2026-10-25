@@ -60,7 +60,7 @@
       if(q.action==='shockwave')for(let i=0;i<3;i++)g.combat.hazard(e.x,e.y,180+i*150,q.windup+i*.38,this.damage(e,.24,.28),.22,{kind:'ring',inner:145+i*150,angle:q.angle,gap:.9});
     },
     cast(g,e){
-      const q=e.guardian,p=g.player,angry=e.hp<e.maxHp*.4;
+      const q=e.guardian,p=g.player,angry=e.hp<e.maxHp*.4;N.Orbitals.emit(e,q.action);
       if(q.action==='salvo'){q.salvo=(angry?14:10)+(q.tier||0)*2;q.shotClock=0;q.shotIndex=0;}
       else if(q.action==='slash'){
         const reach=245,sweep=Math.PI*.95;
@@ -72,7 +72,7 @@
         this.ward(g,e);g.combat.effect('ring',e.x,e.y-30,0,0,95,'#c1a8f2',.6);g.combat.sound('lock');
       }else if(q.action==='soulring'){
         const count=(angry?14:10)+(q.tier||0)*2;
-        for(let i=0;i<count;i++){const angle=q.angle+(i+.5)*Math.PI*2/count;g.combat.enemyShot(e.x,e.y-35,e.x+Math.cos(angle)*500,e.y-35+Math.sin(angle)*500,175,this.damage(e,.085,.14));}
+        for(let i=0;i<count;i++){const angle=q.angle+(i+.5)*Math.PI*2/count;g.combat.enemyShot(e.x,e.y-35,e.x+Math.cos(angle)*500,e.y-35+Math.sin(angle)*500,175,this.damage(e,.085,.14),e,'soulring');}
         g.combat.effect('ring',e.x,e.y-25,0,0,180,'#c9a5f2',.6);g.combat.sound('soulstorm');
       }else if(q.action==='riftstep'){
         g.combat.effect('ring',e.x,e.y-20,0,0,95,'#cfadf2',.4);e.x=q.destinationX;e.y=q.destinationY;
@@ -80,14 +80,14 @@
       }else if(q.action==='lances'){
         for(const offset of [-.34,0,.34]){
           const a=q.angle+offset,x=e.x+Math.cos(a)*q.range,y=e.y+Math.sin(a)*q.range;
-          g.combat.effect('lance',e.x,e.y-16,x,y-16,12,'#e6b4db',.4);
-          if(N.segmentDistance2(e.x,e.y-16,x,y-16,p.x,p.y-12)<(p.radius+12)**2)p.hurt(this.damage(e,.26,.32));
+          const o=N.Orbitals.origin(e,'lances');g.combat.effect('lance',o.x,o.y,x,y-16,12,'#e6b4db',.4);
+          if(N.segmentDistance2(o.x,o.y,x,y-16,p.x,p.y-12)<(p.radius+12)**2)p.hurt(this.damage(e,.26,.32));
         }
         g.combat.sound('lance');
       }else if(q.action==='crossfire'){
         for(const side of [-1,1]){const x=q.targetX+Math.cos(q.angle+Math.PI/2)*260*side,y=q.targetY+Math.sin(q.angle+Math.PI/2)*260*side;
           const a=Math.atan2(q.targetY-y,q.targetX-x),count=5+q.tier;
-          for(let i=0;i<count;i++){const theta=a+(i-(count-1)/2)*.16;g.combat.enemyShot(x,y,x+Math.cos(theta)*600,y+Math.sin(theta)*600,220+q.tier*20,this.damage(e,.18,.22));}
+          for(let i=0;i<count;i++){const theta=a+(i-(count-1)/2)*.16;g.combat.enemyShot(x,y,x+Math.cos(theta)*600,y+Math.sin(theta)*600,220+q.tier*20,this.damage(e,.18,.22),e,'crossfire',true);}
           g.combat.effect('ring',x,y,0,0,50,'#a9def0',.5);
         }
       }else if(q.action==='voidseal'){
@@ -110,8 +110,8 @@
         q.shotClock-=dt;
         while(q.salvo>0&&q.shotClock<=0){
           const a=q.angle+Math.sin(q.shotIndex*1.7)*.055;
-          g.combat.enemyShot(e.x,e.y-35,e.x+Math.cos(a)*q.range,e.y-35+Math.sin(a)*q.range,260+(q.tier||0)*45,this.damage(e,.15,.22));
-          q.salvo--;q.shotIndex++;q.shotClock+=.12-.01*(q.tier||0);e.castTimer=.16;
+          g.combat.enemyShot(e.x,e.y-35,e.x+Math.cos(a)*q.range,e.y-35+Math.sin(a)*q.range,260+(q.tier||0)*45,this.damage(e,.15,.22),e,'salvo');
+          q.salvo--;q.shotIndex++;q.shotClock+=.12-.01*(q.tier||0);
           g.combat.sound('fire',e.x);
         }
         return;
@@ -140,7 +140,7 @@
       if(q.windup>0){
         c.strokeStyle='#ffb0bb';c.fillStyle='#ef658422';c.setLineDash([9,5]);
         c.beginPath();
-        if(q.action==='lances'){for(const offset of [-.34,0,.34]){const a=q.angle+offset;c.moveTo(e.x,e.y-16);c.lineTo(e.x+Math.cos(a)*q.range,e.y-16+Math.sin(a)*q.range);}}
+        if(q.action==='lances'){for(const offset of [-.34,0,.34]){const a=q.angle+offset;const o=N.Orbitals.origin(e,'lances');c.moveTo(o.x,o.y);c.lineTo(e.x+Math.cos(a)*q.range,e.y-16+Math.sin(a)*q.range);}}
         else if(q.action==='salvo'){
           const x=e.x+Math.cos(q.angle)*680,y=e.y-35+Math.sin(q.angle)*680;
           c.moveTo(e.x,e.y-35);c.lineTo(x,y);

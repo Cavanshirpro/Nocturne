@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.2.2';
+  N.VERSION = '5.2.3';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);

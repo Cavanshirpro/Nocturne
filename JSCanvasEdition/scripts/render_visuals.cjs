@@ -25,7 +25,7 @@ async function main(){
  for(let frame=0;frame<12;frame++){
   g.time=frame/12*2;const t=frame/12;
   const pc=createCanvas(1280,420),pctx=pc.getContext('2d');
-  players.forEach((p,i)=>{panel(pctx,i*256,0,256,420,titles[i],i<2?'Level '+p.level+' · '+N.Appearance.player(p).spells.length+' spells':i===4?'Evolved arsenal · stacked Demon form':'Evolutions, relics and talents');p.walk=t*Math.PI*2;p.animator.state='cast';p.animator.time=t*.28;p.castTimer=.28*(1-t);drawAt(pctx,p,i*256+128,348,2);});
+  players.forEach((p,i)=>{panel(pctx,i*256,0,256,420,titles[i],i<2?'Level '+p.level+' · '+N.Appearance.player(p).spells.length+' spells':i===4?'Evolved arsenal · stacked Demon form':'Passive rings + active emitters');p.walk=t*Math.PI*2;p.moving=true;p.animator.state='walk';p.animator.time=t*.45;p.castTimer=0;drawAt(pctx,p,i*256+128,348,2);});
   fs.writeFileSync(path.join(temp,'player-'+frame+'.png'),pc.toBuffer('image/png'));
   const dc=createCanvas(1280,720),dctx=dc.getContext('2d');
   [players[0],players[3],players[4]].forEach((p,row)=>{const old=p.facing,oldState=p.animator.state,oldTime=p.animator.time;

@@ -2,6 +2,17 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.2.3 — Orbit & Flow
+
+Full source package prepared: **2026-10-26**. This archive does not create a GitHub tag or release.
+
+- Replaced costume attachments with shared passive rings and orbiting automatic emitters. Cultist/Wraith shots, guardian salvos/soul rings/lances and player automatic weapons use common emission positions.
+- The visible satellite and projectile share one deterministic origin function. Projectile starts and beam corridors intentionally change; damage formulas, timers, counts and targeting ranges retain their previous rules. Visual quality does not move a muzzle. Twin Gates remain warned remote emitters.
+- Removed automatic `Player.cast()` calls and repeated ranged enemy body firing poses. Deliberate special rituals, Aegis, transformation and initial boss gestures remain.
+- Added speed-reactive bounded atlas bands, stronger baked strides and hand poses, and shared cloth for humanoid enemies. No new live 3D or cloth-physics dependency.
+- Added five bounded visual grades, evolution fins, mastery insets, quality/crowd limits and a 160-entry hull cache. Passive circles replace permanent stat badges on the body.
+- The save schema is unchanged. Emitters derive positions from saved actor/world state; muzzle feedback is transient.
+
 ## v5.2.2 — Sculpted Realms
 
 Full source package prepared: **2026-10-25**. No GitHub tag or release is created by this archive.

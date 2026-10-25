@@ -1,3 +1,11 @@
+# Orbit & Flow — v5.2.3 art guide
+
+The current visual system is documented in [ORBITALS.md](ORBITALS.md). Old costume badge/fitted-fixture sections below are historical and are superseded by passive circles and active emitters. Character meshes are baked only; live rendering uses Canvas sprites, ellipses, cached hulls and a bounded atlas-band effect.
+
+The new `previews/orbital-system.gif` shows passive circles, automatic player fire and a hostile satellite. `previews/orbital-grades.png` compares all five shape/colour grades. `previews/player-regalia.gif` and `previews/directions-regalia.gif` now use walking rather than a permanently repeating cast.
+
+---
+
 # Sculpted Realms — v5.2.2 art guide
 
 The current player artwork comes from `witch_models.py`: a small offline mesh renderer with depth-sorted surfaces, a fixed orthographic camera and camera-space shading. Ellipsoids, oriented limb tubes and thick ring profiles give the body and clothing real depth before baking. The game still uses Canvas 2D and embedded PNG atlases; it does not require WebGL.

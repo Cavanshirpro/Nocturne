@@ -43,7 +43,7 @@
       const g=this.game,p=g.player,q=p.progress;
       if(g.state!=='playing'||q.aegisRemaining>0||q.aegisTime>0)return false;
       q.aegis=q.aegisMax=p.maxHp*.75+p.level*2;q.aegisTime=2.5;q.aegisRemaining=8;
-      g.stats.shields=(g.stats.shields||0)+1;g.combat.effect('ring',p.x,p.y-20,0,0,58,'#a5e1ff',.35);g.combat.sound('lock');return true;
+      p.cast();g.stats.shields=(g.stats.shields||0)+1;g.combat.effect('ring',p.x,p.y-20,0,0,58,'#a5e1ff',.35);g.combat.sound('lock');return true;
     }
     jewel(value=34){
       if(!Number.isFinite(value)||value<=0)return;
@@ -57,7 +57,7 @@
       const g=this.game,p=g.player,q=p.progress,boost=this.preview();
       if(g.state!=='playing'||q.demonTime>0||boost.charges<1)return false;
       q.essence-=boost.cost;q.demonTime=q.demonDuration=boost.duration;q.demonPower=boost.power;q.demonSpeed=boost.speed;
-      g.stats.transformations=(g.stats.transformations||0)+1;
+      p.cast();g.stats.transformations=(g.stats.transformations||0)+1;
       g.ui.banner('DEMON WITCH',boost.charges+' ESSENCE CHARGE'+(boost.charges===1?'':'S')+' · '+N.fmt(boost.duration)+' SECONDS');
       g.combat.effect('ring',p.x,p.y,0,0,360,'#e9a0c9',.8);g.combat.sound('transform');return true;
     }
