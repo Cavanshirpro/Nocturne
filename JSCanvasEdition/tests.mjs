@@ -17,7 +17,7 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
@@ -1149,5 +1149,14 @@ test('reduced motion freezes all added attachment geometry and retains every spe
 });
 test('ward facets consume no charge and the grimoire portrait never changes player coordinates',()=>{
  const g=create();g.reset();g.abilities.shield();const charge=g.player.progress.aegis,x=g.player.x,y=g.player.y;g.player.draw(context);assert.equal(g.player.progress.aegis,charge);g.ui.toggleGrimoire();g.ui.drawRegaliaPortrait();assert.equal(g.player.x,x);assert.equal(g.player.y,y);
+});
+test('5.2.1 sprite blending respects quality and motion without changing animation state',()=>{
+ const g=create();g.reset();const a=g.player.animator,clip=sandbox.NOCTURNE_ATLAS.clips.walk;
+ a.play('walk',{restart:true});a.time=clip.duration*2.5/clip.frames;
+ const before=JSON.stringify(a),calls=[];
+ const c={globalAlpha:.6,save(){this.saved=this.globalAlpha;},restore(){this.globalAlpha=this.saved;},drawImage(...args){calls.push(args);}};
+ a.draw(c,images,'E',0,0,80,107,'witch',null,'high');assert.equal(calls.length,2);assert.equal(c.globalAlpha,.6);assert.equal(JSON.stringify(a),before);
+ calls.length=0;a.draw(c,images,'E',0,0,80,107,'witch',null,'low');assert.equal(calls.length,1);
+ a.reduced=true;calls.length=0;a.draw(c,images,'E',0,0);assert.equal(calls.length,1);assert.equal(calls[0][1],clip.start*96);
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;

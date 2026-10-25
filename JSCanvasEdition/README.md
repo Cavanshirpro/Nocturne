@@ -1,12 +1,19 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.0 · Living Regalia**
+**Version 5.2.1 · Sculpted Silhouettes**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.2.0
+## What's new in 5.2.1
+
+- Deeper robe, skull, hat and boot geometry keeps side views solid in all eight directions. This is lightweight 2.5D artwork rendered with Canvas, not a real-time 3D engine.
+- Permanent upgrades form three readable equipment groups: offensive focus, defensive cuirass and mobility fittings. All twelve spell attachments, mastery, evolutions, talents and relics remain represented.
+- Atlas-frame blending smooths motion at normal/high quality. Low quality and reduced motion keep a single sprite draw.
+- All embedded atlases and player previews are included and regenerated. Open `index.html` to play; no patch installer or asset generation is needed.
+
+## Features inherited from 5.2.0
 
 - **Living Regalia:** learned spells become visible staff, bracer, shoulder, belt and mantle equipment. All twelve spell pieces coexist; mastery, evolutions, relics, talents, directed rituals, oath and permanent upgrades refine the costume.
 - **Rebuilt player model:** layered brocade, jointed arms, fingers, individual boots, moving hair, a face plane, a sculpted hat and a forked staff. Coven palettes and five level milestones change the regalia.

@@ -108,7 +108,7 @@
       // Rear cloth/equipment and front attachments share the model's facing rig.
       N.Appearance.playerBack(c,this,appearance);
       c.save();c.translate(this.x,this.y);
-      this.animator.draw(c,this.game.images,this.facing,-40,-99,80,107,appearance.demon?'demon':'witch',this.attackInterval<.28?this.game.time*3:null);
+      this.animator.draw(c,this.game.images,this.facing,-40,-99,80,107,appearance.demon?'demon':'witch',this.attackInterval<.28?this.game.time*3:null,this.game.quality);
       c.restore();N.Appearance.playerFront(c,this,appearance);c.restore();
     }
   }

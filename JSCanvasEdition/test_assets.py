@@ -41,6 +41,16 @@ class AssetTests(unittest.TestCase):
         self.assertEqual(len({im.tobytes() for im in images}),8)
         self.assertTrue(all(im.size==(96,128) for im in images))
 
+    def test_volumetric_skull_stays_opaque_at_its_projected_center(self):
+        # A second supersampling transform used to place the entire skull
+        # outside its atlas cell, leaving holes between the hair and face.
+        for variant in ('witch', 'demon'):
+            for direction in DIRS:
+                core=png(variant+'_atlas_'+direction).crop((43,46,54,57))
+                alpha=core.getchannel('A')
+                solid=sum(alpha.getpixel((x,y))>220 for x in range(11) for y in range(11))
+                self.assertGreater(solid,100,(variant,direction))
+
     def test_eight_distinct_walk_frames_per_facing(self):
         for direction in DIRS:
             sheet=png("witch_atlas_"+direction)

@@ -17,9 +17,24 @@
       this.reduced=reduced;
     }
     get frame(){const c=window.NOCTURNE_ATLAS.clips[this.state];if(this.reduced)return c.start+(this.state==='cast'?2:0);return c.start+Math.min(c.frames-1,Math.floor((c.loop?this.time%c.duration:Math.min(this.time,c.duration-.00001))/c.duration*c.frames));}
-    draw(c,images,facing,x,y,w=80,h=107,variant='witch',visualClock=null){const a=window.NOCTURNE_ATLAS,clip=a.clips.cast;
-      const frame=visualClock!==null&&!this.reduced&&this.state==='cast'?clip.start+Math.floor((visualClock%1)*clip.frames):this.frame;
-      c.drawImage(images[variant+'_atlas_'+facing]||images['witch_atlas_'+facing],frame*a.width,0,a.width,a.height,x,y,w,h);
+    draw(c,images,facing,x,y,w=80,h=107,variant='witch',visualClock=null,quality='high'){
+      const a=window.NOCTURNE_ATLAS,clip=a.clips[this.state];
+      const sheet=images[variant+'_atlas_'+facing]||images['witch_atlas_'+facing];
+      if(!sheet)return;
+      const cycle=visualClock!==null&&!this.reduced&&this.state==='cast'
+        ? ((visualClock%1)+1)%1
+        : clip.loop ? (this.time%clip.duration)/clip.duration
+        : Math.min(.999999,this.time/clip.duration);
+      const position=this.reduced?0:cycle*clip.frames;
+      const current=this.reduced?Math.min(clip.frames-1,this.state==='cast'?2:0):Math.min(clip.frames-1,Math.floor(position));
+      const draw=index=>c.drawImage(sheet,(clip.start+index)*a.width,0,a.width,a.height,x,y,w,h);
+      draw(current);
+      // Display-only crossfade: no extra simulation update, allocations,
+      // timers or interpolation of the character's world coordinates.
+      if(this.reduced||quality==='low')return;
+      const next=clip.loop?(current+1)%clip.frames:Math.min(current+1,clip.frames-1);
+      const blend=position-Math.floor(position);
+      if(next!==current && blend>.025){c.save();c.globalAlpha*=blend;draw(next);c.restore();}
     }
   }
   N.EnemyMotion={

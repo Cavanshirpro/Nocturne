@@ -2,6 +2,16 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.2.1 — Sculpted Silhouettes
+
+Full source package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
+
+- Witch and Demon source rigs gain full depth in skirt panels, asymmetric boots, skull profiles and a pitched 3D hat brim, avoiding the paper-thin east/west silhouette.
+- A read-only, perspective-aware Canvas pass adds skirt facets and correctly layered hat lips; all twelve spell attachments and their rank, mastery and evolution marks remain distinct.
+- Permanent statistics become three legible equipment systems: offensive focus, protective cuirass and mobility fittings. Talents, relics, rituals, Demon regalia and essence retain individual representations.
+- Walking and cast clips receive display-only crossfades at normal/high quality; low-quality rendering uses one atlas draw and reduced motion disables blending.
+- Combat, enemy AI, cooldowns, collision, controls, RNG, balance and save format are unchanged.
+
 ## v5.2.0 — Living Regalia
 
 Release package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.

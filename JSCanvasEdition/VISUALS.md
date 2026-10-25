@@ -1,4 +1,14 @@
-# Living Regalia — v5.2.0 art guide
+# Living Regalia — v5.2.x art guide
+
+## v5.2.1: Sculpted Silhouettes
+
+The v5.2.1 model pass corrects profile-specific collapse of planar clothing and hat elements. The offline Pillow model now produces deeper robe cross sections, a pitched elliptical hat brim, volumetric skull shading, profile facial details and staggered boot heels. A Canvas pass adds projection-consistent skirt facets and rim occlusion.
+
+Thirteen permanent stat channels are represented by three grouped equipment systems, with constrained sub-marks instead of dozens of overlapping symbols. Learned spells keep all twelve dedicated attachment slots and ranks; mastery, evolutions, relics, talents, rituals, oath, essence and Demon upgrades remain readable. All drawing reads existing gameplay fields without storing cosmetic progression.
+
+**Build instruction:** run `python generate_assets.py` after applying the patch so embedded sprites match the new model source. If you have the optional `@napi-rs/canvas` dependency, regenerate the separate screenshots/gallery with `node scripts/render_visuals.cjs`. The original preview gallery is not automatically replaced by asset generation alone. Low quality and reduced motion skip sprite blending.
+
+
 
 This release changes presentation: models, costume composition, animation, projectile art and a read-only grimoire portrait. It retains the v5.1.3 simulation, AI, difficulty, hitboxes, damage, timers, summons and save schema.
 

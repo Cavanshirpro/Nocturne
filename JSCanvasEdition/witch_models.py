@@ -1,4 +1,4 @@
-"""v5.2 character rig: layered cloth, jointed limbs, face, hair and Demon armor.
+"""v5.2.1 volume-enhanced character rig: layered cloth, jointed limbs, face, hair and Demon armor.
 
 All geometry is generated locally. The same 96x128 footprint and facing system
 are retained; costume attachments are projected by systems/appearance.js.
@@ -32,6 +32,32 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     def line(pts,col,width=1):d.line([p(*v) for v in pts],fill=col,width=max(1,round(width*scale)),joint='curve')
     def orb(x,y,z,rx,rz,col):
         px,py=p(x,y,z);d.ellipse((px-rx*scale,py-rz*scale,px+rx*scale,py+rz*scale),fill=col)
+    def volume_head(x,y,z,rx,ry,rz,body,highlight):
+        # Side silhouette derives from actual skull depth, not a flat bitmap.
+        xx,yy=p(x,y,z)
+        wide=math.hypot(rx*math.cos(a),ry*math.sin(a))
+        d.ellipse((xx-wide*scale,yy-rz*scale,
+                   xx+wide*scale,yy+rz*scale),fill=body)
+        shine=max(2.5,wide*.57)
+        offset=-wide*.18 if math.cos(a)>=0 else wide*.18
+        d.ellipse((xx+(offset-shine)*scale,yy-rz*.73*scale,
+                   xx+(offset+shine)*scale,yy+rz*.44*scale),fill=highlight)
+
+    def sculpted_brim(rx,ry,z):
+        # A pitched ellipse with separate upper surface and raised outer lip.
+        # Its depth (ry) stays visible when the witch faces E or W.
+        n=24
+        vertices=[(rx*math.cos(i*math.tau/n),ry*math.sin(i*math.tau/n),
+                   z+1.2*math.sin(i*math.tau/n)) for i in range(n)]
+        poly(vertices,ink)
+        inner=[(v[0]*.89,v[1]*.86,v[2]+1.7) for v in vertices]
+        poly(inner,cloth)
+        for i in range(n):
+            j=(i+1)%n
+            line([vertices[i],vertices[j]],edge if i%4==0 else metal,.5)
+        poly([(v[0]*.56,v[1]*.59,v[2]+2.6) for v in vertices],
+             '#463748' if demon else '#4b4155')
+
     def limb(pts,width,col):
         line(pts,ink,width+2);line(pts,col,width)
         for x,y,z in pts[1:-1]:orb(x,y,z,width*.6,width*.6,metal)
@@ -43,10 +69,12 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         line([(x*.55,-8,61),(x*.85+wind*.4,-12,31),(x+wind,-13,13+abs(j-3)*2)],metal,.7)
     for side in (-1,1):
         leg=stride*side
-        limb([(side*6,0,35),(side*7,leg*5,20),(side*8,leg*10,4+max(0,-leg)*3)],4,'#504252' if not demon else '#6a334e')
-        poly([(side*8-4,leg*10-2,15),(side*8+4,leg*10-2,15),(side*8+5,leg*10+6,3),(side*8-5,leg*10+6,3)],ink)
-        line([(side*8-3,leg*10+5,5),(side*8+4,leg*10+6,5)],metal,1)
-        for z in (8,12):line([(side*8-3,leg*10+1,z),(side*8+3,leg*10+1,z)],'#8c7080',.6)
+        # Opposing heel depths keep two distinct boots readable in profile.
+        heel_depth=side*3.5
+        limb([(side*6,0,35),(side*7,leg*5+heel_depth*.55,20),(side*8,leg*10+heel_depth,4+max(0,-leg)*3)],4,'#504252' if not demon else '#6a334e')
+        poly([(side*8-4,leg*10+heel_depth-4,15),(side*8+4,leg*10+heel_depth-4,15),(side*8+5,leg*10+heel_depth+8,3),(side*8-5,leg*10+heel_depth+8,3)],ink)
+        line([(side*8-3,leg*10+heel_depth+7,5),(side*8+4,leg*10+heel_depth+7,5)],metal,1)
+        for z in (8,12):line([(side*8-3,leg*10+heel_depth+1,z),(side*8+3,leg*10+heel_depth+1,z)],'#8c7080',.6)
 
     # Sculpted brocade robe with thirteen actual panels, a corset and split front.
     faces=[]
@@ -54,7 +82,7 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         t=i*math.tau/14;u=(i+1)*math.tau/14
         sw=math.sin(cycle+t)*1.4+stride*1.6
         col=int(40+13*math.cos(t+a-.65))
-        pts=[(22*math.cos(t)+sw,13*math.sin(t),10+stride*math.cos(t)*2),(22*math.cos(u)+sw,13*math.sin(u),10+stride*math.cos(u)*2),(10*math.cos(u),7*math.sin(u),57),(10*math.cos(t),7*math.sin(t),57)]
+        pts=[(22*math.cos(t)+sw,18*math.sin(t),10+stride*math.cos(t)*2),(22*math.cos(u)+sw,18*math.sin(u),10+stride*math.cos(u)*2),(10*math.cos(u),11*math.sin(u),57),(10*math.cos(t),11*math.sin(t),57)]
         faces.append((math.sin(t+a),pts,(col+10 if demon else col,col-9 if demon else col-5,col+16,255)))
     for _,pts,col in sorted(faces):poly(pts,col)
     for side in (-1,1):
@@ -72,7 +100,8 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     right=(20+cast*2,6+stride*3,45+cast*7)
     for side,hand in [(-1,left),(1,right)]:
         hx,hy,hz=hand
-        limb([(side*10,0,62),(side*17,hy*.3,52+cast*6),(hx,hy,hz)],6,cloth)
+        # Shoulder joints project across the torso's real front/back depth.
+        limb([(side*10,-3,62),(side*17,hy*.3-3,52+cast*6),(hx,hy,hz)],6,cloth)
         poly([(side*7,0,67),(side*18,0,63),(side*20,3,56),(side*11,5,57)],metal)
         line([(side*10,1,65),(side*17,2,61)],edge,.8)
         orb(hx,hy,hz,3.2,3.7,skin)
@@ -88,13 +117,18 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     for side in (-1,1):line([(sx,sy,80),(sx+side*6,sy,88),(sx+side*4,sy,97)],metal,1.5)
     orb(sx,sy,90,4,6,glow);orb(sx-1,sy+1,92,1.5,2.5,'#fff2db')
     # Face plane, ears, eyebrows, eyes and moving locks remain correct in rear views.
-    orb(0,0,76,10.5,14.5,ink)
+    volume_head(0,0,76,11.2,10.6,14.5,ink,
+                '#4c394b' if not demon else '#6e405c')
     for side in (-1,1):
         hair=math.sin(cycle+side)*1.7+stride*2
         poly([(side*7,-1,84),(side*13,-3,77),(side*14+hair,-4,53),(side*9+hair,-1,56),(side*6,0,71)],'#766375' if not demon else '#d8b9d0')
         line([(side*9,-3,78),(side*11+hair,-3,59)],edge,.6)
     if front>-.15:
         width=max(3,7.5*abs(front));orb(0,7,77,width,10,skin)
+        if abs(front)<.42:
+            # A projecting brow, cheek and nose readable from the side.
+            poly([(-2,9,84),(2,12,83),(2,14,76),(-1,11,71)],skin)
+            line([(0,12,77),(2,14,76),(0,12,74)],'#9e7882',.6)
         poly([(-8,6,84),(0,9,86),(6,8,82),(-2,9,79)],'#463844' if not demon else '#d2b6d1')
         if front>.6:
             for side in (-1,1):
@@ -112,10 +146,10 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
             poly([(side*10,7,80),(side*13,6,73),(side*7,8,69)],metal)
     else:
         # Sculpted asymmetric hat, raised seams, crescent brooch and dangling gems.
-        orb(0,0,92,29,7,ink);orb(0,0,94,27,5.5,cloth)
-        poly([(-16,0,95),(16,0,95),(7,-1,114),(-1,-2,126),(-5,-1,123),(-1,0,109)],cloth)
-        poly([(1,-1,97),(16,0,95),(7,-1,114),(-1,-2,126),(3,0,111)],'#5a4a65')
-        line([(-16,0,95),(-5,-1,123),(-1,-2,126)],edge,.8)
+        sculpted_brim(29,18.5,94)
+        poly([(-16,-7,95),(16,-7,95),(7,-4,114),(-1,3,126),(-5,4,123),(-1,4,109)],cloth)
+        poly([(1,4,97),(16,8,95),(7,2,114),(-1,3,126),(3,5,111)],'#5a4a65')
+        line([(-16,-7,95),(-5,4,123),(-1,3,126)],edge,.8)
         poly([(-15,3,96),(15,3,96),(12,3,101),(-12,3,101)],metal)
         orb(3,5,99,3.5,3.5,glow);orb(4.5,5,100,2.8,3,cloth)
         for side in (-1,1):
