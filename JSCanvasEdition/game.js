@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.1.2';
+  N.VERSION = '5.1.3';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -234,7 +234,7 @@
       player.weapons={...this.player.weapons};player.relics={...this.player.relics};player.upgrades=[...this.player.upgrades];player.rules=5;player.progress=JSON.parse(JSON.stringify(this.player.progress));
       if(recovery){
         player.hp=player.maxHp;player.x=player.y=0;
-        Object.assign(player.progress,{demonTime:0,specialRemaining:0,aegis:0,aegisMax:0,aegisTime:0,aegisRemaining:0,shield:player.progress.activeOath==='stone'?35:0});
+        Object.assign(player.progress,{demonTime:0,specialRemaining:0,silenceTime:0,silenceGrace:0,aegis:0,aegisMax:0,aegisTime:0,aegisRemaining:0,shield:player.progress.activeOath==='stone'?35:0});
       }
       this.save.data.checkpoint={schema:2,phase,difficulty:N.Difficulty.capture(this,recovery),coven:this.player.coven,wave:this.wave,time:this.time,player,
         world:phase==='wave'&&!recovery?N.captureWorld(this):undefined,
@@ -280,12 +280,13 @@
       const angle=N.rand(0,Math.PI*2);
       const r=700;
       this.boss=new N.Enemy(this,overlord?'overlord':'warden',this.player.x+Math.cos(angle)*r,this.player.y+Math.sin(angle)*r,++this.nextId,false,{level:Math.max(this.player.level+3,Math.ceil(N.Difficulty.current(this).effectiveLevel*(overlord?1.18:1.08))),tier:overlord?'overlord':'warden',trait:'none'});
+      if(overlord){const build=N.Difficulty.boss(this);this.boss.maxHp=Math.max(this.boss.maxHp,Math.exp(Math.min(Math.log(1e150),build.logDps+Math.log(6+N.Warfare.tier(this)))));this.boss.hp=this.boss.maxHp;this.boss.damage=Math.min(Math.max(this.boss.damage,build.damageBudget*.35),build.hitBudget*.32);}
       this.boss.spawnDelay=this.visible(this.boss.x,this.boss.y,60)?1.2:0;
       this.enemies.push(this.boss);if(required)this.bossSpawned=true;else this.overlordSpawned=true;this.ui.banner(overlord?'THE ASH OVERLORD':'THE HOLLOW WARDEN',overlord?'BREAK THE SOVEREIGN CROWN':'BREAK THE SEAL');
       this.combat.sound('boss');
     }
     summonMinions(owner){
-      const available=Math.max(0,320-this.enemies.length);for(let i=0;i<Math.min(3,available);i++){const a=i*Math.PI*2/3,e=new N.Enemy(this,'slime',owner.x+Math.cos(a)*75,owner.y+Math.sin(a)*75,++this.nextId,false,{level:Math.max(1,Math.floor(this.player.level*.45)),tier:'minion',trait:'none'});e.maxHp*=.35;e.hp=e.maxHp;e.scale*=.65;e.radius*=.65;e.spawnDelay=.85;this.enemies.push(e);}
+      N.Warfare.summon(this,owner);
     }
     earnGold(amount){const q=this.player.progress,scaled=amount*(q.activeOath==='fortune'?1.2:1)+q.goldCarry,value=Math.floor(scaled+1e-9);q.goldCarry=Math.max(0,scaled-value);this.player.gold+=value;this.stats.goldEarned+=value;}
     unlock(id){

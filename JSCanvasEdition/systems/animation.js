@@ -20,12 +20,21 @@
     draw(c,images,facing,x,y,w=80,h=107){const a=window.NOCTURNE_ATLAS;c.drawImage(images['witch_atlas_'+facing],this.frame*a.width,0,a.width,a.height,x,y,w,h);}
   }
   N.EnemyMotion={
+    ritual(e){
+      const q=e.guardian||e.tactics;if(!q)return null;
+      const action=q.dodgeWindup>0||q.dodgeTime>0?'riftstep':q.action||(q.salvo>0?'salvo':q.releaseTime>0?q.lastAction:q.ward>0?'aegis':null);
+      if(!action)return null;
+      const style=action==='riftstep'?'blink':['salvo','slash','lances'].includes(action)?'sweep':['aegis','shockwave','soulring'].includes(action)?'guard':'channel';
+      const t=q.dodgeWindup>0?.45*(1-q.dodgeWindup/.22):q.dodgeTime>0?.45+.55*(1-q.dodgeTime/.24):q.windup>0?.45*(1-q.windup/q.windupTotal):q.salvo>0?.5+(q.shotIndex%4)*.12:q.releaseTime>0?.45+.55*(1-q.releaseTime/.55):((e.phase||0)/7)%1;
+      return {action,style,t};
+    },
     pose(e){
       if(e.game.reducedMotion||e.frozen>0)return {lean:0,lift:0,stretch:0};
       const cycle=e.phase||0,walking=e.moving!==false&&e.spawnDelay<=0;
-      return {lean:walking?Math.sin(e.gait||0)*(e.boss?.025:.035):Math.sin(cycle)*.008,
+      const ritual=this.ritual(e),power=ritual?Math.sin(ritual.t*Math.PI):0;
+      return {lean:ritual?.style==='sweep'?Math.sin(ritual.t*Math.PI*2)*.13:walking?Math.sin(e.gait||0)*(e.boss?.055:.045):Math.sin(cycle)*.018,
         lift:e.type==='wraith'||e.type==='overlord'?Math.sin(cycle*.8)*3:walking?Math.abs(Math.sin(e.gait||0))*.8:0,
-        stretch:e.type==='slime'?Math.sin(cycle)*.035:e.charge>0?.045:0};
+        stretch:ritual?.style==='blink'?power*.12:e.type==='slime'?Math.sin(cycle)*.06:e.charge>0?.07:0};
     },
     accents(c,e){
       if(!e.boss&&e.type!=='wraith')return;
@@ -38,13 +47,30 @@
         if(g.quality!=='low'){c.beginPath();c.moveTo(x,y);c.lineTo(x-Math.cos(a-.3)*4,y-Math.sin(a-.3)*4);c.stroke();}
       }
       c.restore();
+      this.intent(c,e);
+    },
+    intent(c,e){
+      const r=this.ritual(e);if(!r)return;
+      const size=17+(e.game.reducedMotion?0:Math.sin(r.t*Math.PI)*5);
+      c.save();c.translate(e.x+57*e.scale,e.y-82*e.scale);c.strokeStyle=['voidseal','riftstep'].includes(r.action)?'#d6b3ff':['starfall','meteors'].includes(r.action)?'#ffbc8c':'#e8d5ee';c.fillStyle=c.strokeStyle;c.lineWidth=2;
+      const line=(x,y,a,b)=>{c.beginPath();c.moveTo(x,y);c.lineTo(a,b);c.stroke();};
+      if(['salvo','lances','starfall'].includes(r.action)){for(let i=-1;i<=1;i++){const x=i*size*.7;line(x,-size,x+(r.action==='lances'?i*7:0),size);if(r.action==='starfall'){line(x-4,0,x+4,0);line(x,-5,x,5);}}}
+      else if(['meteors','crossfire','soulring'].includes(r.action)){const count=r.action==='meteors'?3:r.action==='crossfire'?2:8;for(let i=0;i<count;i++){const a=i*Math.PI*2/count+(e.game.reducedMotion?0:r.t*.8);c.beginPath();c.arc(Math.cos(a)*size,Math.sin(a)*size,r.action==='crossfire'?8:3,0,Math.PI*2);c.stroke();}}
+      else if(r.action==='slash'){c.beginPath();c.arc(0,0,size,-1.2,1.2);c.stroke();line(0,-size,size,0);}
+      else if(r.action==='aegis'){c.beginPath();for(let i=0;i<=6;i++){const a=i*Math.PI/3;c[i?'lineTo':'moveTo'](Math.cos(a)*size,Math.sin(a)*size);}c.stroke();line(-6,0,6,0);line(0,-6,0,6);}
+      else if(r.action==='shockwave'){for(let i=0;i<3;i++){c.beginPath();c.arc(0,0,8+i*7,-2.8,-.3);c.stroke();}}
+      else if(r.action==='riftstep'){for(const x of [-10,10]){c.beginPath();c.ellipse(x,0,7,size,0,0,Math.PI*2);c.stroke();}}
+      else{c.beginPath();c.moveTo(0,-size);c.lineTo(size,0);c.lineTo(0,size);c.lineTo(-size,0);c.closePath();c.stroke();line(-8,-8,8,8);line(-8,8,8,-8);}
+      c.restore();
     }
   };
   N.drawEnemy=(c,images,enemy,x,y,w,h,state=null,progress=null)=>{
-    const atlas=window.NOCTURNE_ENEMY_ATLAS,sheet=images['enemy_atlas_'+enemy.type];
+    let atlas=window.NOCTURNE_ENEMY_ATLAS,sheet=images['enemy_atlas_'+enemy.type];
     if(!sheet||!atlas){c.drawImage(images[enemy.type],x,y,w,h);return;}
     const q=enemy.guardian;
-    if(!state){state=enemy.hitSquash>0?'hurt':enemy.terrified?'fear':q?.windup>0||q?.salvo>0||enemy.windup>0||enemy.charge>0||enemy.castTimer>0?'attack':enemy.frozen>0||enemy.moving===false?'idle':'walk';}
+    const ritual=state===null&&progress===null?N.EnemyMotion.ritual(enemy):null;
+    if(ritual&&images['enemy_ritual_'+enemy.type]){atlas=window.NOCTURNE_RITUAL_ATLAS;sheet=images['enemy_ritual_'+enemy.type];state=ritual.style;progress=ritual.t;}
+    if(!state){state=enemy.terrified?'fear':q?.windup>0||q?.salvo>0||enemy.windup>0||enemy.charge>0?'attack':enemy.hitSquash>0?'hurt':enemy.castTimer>0?'attack':enemy.frozen>0||enemy.moving===false?'idle':'walk';}
     const clip=atlas.clips[state];let t=progress;
     if(t===null){
       if(state==='hurt')t=1-enemy.hitSquash/.12;

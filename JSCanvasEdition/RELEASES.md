@@ -2,6 +2,50 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.1.3 — Sovereign Dominion
+
+Release package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
+
+### Offense, range and arena counterplay
+
+- Retains v5.1.2 whole-build vitality tuning. New combat tiers (0–4) also drive attack recovery, shot count, ward strength, reinforcement roles and the guardian's unlocked attack deck.
+- Sanctum radius grows with tier and player range, up to 1,700 units. Lances account for player range, and fixed-position attacks can pressure a player beyond the arena. The guardian remains leashed.
+- **Outer Seal:** more than 65 units outside the boundary activates a visible 90% guardian damage reduction. Returning removes it; boss health and progress never reset. Walking out and firing from safety no longer bypasses the encounter.
+- Tiered effective-health damage floors keep high-tier attacks relevant against extreme armor, while existing per-hit ceilings prevent one-shot escalation. Rapid impacts cannot pin a boss or drag a held warning.
+- High-tier salvo bursts grow to 18 shots (22 enraged); recovery becomes shorter with tier. Tier 2+ also places occasional separate, warned ground impacts. Telegraph durations remain readable.
+- Added four tier-2+ powers: **Hunter Starfall** (fixed forward impact trail), **Twin Gates** (two warned crossfire portals), **Crown Shockwaves** (three staggered annuli with safe cores/gaps), and **Void Seal** (a dodgeable casting-suppression circle). Eleven powers are available to strong guardians.
+- Void Seal warns for 1.3s, then suppresses new auto-casts, wisps and specials for 1.25s on impact. Movement, dash and Aegis remain usable. A seven-second grace timer from application prevents repeated lockouts. Existing projectiles and ground spells continue; no burst backlog accumulates. Separate ground circles warn before the follow-up.
+
+### Defense, tactics and armies
+
+- Dread Aegis now absorbs 8–18% of maximum boss vitality for 3–4.6s by tier. Tier 1+ can react to concentrated damage with a finite ward and nine-second recovery. Wards never heal or endlessly regenerate during a burst.
+- Bosses and Overlords predict nearby projectile paths, signal a sidestep for 0.22s, then move for 0.24s. Cooldowns, bounded scans and arena leashes limit dodging. They remain damageable and hold their main attack warnings steady.
+- Summoned soldiers now use effective encounter levels and whole-build health/damage budgets. Spawn warnings last at least 1.15s.
+- Tier 3+ guardians can summon Overlord commanders. Commanders and invasion Overlords summon soldiers. Depth limits prevent soldiers from summoning and prevent commanders from recursively creating Overlords. Global caps: two summoned Overlords and 18 army members.
+- Commander deaths never break the primary guardian's seal. World saves retain ownership and summon depth and restore the primary boss even when several Overlords are alive.
+- Invasions are more frequent: 8–90% saved chance based on build pressure and wave, with consecutive-wave eligibility at pressure 1.7+. Lower pressure retains a three-wave gap. Strong builds become eligible from wave 2. Existing wave rolls remain unchanged on migration or retry.
+- Invasion Overlords also receive whole-build vitality and bounded damage, so their relevance grows beyond a displayed level number.
+
+### Artwork and animation
+
+- Four new articulated boss rituals: **channel**, **sweep**, **guard** and **blink**, with six frames and eight directions each for Wardens/Overlords. Attack-specific staff glyphs distinguish the eleven attack intents.
+- Fixed repeated hurt frames hiding the boss's casting animation under rapid fire. Ritual poses now take priority; normal enemies also show attack anticipation before hurt reactions.
+- Independent mantle shards, stronger float/stride/lean motion and clearer hand/staff articulation. Added `boss-ritual-preview.gif`; existing procedural artwork and previews are regenerated.
+- Only two additional boss atlases are decoded; ordinary enemies retain their existing atlas dimensions. Reduced motion and low-quality rendering remain supported. Cell-boundary checks include all 384 new ritual frames.
+
+### Compatibility and validation
+
+- Existing supported saves remain usable. A fighting v5.1.2 guardian gains tactics and an expanded arena once without changing current/maximum vitality, while preserving ward percentage and attack clocks. New saves preserve all new clocks, army roles, seal warnings, ring gaps and suppression.
+- Aegis, manual banked essence, minimap, vitality cues and same-wave half-gold death recovery are retained. Retry clears temporary casting suppression.
+- **218 logic/integration groups passed**, including all eleven powers, ranged counterplay, ward recovery, dodge prediction, nonrecursive armies, boss identity, exact reloads, migration, suppression and death recovery.
+- **19 asset tests passed**, including 50 valid embedded PNGs, all ordinary/ritual frame boundaries and deterministic regeneration.
+- Native Canvas decoded all 50 assets and rendered all eleven warning scenes, a reinforced army and a narrow reduced-motion scene. These checks do not verify browser DOM/CSS layout, physical input, real-device performance or audio output. Real-browser checks were not run for this package; the manual browser fixtures are included.
+- [BALANCE.md](BALANCE.md) explains the combat budgets, calibration fixture and limits. The scripted five-wave stability fixture uses hit immunity and is not a player win-rate benchmark.
+
+### Install
+
+Back up the save, replace the complete `JSCanvasEdition` folder, and open `index.html` with the same browser/profile and game address. This archive contains only that edition, README, release notes, license, source and preserved credits.
+
 ## v5.1.2 — Balance of Power
 
 Release package prepared: **2026-10-23**. This package does not imply that a GitHub release or tag has been published.

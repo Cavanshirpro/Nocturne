@@ -1,17 +1,20 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.1.2 · Balance of Power**
+**Version 5.1.3 · Sovereign Dominion**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.1.2
+## What's new in 5.1.3
 
-- **Whole-build difficulty:** merchant damage, haste, projectile count, crits, learned spells, mastery, relics, talents, vitality, armor and mobility now influence swarm pressure alongside character level.
-- **Stronger high-build guardians:** boss vitality follows estimated sustained damage, without the previous health ceiling. Weak builds get a smaller health budget and bounded per-hit damage. Seven warned powers include Soul Constellation, Rift Step and Triune Lances.
-- **Adaptive waves:** spawn density, enemy level bands, a separate threat-wave indicator, timer and Overlord invasion probability account for build strength. Changes during a wave are gradual and affect newly spawned enemies.
-- **Livelier enemies:** independently moving wings, robes, arms and tails, clearer windup/strike poses, boss strafing and orbiting motes. Low quality and reduced motion remain available.
+- **Sovereign combat tiers:** whole-build strength now controls attack cadence, burst size, wards, arena size, reinforcements and attack selection, alongside the retained vitality budget.
+- **Eleven powers:** strong guardians add Hunter Starfall, Twin Gates, Crown Shockwaves and Void Seal to their seven existing powers. Ground warnings, distinct casting poses and staff glyphs show the incoming attack.
+- **Range counterplay:** larger sanctums, longer lances and player-position attacks. Leaving the outer boundary activates a visible 90% guardian damage reduction; it never heals or resets the encounter.
+- **Stronger armies:** high-tier guardians summon Overlord commanders; commanders and invasion Overlords summon soldiers. Whole-build health/damage budgets, spawn warnings, depth limits and global caps keep reinforcements useful and bounded.
+- **More frequent invasions:** high-pressure builds can encounter an Overlord on consecutive waves. One saved roll and one primary invasion per wave remain.
+- **Reactive movement and defense:** bosses read incoming projectile paths, signal a sidestep, then move; no dodge invulnerability. Strong wards can react to concentrated damage with a recovery period.
+- **Boss animation:** four new articulated ritual clips in eight directions, moving mantle shards and attack-specific glyphs. Casting poses take priority over repeated hurt reactions from fast fire.
 - **Retained:** E/Aegis, same-wave retries with half-gold loss, manual banked Demon Essence, vitality cues, red screen edges, final sanctums and the minimap.
 
 See [RELEASES.md](RELEASES.md) for version-specific changes and migration notes.
@@ -64,7 +67,7 @@ Sound starts after an interaction. Volume, tonal ambience, low-quality rendering
 4. Enter the marked arena to summon its guardian. Every final encounter summons a **Final Sovereign**, a crowned form of Overlord. It stays within its arena and must be defeated before the merchant opens. A surviving invasion boss ascends into the Sovereign and fully heals once; it keeps its identity and never duplicates.
 5. Buy upgrades, reroll or refill stock, lock offers, prepare an oath, then start the next wave.
 
-Overlords can also invade from wave 3 onward. Each wave has one saved invasion roll, with a **4–42%** chance based on wave and build pressure, and at least three waves between invasions. Reopening or retrying the same wave does not reroll that decision. Ending the survival timer alone never completes a wave.
+Overlords can invade from wave 3, or wave 2 for builds with pressure at least 1.7. The saved per-wave chance is `clamp(0.08 + 0.015 × max(0, wave − 3) + 0.19 × pressure, 0.08, 0.90)`. High-pressure builds can invade on consecutive waves; lower-pressure builds retain a three-wave gap. Only one primary invasion can occur per wave. Reopening or retrying does not reroll it. Invasions also receive a whole-build vitality budget. Ending the survival timer alone never completes a wave.
 
 ## Build-aware wave pressure
 
@@ -78,19 +81,27 @@ Gold, missing health, stored essence, active Demon bonuses and Aegis charge do n
 
 The final boss locks its level, health and damage budgets when the encounter starts, including when an invasion ascends. Level uses the whole-build effective enemy level. Vitality targets roughly **32–47 seconds of estimated sustained damage**, with a small 300-health floor; this is a tuning budget, not a guaranteed real fight duration. Spell coverage, projectile spread, crits, mastery and evolutions contribute. There is no old threefold health ceiling or fivefold vitality floor. Later player upgrades never refill or continually rescale an active boss.
 
-The reference attack stat remains at least five times a same-level Overlord's value, and also grows with player vitality and armor. Actual attacks have separate ceilings based on the player's effective health at encounter start. Armor applies normally; a weak character cannot be killed by one full-health contact hit. Several hits, overlapping hazards and minions still require movement and Aegis.
+The reference attack stat remains at least five times a same-level Overlord's value, and also grows with player vitality and armor. Actual attacks have separate ceilings based on the player's effective health at encounter start. Armor applies normally. Tier 1+ also has a bounded effective-health minimum per attack so extreme armor cannot make high-tier boss attacks harmless; the separate upper ceilings still apply. A weak character cannot be killed by one full-health contact hit. Several hits, overlapping hazards and minions still require movement and Aegis.
 
 | Guardian power | Counterplay |
 | --- | --- |
-| **Hellfire Salvo** | A 0.9s locked-aim warning, then 10 shots (14 enraged), plus up to one extra for high build pressure. Sidestep, dash, or shield. Each shot is capped at 18% of effective health before armor. |
-| **Ash Meteors** | Three fixed circles (four enraged) warn for 1.15s. Leave the marked ground. Each impact is capped at 30% of effective health before armor. |
-| **Soul Reaping** | A warned, directed 245-unit arc. Leave the arc or raise Aegis; capped at 38% of effective health before armor. |
-| **Dread Aegis** | A temporary 3s boss ward absorbs up to 4% of its maximum vitality. The ward has a separate HUD bar; it does not heal the boss. |
-| **Soul Constellation** | Ten radial shots (fourteen enraged) leave a gap along the warned aim. Move through a gap; each orb is capped at 14% of effective health before armor. |
-| **Rift Step** | A marked destination warns for 1.1s before an impact and teleport. The destination locks inside the arena; leave its circle. Impact is capped at 24% of effective health before armor. |
-| **Triune Lances** | Three fixed rays warn for 1.15s before firing. Move between them or use Aegis; each hit is capped at 28% of effective health before armor. |
+| **Hellfire Salvo** | A 0.9s locked-aim warning, then 10–18 shots (14–22 enraged). Sidestep, dash or shield. Each shot is capped at 22% of effective health before armor. |
+| **Ash Meteors** | Three fixed circles (four enraged) warn for 1.15s. Leave the marked ground; impacts are capped at 30% of effective health before armor. |
+| **Soul Reaping** | A warned 245-unit arc. Leave the arc or raise Aegis; capped at 38% of effective health before armor. |
+| **Dread Aegis** | A finite ward holds 8–18% of maximum boss vitality for 3–4.6s, depending on combat tier. Tier 1+ can also raise it against a concentrated burst, with 9s recovery. It absorbs damage and never heals. |
+| **Soul Constellation** | Radial shots leave a gap along the warned aim. More orbs at higher tiers and when enraged; each is capped at 14% of effective health before armor. |
+| **Rift Step** | An arena-bounded destination warns for 1.1s before impact/teleport. Leave its circle; impact is capped at 28% of effective health before armor. |
+| **Triune Lances** | Three fixed long rays warn for 1.15s. Move between them or use Aegis; each hit is capped at 32% of effective health before armor. Range accounts for the player's projectile range. |
+| **Hunter Starfall** | Tier 2+: a trail of fixed impacts is marked ahead of the player's movement. Change direction after the warning. |
+| **Twin Gates** | Tier 2+: two portals appear beside the locked target position, then release crossfire fans. Move out of the crossing lanes. |
+| **Crown Shockwaves** | Tier 2+: three staggered annuli leave a safe core and a marked directional gap. Move through the gap rather than crossing a bright band. |
+| **Void Seal** | Tier 2+: a purple circle warns for 1.3s. An impact seals new auto-casts, wisps and directed specials for 1.25s. Movement, dash, Aegis, existing projectiles and ground spells remain available. A 7s grace timer from application prevents repeated lockouts. Separate impact circles warn before the follow-up. |
 
-The Sovereign summons minions, strafes, and shortens recovery windows below **40% health**. After showing all seven powers, it can choose lances against distant players and Rift Step against nearby players. Contact damage is capped at 42% of effective health before armor.
+Combat tier runs from 0 to 4 and derives from build power/effective enemy level. Strong tiers shorten recovery, add shots and independently place occasional 1.25s ground warnings. The opening rotation shows the unlocked powers; later choices respond to range and proximity. Boss sidesteps scan nearby projectiles, display a 0.22s direction tell, and move for 0.24s with a 2.9–4.85s recovery. Bosses remain damageable and hold still during their main attack warnings.
+
+Sanctums grow with combat tier and player range, up to a 1,700-unit radius. The guardian remains leashed inside; a player more than 65 units beyond the boundary activates its **Outer Seal** (90% damage reduction). Position-targeted attacks still reach distant players. Returning removes that reduction, with no healing or progress reset.
+
+Tier 3+ guardians can summon **Overlord commanders**. Whole-build soldier vitality grows with damage output; their levels follow effective encounter strength. All reinforcements have at least 1.15s spawn warnings. At most **two summoned Overlords** and **18 summoned creatures** can be alive globally. Commanders only summon soldiers; soldiers cannot summon. Defeating a commander never completes the wave. Below **40% guardian health**, attacks accelerate further. Contact damage remains capped at 42% of effective health before armor.
 
 **Your Aegis** is available from the start for all three covens. It lasts **2.5 seconds**, absorbs `0.75 × maximum vitality + 2 × character level` damage after armor, and has **8 seconds of recovery from activation**. Overflow reaches your Stone oath shield, then vitality. It costs no gold or Demon Essence. A depleted or expired barrier disappears; loading and pausing never refill it. Use movement and dash while it recovers.
 
@@ -134,7 +145,7 @@ There are **24 independent local save slots**, with renaming and JSON backup exp
 
 Export a backup from **SAVES** before upgrading. Replace the edition's files together, then use the same browser, profile, and game address. Clearing site data, private browsing, a different localhost port, or a different browser can make local saves unavailable. Direct-file save behavior depends on the browser.
 
-v5.1.2 accepts v5.1.1, v5.1.0 and v5.0 saves, retaining characters, banked essence, spells, gold, merchant state, world snapshots and player Aegis timers. New saves preserve adaptive wave plans and all seven guardian powers, including locked aim, teleport destination and ward state. A legacy guardian already fighting upgrades once while preserving identity, health/ward percentages and attack clocks. Saving again never repeats the adjustment. A legacy save past its timer receives a final sanctum on resuming. Older supported v3/v4 data still uses the existing migration path.
+v5.1.3 accepts the supported v5.1.2/v5.1.1/v5.1.0/v5.0 saves. Player progression, essence, merchant stock, health, sanctums, attacks and cooldowns remain. A fighting v5.1.2 guardian receives tactics once **without changing its current or maximum vitality**; its ward percentage and attack clocks remain, and the arena expands. Earlier guardians follow their existing vitality migration. New snapshots preserve army ownership/depth, the primary guardian's identity, sidestep clocks, suppression, ring gaps and seal warnings. Saves made after migration load exactly without repeating it. Older supported v3/v4 data still follows the existing migration path.
 
 ## Source layout
 
@@ -148,6 +159,7 @@ v5.1.2 accepts v5.1.1, v5.1.0 and v5.0 saves, retaining characters, banked essen
 | `systems/abilities.js` | Charged specials and banked Demon form |
 | `systems/encounters.js` | Final sanctum, guardian leash, minimap |
 | `systems/guardian.js` | Sovereign scaling, warned powers, temporary boss ward |
+| `systems/warfare.js` | Combat tiers, arena sizing, armies, silence and predictive sidesteps |
 | `systems/difficulty.js` | Whole-build assessment, saved wave plans, encounter budgets |
 | `systems/vitality.js` | Player health feedback and red screen edges |
 | Other `systems/*.js` | Progression, balance, encounter distribution, animation, audio, snapshots, storage |

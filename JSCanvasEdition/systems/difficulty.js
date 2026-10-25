@@ -43,10 +43,10 @@
     start(g,resuming=false){
       if(resuming&&g.difficulty?.plan.wave===g.wave){g.waveDuration=g.difficulty.plan.duration;return;}
       const previous=g.difficulty,last=previous?.lastInvasionWave||0,profile=this.assess(g.player),roll=Math.random();
-      const invasionChance=N.clamp(.04+.017*Math.max(0,g.wave-3)+.085*profile.pressure,.04,.42);
+      const invasionChance=N.clamp(.08+.015*Math.max(0,g.wave-3)+.19*profile.pressure,.08,.9);
       const plan={...this.values(g,profile.pressure),rating:profile.rating,logDps:profile.logDps,wave:g.wave,
         duration:30+Math.min(g.wave-1,6)*5+Math.round(profile.pressure*2),invasionChance,roll,
-        invades:g.wave>=3&&g.wave-last>=3&&roll<invasionChance};
+        invades:g.wave>=(profile.pressure>=1.7?2:3)&&g.wave-last>=(profile.pressure>=1.7?1:3)&&roll<invasionChance};
       g.difficulty={schema:1,plan,lastInvasionWave:last,clock:0};g.waveDuration=plan.duration;
     },
     refresh(g){
@@ -61,7 +61,7 @@
     valid(d){
       if(d?.schema!==1||!Number.isSafeInteger(d.lastInvasionWave)||d.lastInvasionWave<0||!Number.isFinite(d.clock)||d.clock<0||d.clock>6)return false;
       const p=d.plan;if(!p||!['level','pressure','effectiveLevel','effectiveWave','spawnMultiplier','aliveBudget','fodder','regular','veteran','rating','logDps','wave','duration','invasionChance','roll'].every(k=>Number.isFinite(p[k])))return false;
-      return ['level','effectiveLevel','effectiveWave','aliveBudget','wave','duration','rating'].every(k=>Number.isSafeInteger(p[k])&&p[k]>=1)&&p.pressure>=0&&p.pressure<=3.5&&p.spawnMultiplier>=1&&p.spawnMultiplier<=1.8&&p.aliveBudget<=200&&p.effectiveLevel>=p.level&&p.effectiveWave>=p.wave&&p.duration>=30&&p.duration<=67&&p.invasionChance>=.04&&p.invasionChance<=.42&&p.roll>=0&&p.roll<1&&typeof p.invades==='boolean'&&[p.fodder,p.regular,p.veteran].every(v=>v>0&&v<1)&&Math.abs(p.fodder+p.regular+p.veteran-1)<1e-8;
+      return ['level','effectiveLevel','effectiveWave','aliveBudget','wave','duration','rating'].every(k=>Number.isSafeInteger(p[k])&&p[k]>=1)&&p.pressure>=0&&p.pressure<=3.5&&p.spawnMultiplier>=1&&p.spawnMultiplier<=1.8&&p.aliveBudget<=200&&p.effectiveLevel>=p.level&&p.effectiveWave>=p.wave&&p.duration>=30&&p.duration<=67&&p.invasionChance>=.04&&p.invasionChance<=.9&&p.roll>=0&&p.roll<1&&typeof p.invades==='boolean'&&[p.fodder,p.regular,p.veteran].every(v=>v>0&&v<1)&&Math.abs(p.fodder+p.regular+p.veteran-1)<1e-8;
     },
     boss(g){
       const profile=this.assess(g.player),v=this.values(g,profile.pressure);

@@ -5,8 +5,8 @@
   N.Sanctum={
     create(g){
       if(g.sanctum)return;
-      const angle=N.rand(0,Math.PI*2),distance=1050;
-      g.sanctum={x:g.player.x+Math.cos(angle)*distance,y:g.player.y+Math.sin(angle)*distance,radius:330,phase:'waiting',bossId:null};
+      const radius=N.Warfare.arena(g),angle=N.rand(0,Math.PI*2),distance=Math.max(1050,radius+350);
+      g.sanctum={x:g.player.x+Math.cos(angle)*distance,y:g.player.y+Math.sin(angle)*distance,radius,phase:'waiting',bossId:null};
       g.ui.banner('THE FINAL SANCTUM','FOLLOW THE CRIMSON DIAMOND ON YOUR MINIMAP');
       g.combat.sound('warning');
     },
@@ -34,7 +34,7 @@
     },
     draw(g,c){
       const s=g.sanctum;if(!s||!g.visible(s.x,s.y,s.radius+80))return;
-      const active=s.phase==='fighting',color=s.phase==='cleared'?'#95dbbe':'#ec9c99';
+      const active=s.phase==='fighting',outside=active&&N.dist2(g.player,s)>(s.radius+65)**2,color=s.phase==='cleared'?'#95dbbe':outside?'#b7a2f5':'#ec9c99';
       c.save();c.translate(s.x,s.y);c.fillStyle=active?'#9b313d13':'#a35a7210';c.strokeStyle=color+'88';c.lineWidth=2;
       c.beginPath();c.arc(0,0,s.radius,0,Math.PI*2);c.fill();c.stroke();
       c.strokeStyle=color+'44';c.beginPath();c.arc(0,0,s.radius-22,0,Math.PI*2);c.stroke();
@@ -45,7 +45,7 @@
       }
       c.strokeStyle=color;c.lineWidth=3;c.beginPath();c.moveTo(0,-35);c.lineTo(24,0);c.lineTo(0,35);c.lineTo(-24,0);c.closePath();c.stroke();
       c.textAlign='center';c.fillStyle='#f1d5ca';c.font='bold 13px Arial';
-      c.fillText(s.phase==='waiting'?'ENTER TO SUMMON THE GUARDIAN':s.phase==='cleared'?'SEAL BROKEN':'FINAL SANCTUM',0,-65);
+      c.fillText(s.phase==='waiting'?'ENTER TO SUMMON THE GUARDIAN':s.phase==='cleared'?'SEAL BROKEN':outside?'OUTER SEAL · 90% PROTECTION':'FINAL SANCTUM',0,-65);
       c.restore();
     }
   };

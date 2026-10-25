@@ -29,7 +29,7 @@ def png(key):
 
 class AssetTests(unittest.TestCase):
     def test_all_embedded_images_are_valid(self):
-        self.assertEqual(len(data()),48)
+        self.assertEqual(len(data()),50)
         for key in data():
             im=png(key)
             self.assertGreater(im.width,0)
@@ -140,10 +140,34 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(gif.info['loop'],0)
 
     def test_generation_is_deterministic(self):
-        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif",ROOT/"enemy-animation-preview.gif",ROOT/"enemy-directions-preview.gif"]
+        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif",ROOT/"enemy-animation-preview.gif",ROOT/"enemy-directions-preview.gif",ROOT/"boss-ritual-preview.gif"]
         before=[hashlib.sha256(p.read_bytes()).digest() for p in paths]
         subprocess.run([sys.executable,str(ROOT/"generate_assets.py")],check=True,stdout=subprocess.DEVNULL)
         self.assertEqual(before,[hashlib.sha256(p.read_bytes()).digest() for p in paths])
+
+    def test_boss_rituals_have_four_distinct_articulated_clips(self):
+        for kind in ('warden','overlord'):
+            im=png('enemy_ritual_'+kind)
+            self.assertEqual(im.size,(2304,1024))
+            for state in range(4):
+                frames=[im.crop(((state*6+i)*96,0,(state*6+i+1)*96,128)) for i in range(6)]
+                self.assertGreaterEqual(len({f.tobytes() for f in frames}),5,(kind,state))
+            self.assertEqual(len({im.crop(((s*6+2)*96,0,(s*6+3)*96,128)).tobytes() for s in range(4)}),4)
+
+    def test_boss_ritual_frames_stay_inside_every_directional_cell(self):
+        for kind in ('warden','overlord'):
+            im=png('enemy_ritual_'+kind)
+            for row in range(8):
+                for frame in range(24):
+                    alpha=im.crop((frame*96,row*128,(frame+1)*96,(row+1)*128)).getchannel('A').point(lambda v:255 if v>90 else 0)
+                    box=alpha.getbbox()
+                    self.assertTrue(box and box[0]>0 and box[1]>0 and box[2]<96 and box[3]<128,(kind,row,frame,box))
+
+    def test_boss_ritual_preview_loops(self):
+        with Image.open(ROOT/'boss-ritual-preview.gif') as gif:
+            self.assertEqual(gif.n_frames,12)
+            self.assertEqual(gif.size,(800,380))
+            self.assertEqual(gif.info['loop'],0)
 
 
 if __name__=="__main__":

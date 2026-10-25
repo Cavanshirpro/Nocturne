@@ -173,6 +173,7 @@
       }
       if(this.type==='reaper'&&!this.terrified&&this.frozen<=0){this.attackTimer-=dt;if(this.attackTimer<=0&&len<220){this.game.combat.hazard(p.x,p.y,66,.9,this.damage,.35);this.castTimer=.3;this.attackTimer=3.2;}}
       if(this.boss&&this.frozen<=0){
+        if(!this.guardian){N.Warfare.tactics(this);this.tactics.releaseTime=Math.max(0,(this.tactics.releaseTime||0)-dt);N.Warfare.dodge(this.game,this,dt);}
         if(this.guardian)N.FinalGuardian.update(this.game,this,dt);else{
         if(this.type==='overlord'){this.summonTimer-=dt;if(this.summonTimer<=0){this.summonTimer=6;this.game.summonMinions(this);this.castTimer=.4;}}
         this.attackTimer-=dt;
@@ -186,11 +187,12 @@
             for(let i=0;i<count;i++)this.game.combat.enemyShot(this.x,this.y-25,this.x+Math.cos(angle+(i-(count-1)/2)*.19)*300,this.y-25+Math.sin(angle+(i-(count-1)/2)*.19)*300,angry?190:150,this.damage*.7);
           }
           this.attackTimer=angry?1.7:2.6;this.game.shake=Math.max(this.game.shake,2);
+          this.tactics.lastAction=this.attackCount%2?'meteors':'salvo';this.tactics.releaseTime=.55;
           this.castTimer=.3;
         }
         }
         if(len<190)movement*=.3;
-        if(this.guardian?.windup>0)movement=0;
+        if(this.guardian?.windup>0||(this.guardian||this.tactics)?.dodgeTime>0||(this.guardian||this.tactics)?.dodgeWindup>0){movement=0;this.knockX=this.knockY=0;}
       }
       if(this.terrified)movement=-Math.abs(movement)*1.15;else if(this.boss&&p.progress.demonTime>0&&len<360)movement*=.9;
       const moveAngle=Math.atan2(dy*(this.terrified?-1:1),dx*(this.terrified?-1:1));this.facing=DIRECTIONS[(Math.round(moveAngle/(Math.PI/4))+8)%8];
@@ -211,6 +213,7 @@
       const dealt=Math.min(this.hp,damage);this.game.stats.damage+=dealt;
       this.game.stats.weapons[source]=(this.game.stats.weapons[source]||0)+dealt;
       this.hp-=damage;this.flash=.1;this.hitSquash=.12;this.knockX+=vx*(this.boss?12:85);this.knockY+=vy*(this.boss?12:85);
+      if(this.boss){this.knockX=N.clamp(this.knockX,-45,45);this.knockY=N.clamp(this.knockY,-45,45);}
       const g=this.game;
       g.combat.burst(this.x,this.y-13,crit?13:7,'#fff9ee');
       g.combat.number(this.x,this.y-37,String(Math.round(damage)),crit?'#e5c88a':'#e4e0d5',crit);
@@ -229,7 +232,7 @@
       if(this.type==='gargoyle'){g.shake=Math.max(g.shake,5);g.combat.burst(this.x,this.y-10,18,'#bdb0cc');}
       if(this.elite){g.stats.elites++;g.loot.push(new Loot(g,'heal',this.x,this.y,12));g.unlock('elite');}
       if(this.boss||this.elite||Math.random()<.016)g.loot.push(new Loot(g,'jewel',this.x,this.y,this.boss?100:this.elite?50:34));
-      if(this.boss){
+      if(this.boss&&!this.summonedBy){
         if(g.sanctum?.bossId===this.id)g.sanctum.phase='cleared';
         g.bossDefeated=true;g.stats.bosses++;g.save.data.profile.bosses++;g.unlock('warden');
         g.loot.push(new Loot(g,'heal',this.x,this.y,30));g.ui.banner('THE SEAL IS BROKEN',this.type==='overlord'?'OVERLORD BANISHED':'WARDEN BANISHED');
@@ -251,7 +254,7 @@
       if(!window.NOCTURNE_ENEMY_ATLAS?.rows&&this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
       N.drawEnemy(c,this.game.images,this,-40*s,-99*s+bob,80*s,107*s);
       c.restore();
-      N.EnemyMotion.accents(c,this);N.FinalGuardian.draw(this.game,this,c);
+      N.EnemyMotion.accents(c,this);N.FinalGuardian.draw(this.game,this,c);N.Warfare.drawDodge(c,this);
       if(this.castTimer>0){c.globalCompositeOperation='lighter';c.strokeStyle='#d3b3d288';c.beginPath();c.arc(this.x,this.y-35*s,12+this.castTimer*30,0,Math.PI*2);c.stroke();c.globalCompositeOperation='source-over';}
       if(this.hp<this.maxHp&&!this.boss){
         c.fillStyle='#101617';c.fillRect(this.x-15,this.y-75*s,30,3);c.fillStyle=this.elite?'#d7b579':'#b8a293';c.fillRect(this.x-15,this.y-75*s,30*Math.max(0,this.hp/this.maxHp),3);

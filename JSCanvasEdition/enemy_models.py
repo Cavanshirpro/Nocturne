@@ -30,11 +30,14 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
     if action == 'fear':
         gait = math.sin(progress*math.tau)*1.25
     strike = (progress/.42)*.25 if progress<.42 else .25+math.sin((progress-.42)/.58*math.pi)*.75
-    attack = strike if action == 'attack' else 0
+    ritual = action in ('channel','sweep','guard','blink')
+    attack = strike if action == 'attack' or ritual else 0
     hurt = math.sin(progress*math.pi*1.5) if action == 'hurt' else 0
     death = progress if action == 'death' else 0
     breath = math.sin(progress*math.tau+.4)*.7 if action == 'idle' else 0
-    bob = abs(gait)*1.7+breath+(math.sin(cycle*.8)*1.5 if kind in ('wraith','overlord') and action!='death' else 0)
+    bob = abs(gait)*1.7+breath+(math.sin(cycle*.8)*2.4 if kind in ('wraith','overlord') and action!='death' else 0)
+    if action=='channel': bob+=math.sin(progress*math.pi)*5
+    if action=='blink': bob+=math.sin(progress*math.pi)*7
     palette = {
         'slime': ('#244d46', '#699780', '#bdd9a8'),
         'skeleton': ('#64605b', '#d1c5a7', '#8bd7c6'),
@@ -54,10 +57,17 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             y += attack*min(z/70, 1)*7-hurt*5
             if action == 'fear':
                 y -= min(z/80, 1)*8
+            if action=='sweep': y+=math.sin(progress*math.pi)*min(z/70,1)*10
+            if action=='blink': x+=math.sin(progress*math.tau)*min(z/90,1)*3
         if death:
             x += z*death*.03
             z *= 1-death*.80
             y += death*4
+        if ritual:
+            spread=.82 if action=='sweep' else .9
+            x*=spread
+            y*=spread
+            z*=.92
         xx = x*math.cos(a)-y*math.sin(a)
         yy = x*math.sin(a)+y*math.cos(a)
         return ((48+xx)*scale, (116-(3 if kind=='slime' else 0)-death*9+yy*.46-z*.89-bob*(1-death))*scale)
@@ -211,10 +221,18 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
     for side in (-1, 1):
         hand_z=43+gait*side*3+attack*(27 if side==1 else 16)+(6 if action=='fear' else 0)
         hand_y=7+gait*side*5+attack*12
-        limb([(side*12, 0, 65), (side*(20+attack*4), 2, 51+attack*10), (side*21, hand_y, hand_z)], 3 if skeletal else 5)
-        oval(side*21, hand_y, hand_z, 3, 3.5, light)
+        hand_x=side*21
+        if action=='channel': hand_z=69+math.sin(progress*math.pi)*18;hand_y=10;hand_x=side*(23+math.sin(progress*math.pi)*6)
+        if action=='guard': hand_z=65+math.sin(progress*math.pi)*7;hand_y=16;hand_x=side*(9+math.cos(progress*math.pi)*3)
+        if action=='sweep': hand_z=60+side*math.sin(progress*math.tau)*18;hand_y=8+math.sin(progress*math.pi)*19;hand_x=side*28
+        if action=='blink': hand_z=49+side*math.sin(progress*math.pi)*22;hand_y=-5+progress*14
+        limb([(side*12, 0, 65), (side*(20+attack*4), 2, 51+attack*10), (hand_x, hand_y, hand_z)], 3 if skeletal else 5)
+        oval(hand_x, hand_y, hand_z, 3, 3.5, light)
         for finger in (-1, 0, 1):
-            line([(side*21+finger, hand_y, hand_z), (side*23+finger*2, hand_y+3, hand_z-5)], light, 1)
+            line([(hand_x+finger, hand_y, hand_z), (hand_x+side*2+finger*2, hand_y+3, hand_z-5)], light, 1)
+        if ritual:
+            oval(hand_x,hand_y+1,hand_z,5.5,6,'#eac4ed')
+            oval(hand_x,hand_y+2,hand_z+1,2.4,3,'#fff1e5')
         if kind in ('warden', 'overlord'):
             poly([(side*9, 0, 70), (side*23, 0, 69), (side*24, 1, 56), (side*13, 3, 58)], light)
             line([(side*12, 2, 67), (side*21, 2, 65)], glow, 1)
@@ -236,6 +254,9 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
 
     if kind in ('cultist', 'warden', 'overlord'):
         sx, sy = 24+attack*7, 6+attack*5+gait*2
+        if action=='guard':sx,sy=15,17
+        if action=='sweep':sx,sy=math.cos(progress*math.pi)*25,15
+        if action=='channel':sx,sy=28,2
         line([(23-attack*5, 4, 4), (sx, sy, 102)], '#6c5b51', 3)
         line([(24-attack*5, 4, 8), (sx+1, sy, 100)], '#bba17f', 1)
         oval(sx, sy, 102, 6, 8, light)
@@ -255,6 +276,11 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         oval(0, 10, 59, 5, 7, glow)
         for side in (-1, 1):
             line([(side*15, 5, 67), (side*9, 9, 56), (math.sin(cycle+side)*3, 10, 53)], '#b69a80', 1)
+            # Segmented mantle and floating shoulder shards move independently.
+            for j in range(3):
+                z=58-j*12+math.sin(cycle+side+j)*2
+                poly([(side*(15+j*2),-6,z+9),(side*(23+j*2),-5,z+3),(side*(18+j*2),-3,z-6)], '#70556f')
+                line([(side*(16+j*2),-4,z+6),(side*(21+j*2),-4,z+2)], '#cf9cad', .8)
     if action=='fear':
         for side in (-1, 1):
             line([(side*12, 3, 99), (side*16, 3, 105), (side*18, 3, 102)], '#ecb9dc', 1)

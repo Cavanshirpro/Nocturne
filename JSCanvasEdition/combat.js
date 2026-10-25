@@ -167,9 +167,9 @@
       const b=this.hostile.acquire();if(!b)return false;
       const d=Math.hypot(tx-x,ty-y)||1;Object.assign(b,{x,y,vx:(tx-x)/d*speed,vy:(ty-y)/d*speed,damage,life:7,radius:6});return true;
     }
-    hazard(x,y,radius,delay,damage,duration){
+    hazard(x,y,radius,delay,damage,duration,options={}){
       const h=this.hazards.acquire();if(!h)return false;
-      Object.assign(h,{x,y,radius,delay,damage,duration,age:0});return true;
+      Object.assign(h,{x,y,radius,delay,damage,duration,age:0,kind:'circle',inner:0,angle:0,gap:0,silence:0},options);return true;
     }
     burst(x,y,count,color,style='circle'){
       if(this.game.reducedMotion||this.game.quality==='low')count=Math.ceil(count*.4);
@@ -183,10 +183,13 @@
     }
     update(dt){
       const p=this.game.player;
+      const sealed=p.progress.silenceTime>0;
       this.cooldown-=dt;
-      if(this.cooldown<=0){const target=this.nearest();if(target){const interval=N.castInterval(p),casts=Math.max(1,Math.floor(-this.cooldown/interval)+1);this.fire(target,casts);this.cooldown+=casts*interval;}else this.cooldown=0;}
+      if(sealed)this.cooldown=Math.max(0,this.cooldown);
+      if(!sealed&&this.cooldown<=0){const target=this.nearest();if(target){const interval=N.castInterval(p),casts=Math.max(1,Math.floor(-this.cooldown/interval)+1);this.fire(target,casts);this.cooldown+=casts*interval;}else this.cooldown=0;}
       for(const id of ['lightning','nova','meteor','lance','thorn','rift','rapid','cannon','burst','glacier'])if((p.weapons[id]||0)>0){
         this.spellTimers[id]-=dt;
+        if(sealed){this.spellTimers[id]=Math.max(0,this.spellTimers[id]);continue;}
         if(this.spellTimers[id]<=0){
           const base={lightning:2.8,nova:5,meteor:3.6,lance:2.6,thorn:4.5,rift:6,rapid:.13,cannon:2.6,burst:1.9,glacier:3.7}[id];
           const interval=Math.max(Number.MIN_VALUE,base/(1+.11*(p.weapons[id]-1))*(p.attackInterval/.56)),casts=Math.max(1,Math.floor(-this.spellTimers[id]/interval)+1);
@@ -194,7 +197,7 @@
         }
       }
       this.updateAreas(dt);
-      this.updateWisps();this.mapClock-=dt;
+      if(!sealed)this.updateWisps();this.mapClock-=dt;
       if(this.mapClock<=0){this.mapClock=1;for(const [id,until] of this.wispHits)if(until<this.game.time-1)this.wispHits.delete(id);}
       const active=this.projectiles.active;
       for(let i=active.length-1;i>=0;i--){
@@ -233,7 +236,9 @@
       }
       for(let i=this.hazards.active.length-1;i>=0;i--){
         const h=this.hazards.active[i];h.age+=dt;
-        if(h.age>=h.delay&&N.dist2(h,p)<(h.radius+p.radius)**2)p.hurt(h.damage);
+        const d=Math.hypot(p.x-h.x,p.y-h.y),angle=Math.atan2(p.y-h.y,p.x-h.x),delta=Math.abs(Math.atan2(Math.sin(angle-(h.angle||0)),Math.cos(angle-(h.angle||0))));
+        const inside=d<h.radius+p.radius&&(h.kind!=='ring'||d+p.radius>h.inner&&delta>h.gap/2);
+        if(h.age>=h.delay&&inside){if(h.damage>0)p.hurt(h.damage);if(h.silence>0)N.Warfare.silence(this.game,h.silence);}
         if(h.age>=h.delay+h.duration)this.hazards.release(i);
         if(this.game.state!=='playing')return;
       }
@@ -272,7 +277,12 @@
       }
       for(const h of this.hazards.active){
         const warning=h.age<h.delay;c.fillStyle=warning?'#c2946d14':'#b866573f';c.strokeStyle=warning?'#d3a477aa':'#e49d8bc0';c.lineWidth=2;
-        c.beginPath();c.arc(h.x,h.y,h.radius,0,Math.PI*2);c.fill();c.stroke();
+        if(h.kind==='seal'){c.fillStyle=warning?'#ad91e72a':'#b49bf25a';c.strokeStyle='#ddc3ff';}
+        c.beginPath();
+        if(h.kind==='ring'){const a=(h.angle||0)+h.gap/2,b=(h.angle||0)+Math.PI*2-h.gap/2;c.arc(h.x,h.y,h.radius,a,b);c.arc(h.x,h.y,h.inner,b,a,true);c.closePath();}
+        else c.arc(h.x,h.y,h.radius,0,Math.PI*2);
+        c.fill();c.stroke();
+        if(h.kind==='seal'){c.save();c.textAlign='center';c.font='bold 12px Arial';c.fillStyle='#f4e3ff';c.fillText('VOID SEAL · LEAVE CIRCLE',h.x,h.y-12);c.restore();}
         if(warning){c.setLineDash([4,8]);c.beginPath();c.arc(h.x,h.y,Math.max(1,h.radius*h.age/h.delay),0,Math.PI*2);c.stroke();c.setLineDash([]);}
         else{c.beginPath();c.moveTo(h.x-14,h.y);c.lineTo(h.x+14,h.y);c.moveTo(h.x,h.y-14);c.lineTo(h.x,h.y+14);c.stroke();}
       }

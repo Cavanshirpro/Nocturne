@@ -16,13 +16,13 @@
   class Abilities {
     constructor(game){this.game=game;this.charging=false;this.charge=0;}
     aim(){const g=this.game,p=g.player,a=g.input.aim;return a?.active?{x:g.camera.x+(a.x-g.width/2)/g.zoom,y:g.camera.y+(a.y-g.height/2)/g.zoom}:{x:p.x+p.lastX*240,y:p.y+p.lastY*240};}
-    begin(){if(this.game.state!=='playing'||this.game.player.progress.specialRemaining>0||this.charging)return false;this.charging=true;this.charge=0;return true;}
+    begin(){if(this.game.state!=='playing'||this.game.player.progress.silenceTime>0||this.game.player.progress.specialRemaining>0||this.charging)return false;this.charging=true;this.charge=0;return true;}
     cancel(){this.charging=false;this.charge=0;}
     cycle(){const p=this.game.player;if(this.game.state!=='playing')return;const ids=Object.keys(N.SPECIALS).filter(id=>p.level>=N.SPECIALS[id].unlock);p.progress.special=ids[(ids.indexOf(p.progress.special)+1)%ids.length];this.cancel();this.game.ui.toast(N.SPECIALS[p.progress.special].name);}
     select(id){const p=this.game.player;if(!N.SPECIALS[id]||p.level<N.SPECIALS[id].unlock)return false;p.progress.special=id;this.cancel();return true;}
     release(){
       const g=this.game,p=g.player,q=p.progress;if(!this.charging)return false;
-      const charge=N.clamp(this.charge/1.2,0,1);this.cancel();if(g.state!=='playing'||q.specialRemaining>0)return false;
+      const charge=N.clamp(this.charge/1.2,0,1);this.cancel();if(g.state!=='playing'||q.silenceTime>0||q.specialRemaining>0)return false;
       const id=q.special,rank=q.arsenal[id],target=this.aim(),angle=Math.atan2(target.y-p.y,target.x-p.x),weight=1+charge*1.5,reach=170+rank*10+charge*110;
       q.specialRemaining=N.SPECIALS[id].cooldown/(1+.06*(rank-1));p.cast(target);g.shake=Math.max(g.shake,3+charge*3);
       if(id==='slash'){
@@ -63,11 +63,13 @@
     }
     update(dt){
       const q=this.game.player.progress;q.specialRemaining=Math.max(0,q.specialRemaining-dt);
+      q.silenceTime=Math.max(0,(q.silenceTime||0)-dt);q.silenceGrace=Math.max(0,(q.silenceGrace||0)-dt);
       if(this.charging)this.charge=Math.min(1.2,this.charge+dt);
       q.demonTime=Math.max(0,q.demonTime-dt);
       q.aegisRemaining=Math.max(0,q.aegisRemaining-dt);q.aegisTime=Math.max(0,q.aegisTime-dt);if(q.aegisTime===0)q.aegis=0;
     }
     draw(c){const g=this.game,p=g.player,q=p.progress;if(g.state!=='playing'&&g.state!=='paused')return;
+      if(q.silenceTime>0){c.save();c.textAlign='center';c.font='bold 12px Arial';c.fillStyle='#ead7ff';c.strokeStyle='#131b22';c.lineWidth=3;const text='SEALED '+q.silenceTime.toFixed(1)+'s · DASH / AEGIS';c.strokeText(text,p.x,p.y-120);c.fillText(text,p.x,p.y-120);c.restore();}
       if(q.aegisTime>0&&q.aegis>0){c.save();c.strokeStyle='#acddff';c.fillStyle='#8ed2ff14';c.lineWidth=2;c.beginPath();c.ellipse(p.x,p.y-40,42,67,0,0,Math.PI*2);c.fill();c.stroke();c.restore();}
       if(q.demonTime>0){c.save();c.strokeStyle='#e5a6ce66';c.lineWidth=1.5;c.setLineDash([6,12]);c.beginPath();c.ellipse(p.x,p.y,360,280,0,0,Math.PI*2);c.stroke();c.restore();}
       if(!this.charging)return;const a=this.aim(),angle=Math.atan2(a.y-p.y,a.x-p.x),t=this.charge/1.2,id=q.special,r=170+q.arsenal[id]*10+t*110;
