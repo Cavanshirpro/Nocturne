@@ -2,6 +2,16 @@
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
 
+## v5.2.4 — Read the Battle
+
+Full source package prepared: **2026-10-26**. No GitHub release/tag is created by this archive.
+
+- Added a shared field renderer with ownership, distinctive motifs, timing and exact hostile circle/annulus outlines. Allied boundary circles now also use the actual circular footprint rather than an artistically flattened ellipse.
+- Grouped/sampled/budgeted allied field detail; every real field and visible hostile hazard retains its gameplay effect. Added a field guide and an immediate danger status when the player is actually inside a hostile region.
+- Restyled sanctum boundaries as neutral architecture and clarified boss beam/emitter warnings.
+- Added unique school-specific satellite mechanisms, hover/recoil profiles and responsive defence/mobility/focus ring arcs. Shot and draw origins remain shared, deterministic and quality-independent.
+- No damage, timing, targeting or save-schema change. Emitter positions intentionally gain shared, deterministic hover; only friendly visual representation is simplified in dense overlaps.
+
 ## v5.2.3 — Orbit & Flow
 
 Full source package prepared: **2026-10-26**. This archive does not create a GitHub tag or release.

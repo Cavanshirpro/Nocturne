@@ -1,12 +1,23 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.3 · Orbit & Flow**
+**Version 5.2.4 · Read the Battle**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.2.3
+## What's new in 5.2.4
+
+- **Readable fields:** Thorn uses vines and means ally damage + slow, not healing. Veil uses cyan feathers, Rift has inward spirals, Meteor has a crater/impact motif. Ownership tags and a grimoire field guide explain them.
+- **Clear hostile warnings:** solid hatched danger boundaries, activation timers, a distinct Void Seal lock, and a truly empty shock-ring opening with mint exit guides. The visible outer circles/annuli now follow their real collision geometry. The boss arena uses quiet segmented stone architecture instead of a red attack-like floor.
+- **Less allied clutter:** nearby overlapping allied fields share a visual representation, with bounded field/detail/label budgets and stronger limits during boss battles. All real effects still exist and deal their original damage. Every visible hostile warning remains drawn.
+- **Individual satellite animation:** twelve school mechanisms: crystal, comet, coil, petals, embers, rail, leaves, iris, rotor, piston, triad and shards. Orbital hover, recoil and cached shaded hulls share the real emitter positions.
+- **Individual passive-ring behaviour:** defence reacts to hits/healing, mobility follows movement/dash, and focus arcs react to charging. Quality and reduced-motion settings limit decorative work without moving shots to another muzzle.
+
+Open [visual-gallery.html](visual-gallery.html) for the animated field and mechanism comparisons. See [FIELDS.md](FIELDS.md) for the exact meanings and visual limits.
+
+## Previous changes in 5.2.3
+
 
 - **Passive circles, active satellites:** defence, movement and focus upgrades appear in restrained rings. Automatic spells have distinct orbiting emitter hulls instead of costume badges. Enemy armour/mending/swiftness and ranged/boss skills use the same system.
 - **Real emission points:** primary bolts, Rapid Fire, Heavy Cannon, Burst and Glacial Seed start at their visible satellite. Lightning and beams originate there; targeted fields have delivery trails. Twin Gates retain their warned remote portal origins.

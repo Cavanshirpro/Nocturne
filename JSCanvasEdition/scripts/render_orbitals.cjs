@@ -8,7 +8,7 @@ for(const [,name] of fs.readFileSync(path.join(root,'index.html'),'utf8').matchA
 function label(c,x,title,subtitle){c.fillStyle='#15232c';c.fillRect(x,0,400,520);c.strokeStyle='#b8a17744';c.strokeRect(x+6,6,388,508);c.textAlign='center';c.font='bold 16px Georgia';c.fillStyle='#ecd2a9';c.fillText(title,x+200,35);c.font='12px Arial';c.fillStyle='#a7bbb9';c.fillText(subtitle,x+200,58);}
 async function main(){
  const images=Object.fromEntries(await Promise.all(Object.entries(s.NOCTURNE_ASSETS).map(async([k,v])=>[k,await loadImage(v)]))),N=s.Nocturne,out=path.join(root,'previews'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'nocturne-orbits-'));
- const games=Array.from({length:3},()=>{const g=new N.Game(createCanvas(1280,800),images);g.reset();g.state='playing';g.quality='high';g.visible=()=>true;g.player.invulnerable=999;return g;});
+ const games=Array.from({length:3},()=>{const g=new N.Game(createCanvas(1280,800),images);g.reset();g.state='playing';g.quality='high';g.visible=()=>true;g.player.invulnerable=0;return g;});
  const p=games[0].player;Object.assign(p,{level:40,armor:3,maxHp:300,regen:2,speed:300,pickupRadius:160});
  const fast=games[1].player;Object.assign(fast,{level:80,speed:800});fast.weapons.rapid=8;fast.weapons.cannon=4;fast.relics.quicksilver=true;fast.relics.ironstar=true;
  games[1].enemies=[new N.Enemy(games[1],'warden',220,0,1)];games[1].enemies[0].hp=games[1].enemies[0].maxHp=1e9;

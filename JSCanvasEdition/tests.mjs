@@ -18,7 +18,7 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(type,fn,options){if(!docEvents.has(type))docEvents.set(type,[]);docEvents.get(type).push({fn,options});},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/motion.js','systems/orbitals.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/motion.js','systems/orbitals.js','systems/fields.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
@@ -1215,5 +1215,25 @@ test('5.2.3 speed cloth grows with real movement and stays within draw budgets',
 });
 test('5.2.3 dense low-quality ordinary cloth uses one draw while the player stays expressive',()=>{
  const g=create();g.reset();g.quality='low';g.enemies=Array.from({length:120},()=>({}));const e=new N.Enemy(g,'cultist',0,0,200);e.moving=true;let calls=0;const c={drawImage(){calls++;}};N.Motion.draw(c,{},0,0,96,128,0,0,80,107,e);assert.equal(calls,1);g.player.moving=true;calls=0;N.Motion.draw(c,{},0,0,96,128,0,0,80,107,g.player);assert.equal(calls,2);
+});
+test('5.2.4 field identities distinguish ally Thorn from healing and hostile silence',()=>{
+ const base={x:0,y:0,radius:90,delay:.5,duration:2,age:.2};
+ const thorn=N.Fields.info({...base,kind:'thorn'});assert.equal(thorn.team,'ALLY');assert.equal(thorn.effect,'DAMAGE + SLOW');assert.equal(thorn.phase,'warning');
+ assert.equal(N.Fields.info({...base,kind:'veil'}).effect,'SLOW ONLY');assert.equal(N.Fields.info({...base,kind:'seal'},true).effect,'SILENCE');assert.equal(N.Fields.info({...base,kind:'circle',age:.7},true).phase,'active');assert.equal(N.Fields.info({...base,kind:'circle',age:3},true).phase,'expired');
+});
+test('5.2.4 shock ring opening and inner circle remain safe in the visible geometry',()=>{
+ const h={x:0,y:0,radius:200,inner:140,kind:'ring',angle:0,gap:1},p={x:170,y:0,radius:1};assert.equal(N.Fields.contains(h,p),false);p.x=-170;assert.equal(N.Fields.contains(h,p),true);p.x=-50;assert.equal(N.Fields.contains(h,p),false);
+ const g=create();g.reset();g.state='playing';g.player.x=170;g.player.y=0;g.player.radius=1;g.combat.hazards.active=[{...h,age:.1,delay:1,duration:1,damage:1}];let labels=0;const c=new Proxy({fillText(){labels++;}},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});N.Fields.hud(g,c);assert.equal(labels,0);g.player.x=-170;N.Fields.hud(g,c);assert.equal(labels,1);
+});
+test('5.2.4 overlapping ally fields group visually with bounded plans and no simulation mutation',()=>{
+ const g=create();g.reset();for(let i=0;i<2000;i++)g.combat.addArea('thorn',i%8,i%7,100,.1,3,10,4);const before=JSON.stringify(g.combat.areas.active),plan=N.Fields.plan(g);assert.ok(plan.length<=12);g.quality='low';assert.ok(N.Fields.plan(g).length<=6);N.Fields.draw(g,context);assert.equal(JSON.stringify(g.combat.areas.active),before);assert.equal(g.combat.areas.active.length,2000);
+});
+test('5.2.4 every hostile boundary remains drawn when allied clutter reaches its cap',()=>{
+ const g=create();g.reset();g.state='playing';for(let i=0;i<100;i++)g.combat.addArea('thorn',i*2,0,70,.1,3,10);for(let i=0;i<24;i++)g.combat.hazard(i*3,0,80,.8,10,.3);let arcs=0;const c=new Proxy({arc(...args){arcs++;assert.ok(args.every(Number.isFinite));}},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});g.quality='low';N.Fields.draw(g,c);assert.ok(arcs>=24*3);assert.equal(g.combat.hazards.active.length,24);
+});
+test('5.2.4 orbital mechanics and passive ring animations have distinct bounded identities',()=>{
+ const g=create();g.reset();const p=g.player,ids=N.SPELL_IDS;assert.equal(new Set(ids.map(id=>N.Orbitals.behaviour(id).mode)).size,12);
+ g.time=1;const poses=ids.map(id=>N.Orbitals.animation(p,id,4,.5));assert.ok(poses.every(x=>Number.isFinite(x.phase)&&x.recoil<=4.5));assert.notEqual(N.Orbitals.animation(p,'rapid',4,.5).phase,N.Orbitals.animation(p,'cannon',4,.5).phase);
+ const at=N.Orbitals.origin(p,'cannon');g.quality='low';g.reducedMotion=true;assert.deepEqual(N.Orbitals.origin(p,'cannon'),at);for(const id of ids){const a=N.Orbitals.animation(p,id,4,1);assert.equal(a.phase,0);assert.equal(a.recoil,0);}
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;

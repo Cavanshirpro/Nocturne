@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.2.3';
+  N.VERSION = '5.2.4';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -485,7 +485,7 @@
         const fog=c.createRadialGradient(this.width/2,this.height/2,70,this.width/2,this.height/2,Math.max(this.width,this.height)*.7);
         fog.addColorStop(0,'#75847c00');fog.addColorStop(1,'#080e114f');c.fillStyle=fog;c.fillRect(0,0,this.width,this.height);
       }
-      N.drawLowHealth(this,c);N.drawRadar(this,c);
+      N.drawLowHealth(this,c);N.drawRadar(this,c);N.Fields.hud(this,c);
       const objective=this.sanctum?.phase==='waiting'?this.sanctum:this.boss?.alive?this.boss:null;
       if(objective&&!this.visible(objective.x,objective.y,0)){
         const a=Math.atan2(objective.y-this.camera.y,objective.x-this.camera.x);

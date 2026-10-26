@@ -253,6 +253,20 @@ run.onclick=async()=>{
     const p=g.player;p.moving=true;p.speed=1400;g.reducedMotion=false;check(N.Motion.profile(p).strength>1,'Fast cloth did not strengthen');g.draw();check(N.Orbitals.cacheSize()>0&&N.Orbitals.cacheSize()<=160,'Satellite cache is unbounded or unused');
     check(N.Orbitals.color('cannon',1)!==N.Orbitals.color('cannon',5),'Rank colours are identical');g.reducedMotion=true;check(N.Motion.profile(p).strength===0,'Reduced motion did not stop cloth');g.draw();
   });
+  test('5.2.4 allied and hostile field identities stay distinct on real Canvas',()=>{
+    setup();g.combat.clear();g.combat.addArea('thorn',-75,0,100,.1,3,10);g.combat.addArea('rift',75,0,95,.2,2,10);g.combat.hazard(0,30,100,1,10,.3);g.draw();
+    check(N.Fields.info(g.combat.areas.active[0]).effect==='DAMAGE + SLOW','Green field described as healing');check(N.Fields.info(g.combat.hazards.active[0],true).team==='DANGER','Enemy ownership missing');
+    g.ui.toggleGrimoire();check(doc.querySelector('.field-guide')?.textContent.includes('does not heal'),'Field guide is missing');g.ui.toggleGrimoire();
+  });
+  test('5.2.4 dense allied fields preserve all real effects and every hostile warning',()=>{
+    setup();g.combat.clear();for(let i=0;i<1500;i++)g.combat.addArea('thorn',i%7,i%9,100,.1,3,10);g.combat.hazard(0,0,180,.8,10,.3,{kind:'ring',inner:120,angle:0,gap:1});
+    const before=JSON.stringify(g.combat.areas.active);g.quality='low';g.draw();check(N.Fields.plan(g).length<=6,'Friendly detail cap missing');check(g.combat.hazards.active.length===1&&JSON.stringify(g.combat.areas.active)===before,'Rendering removed real damage effects');
+    check(!N.Fields.contains(g.combat.hazards.active[0],{x:150,y:0,radius:1}),'Open shock gap is marked unsafe');
+  });
+  test('5.2.4 each automatic school has its own animated mechanism and quality-safe origin',()=>{
+    setup();check(new Set(N.SPELL_IDS.map(id=>N.Orbitals.behaviour(id).mode)).size===12,'Schools share a generic mechanism');
+    const p=g.player;g.time=2;const before=N.Orbitals.origin(p,'cannon');g.reducedMotion=true;g.quality='low';const after=N.Orbitals.origin(p,'cannon');check(before.x===after.x&&before.y===after.y,'Quality changed the shot origin');g.draw();
+  });
   output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
   present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;
   run.disabled=false;

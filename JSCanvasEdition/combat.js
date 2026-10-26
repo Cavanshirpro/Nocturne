@@ -267,27 +267,7 @@
         }
         c.restore();
       }
-      const fieldStride=Math.max(1,Math.ceil(this.areas.active.length/(this.game.quality==='low'?24:72)));
-      for(let fieldIndex=0;fieldIndex<this.areas.active.length;fieldIndex+=fieldStride){
-        const a=this.areas.active[fieldIndex];
-        if(!this.game.visible(a.x,a.y,a.radius))continue;
-        c.save();const t=a.age<a.delay?a.age/Math.max(.001,a.delay):1,color=a.kind==='meteor'?'#ecb180':a.kind==='rift'?'#b5a9ed':a.kind==='thorn'?'#b3d5a1':'#bbd9e8';
-        c.globalAlpha=a.age<a.delay?.35:.7;c.strokeStyle=color;c.fillStyle=color+'12';c.lineWidth=1.5;const r=Math.max(1,a.radius);c.beginPath();c.ellipse(a.x,a.y,r,r*.78,0,0,Math.PI*2);c.fill();c.stroke();
-        if(a.kind==='meteor'&&a.age<a.delay){c.strokeStyle=color;c.setLineDash([5,7]);c.beginPath();c.arc(a.x,a.y,Math.max(1,r*t),0,Math.PI*2);c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(a.x+55*(1-t),a.y-130*(1-t));c.lineTo(a.x,a.y);c.stroke();}
-        else for(let j=0;j<8;j++){const phase=this.game.reducedMotion?0:a.age*(a.kind==='rift'?2:.3),angle=j*Math.PI/4+phase;const x=a.x+Math.cos(angle)*r*.65,y=a.y+Math.sin(angle)*r*.5;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(angle+.8)*12,y-12);c.lineTo(x+Math.cos(angle)*5,y-20);c.stroke();}
-        c.restore();
-      }
-      for(const h of this.hazards.active){
-        const warning=h.age<h.delay;c.fillStyle=warning?'#c2946d14':'#b866573f';c.strokeStyle=warning?'#d3a477aa':'#e49d8bc0';c.lineWidth=2;
-        if(h.kind==='seal'){c.fillStyle=warning?'#ad91e72a':'#b49bf25a';c.strokeStyle='#ddc3ff';}
-        c.beginPath();
-        if(h.kind==='ring'){const a=(h.angle||0)+h.gap/2,b=(h.angle||0)+Math.PI*2-h.gap/2;c.arc(h.x,h.y,h.radius,a,b);c.arc(h.x,h.y,h.inner,b,a,true);c.closePath();}
-        else c.arc(h.x,h.y,h.radius,0,Math.PI*2);
-        c.fill();c.stroke();
-        if(h.kind==='seal'){c.save();c.textAlign='center';c.font='bold 12px Arial';c.fillStyle='#f4e3ff';c.fillText('VOID SEAL · LEAVE CIRCLE',h.x,h.y-12);c.restore();}
-        if(warning){c.setLineDash([4,8]);c.beginPath();c.arc(h.x,h.y,Math.max(1,h.radius*h.age/h.delay),0,Math.PI*2);c.stroke();c.setLineDash([]);}
-        else{c.beginPath();c.moveTo(h.x-14,h.y);c.lineTo(h.x+14,h.y);c.moveTo(h.x,h.y-14);c.lineTo(h.x,h.y+14);c.stroke();}
-      }
+      N.Fields.draw(this.game,c);
       c.restore();
     }
     draw(c){

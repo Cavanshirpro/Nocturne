@@ -34,19 +34,16 @@
     },
     draw(g,c){
       const s=g.sanctum;if(!s||!g.visible(s.x,s.y,s.radius+80))return;
-      const active=s.phase==='fighting',outside=active&&N.dist2(g.player,s)>(s.radius+65)**2,color=s.phase==='cleared'?'#95dbbe':outside?'#b7a2f5':'#ec9c99';
-      c.save();c.translate(s.x,s.y);c.fillStyle=active?'#9b313d13':'#a35a7210';c.strokeStyle=color+'88';c.lineWidth=2;
-      c.beginPath();c.arc(0,0,s.radius,0,Math.PI*2);c.fill();c.stroke();
-      c.strokeStyle=color+'44';c.beginPath();c.arc(0,0,s.radius-22,0,Math.PI*2);c.stroke();
-      for(let i=0;i<12;i++){
-        const a=i*Math.PI/6,x=Math.cos(a)*(s.radius+12),y=Math.sin(a)*(s.radius+12);
-        c.fillStyle='#1a2227';c.strokeStyle=color+'88';c.fillRect(x-8,y-16,16,28);c.strokeRect(x-8,y-16,16,28);
-        c.fillStyle=color;c.fillRect(x-1,y-10,2,9);
-      }
-      c.strokeStyle=color;c.lineWidth=3;c.beginPath();c.moveTo(0,-35);c.lineTo(24,0);c.lineTo(0,35);c.lineTo(-24,0);c.closePath();c.stroke();
-      c.textAlign='center';c.fillStyle='#f1d5ca';c.font='bold 13px Arial';
-      c.fillText(s.phase==='waiting'?'ENTER TO SUMMON THE GUARDIAN':s.phase==='cleared'?'SEAL BROKEN':outside?'OUTER SEAL · 90% PROTECTION':'FINAL SANCTUM',0,-65);
-      c.restore();
+      const outside=s.phase==='fighting'&&N.dist2(g.player,s)>(s.radius+65)**2;
+      const col=s.phase==='cleared'?'#95c7ae':outside?'#dac09a':'#a5a796';
+      // Architecture, not an attack circle: no red floor wash or countdown.
+      c.save();c.translate(s.x,s.y);c.lineWidth=2;c.strokeStyle=col+'90';
+      for(let i=0;i<12;i++){const a=i*Math.PI/6+.035,b=(i+1)*Math.PI/6-.035;c.beginPath();c.arc(0,0,s.radius,a,b);c.stroke();}
+      c.lineWidth=.8;c.strokeStyle=col+'30';c.beginPath();c.arc(0,0,s.radius-12,0,Math.PI*2);c.stroke();
+      for(let i=0;i<12;i++){const a=i*Math.PI/6,x=Math.cos(a)*(s.radius+6),y=Math.sin(a)*(s.radius+6);c.save();c.translate(x,y);c.rotate(a);c.fillStyle='#293136';c.strokeStyle=col+'88';c.fillRect(-6,-5,12,10);c.strokeRect(-6,-5,12,10);c.fillStyle=col;c.fillRect(-1,-3,2,6);c.restore();}
+      if(s.phase!=='fighting'){c.strokeStyle=col;c.lineWidth=2;c.beginPath();c.moveTo(0,-18);c.lineTo(13,0);c.lineTo(0,18);c.lineTo(-13,0);c.closePath();c.stroke();}
+      c.textAlign='center';c.fillStyle=col;c.font='bold 11px Arial';
+      c.fillText(s.phase==='waiting'?'BOSS ARENA · ENTER TO SUMMON':s.phase==='cleared'?'SEAL BROKEN':outside?'RETURN INSIDE · BOSS GUARDED':'BOSS ARENA',0,-Math.min(s.radius-30,100));c.restore();
     }
   };
   // Fixed local scale: a distant objective no longer shrinks nearby threats.

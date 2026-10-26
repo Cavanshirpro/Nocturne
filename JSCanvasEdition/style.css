@@ -158,3 +158,6 @@ input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
  #power-hud .special-row button{padding:6px 3px}
  #power-hud .aegis-control button{min-height:26px}
 }
+
+/* v5.2.4 field guide: ownership is readable without relying on colour. */
+.field-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;text-align:left;margin:16px 0 25px}.field-guide article{padding:13px;border:1px solid #95b4ac40;background:#13242cc9}.field-guide b{font:10px Arial;letter-spacing:1px;color:#d9d9bd}.field-guide p{font:11px/1.65 Arial;color:#adbfba;margin:8px 0 0}@media(max-width:500px){.field-guide{grid-template-columns:1fr}}

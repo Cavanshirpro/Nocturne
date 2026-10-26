@@ -1,3 +1,9 @@
+# Read the Battle — v5.2.4 visual guide
+
+See [FIELDS.md](FIELDS.md) for current field meanings, ownership, danger geometry, clutter limits and individual orbital mechanisms. [ORBITALS.md](ORBITALS.md) describes the shared emitter and save rules inherited from 5.2.3. Historical costume descriptions below do not override the current passive-circle/active-satellite system.
+
+---
+
 # Orbit & Flow — v5.2.3 art guide
 
 The current visual system is documented in [ORBITALS.md](ORBITALS.md). Old costume badge/fitted-fixture sections below are historical and are superseded by passive circles and active emitters. Character meshes are baked only; live rendering uses Canvas sprites, ellipses, cached hulls and a bounded atlas-band effect.
