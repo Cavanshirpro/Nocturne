@@ -3,7 +3,7 @@
 const fs=require('fs'),path=require('path'),os=require('os'),vm=require('vm'),{spawnSync}=require('child_process');
 const {createCanvas,loadImage}=require('@napi-rs/canvas'),root=path.resolve(__dirname,'..');
 const elements=new Map(),el=()=>({hidden:false,style:{},dataset:{},innerHTML:'',textContent:'',classList:{add(){},remove(){}},addEventListener(){},querySelector(){return null;},querySelectorAll(){return [];},focus(){}});
-const s={console,Math,Float32Array,localStorage:{getItem:()=>null,setItem(){}},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,el());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};s.window=s;vm.createContext(s);
+const s={OffscreenCanvas:function(w,h){return createCanvas(w,h);},console,Math,Float32Array,localStorage:{getItem:()=>null,setItem(){}},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(){},getElementById(id){if(!elements.has(id))elements.set(id,el());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};s.window=s;vm.createContext(s);
 for(const [,name] of fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/<script defer src="([^"]+)"/g))vm.runInContext(fs.readFileSync(path.join(root,name.split('?')[0]),'utf8'),s,{filename:name});
 const powers=['salvo','meteors','slash','aegis','soulring','riftstep','lances','starfall','crossfire','shockwave','voidseal'];
 function panel(c,x,y,w,h,title,sub=''){

@@ -1,3 +1,11 @@
+# v5.2.5 — Visual Evolution & Polish · 26 October 2026
+
+Visual-only evolution from 5.2.4: deeper Witch/Demon coats and shoulders, articulated wing panels, isolated visible cloth masks and settling, distinct school hulls/grades, fixed muzzle/rear-recoil alignment, quieter passive rings, nearest-field selection, staged exact hostile outlines, biome materials/architecture, raised boss armor, projectile silhouettes and live Grimoire references.
+
+Enemy/ritual textures use lossless transparent trimming and offsets. Active raw image area drops from ~182 MiB to ~98 MiB, excluding browser overhead and caches; file size is a separate metric. No gameplay/save migration is introduced. Damage, targeting, emitter positions, cooldowns, AI, spawning, progression and collisions are retained. [VALIDATION.md](VALIDATION.md), [PERFORMANCE.md](PERFORMANCE.md) and [EVOLUTION.md](EVOLUTION.md) contain reproducible details and limitations.
+
+---
+
 # JSCanvasEdition release notes
 
 These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).

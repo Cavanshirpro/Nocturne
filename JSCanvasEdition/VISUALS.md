@@ -1,3 +1,9 @@
+# Visual Evolution & Polish — v5.2.5
+
+The current art system is documented in [EVOLUTION.md](EVOLUTION.md), with measured costs in [PERFORMANCE.md](PERFORMANCE.md). See the real-renderer [gallery](visual-gallery.html). The following sections are historical release notes and do not override the current isolated cloth masks, packed atlases and orbital system.
+
+---
+
 # Read the Battle — v5.2.4 visual guide
 
 See [FIELDS.md](FIELDS.md) for current field meanings, ownership, danger geometry, clutter limits and individual orbital mechanisms. [ORBITALS.md](ORBITALS.md) describes the shared emitter and save rules inherited from 5.2.3. Historical costume descriptions below do not override the current passive-circle/active-satellite system.

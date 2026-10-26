@@ -73,11 +73,11 @@
     }
   };
   N.drawEnemy=(c,images,enemy,x,y,w,h,state=null,progress=null)=>{
-    let atlas=window.NOCTURNE_ENEMY_ATLAS,sheet=images['enemy_atlas_'+enemy.type];
+    let atlas=window.NOCTURNE_ENEMY_ATLAS,key='enemy_atlas_'+enemy.type,sheet=images[key];
     if(!sheet||!atlas){c.drawImage(images[enemy.type],x,y,w,h);return;}
     const q=enemy.guardian;
     const ritual=state===null&&progress===null?N.EnemyMotion.ritual(enemy):null;
-    if(ritual&&images['enemy_ritual_'+enemy.type]){atlas=window.NOCTURNE_RITUAL_ATLAS;sheet=images['enemy_ritual_'+enemy.type];state=atlas.clips[ritual.action]?ritual.action:ritual.style;progress=ritual.t;}
+    if(ritual&&images['enemy_ritual_'+enemy.type]){atlas=window.NOCTURNE_RITUAL_ATLAS;key='enemy_ritual_'+enemy.type;sheet=images[key];state=atlas.clips[ritual.action]?ritual.action:ritual.style;progress=ritual.t;}
     if(!state){state=enemy.terrified?'fear':q?.windup>0||(!['cultist','wraith'].includes(enemy.type)&&enemy.windup>0)||enemy.charge>0?'attack':enemy.hitSquash>0?'hurt':enemy.castTimer>0?'attack':enemy.frozen>0||enemy.moving===false?'idle':'walk';}
     const clip=atlas.clips[state];let t=progress;
     if(t===null){
@@ -87,7 +87,9 @@
     }
     t=N.clamp(t,0,.999999);const position=t*clip.frames,index=Math.floor(position);
     const row=atlas.rows?Math.max(0,atlas.directions.indexOf(enemy.facing||'S')):0;
-    const draw=i=>{const frame=clip.start+i,columns=atlas.columns||Infinity;N.Motion.draw(c,sheet,(frame%columns)*atlas.width,(row*(atlas.rowStride||1)+Math.floor(frame/columns))*atlas.height,atlas.width,atlas.height,x,y,w,h,enemy);};
+    const draw=i=>{const frame=clip.start+i,columns=atlas.columns||Infinity,logicalRow=row*(atlas.rowStride||1)+Math.floor(frame/columns),logicalColumn=frame%columns,packing=window.NOCTURNE_PACKING?.[key],rect=packing?.rects[logicalRow*(packing.logicalWidth/atlas.width)+logicalColumn];
+     if(rect){const [px,py,pw,ph,ox,oy]=rect;c.drawImage(sheet,px,py,pw,ph,x+ox*(w/atlas.width),y+oy*(h/atlas.height),pw*(w/atlas.width),ph*(h/atlas.height));}
+     else N.Motion.draw(c,sheet,logicalColumn*atlas.width,logicalRow*atlas.height,atlas.width,atlas.height,x,y,w,h,enemy);};
     if(enemy.game.reducedMotion){draw(0);return;}
     draw(index);
     // Only prominent/uncrowded actors blend; low quality keeps a single atlas draw.

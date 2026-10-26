@@ -66,7 +66,7 @@ run.onclick=async()=>{
   const results=[];let passed=0,failed=0;
   const test=(name,fn)=>{try{fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
   const testAsync=async(name,fn)=>{try{await fn();passed++;results.push('PASS '+name);}catch(error){failed++;results.push('FAIL '+name+' — '+error.message);}};
-  test('58 actual images decode',()=>check(Object.values(g.images).length===58&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
+  test('55 active images decode (9 unused legacy walk strips stay unloaded)',()=>check(Object.values(g.images).length===55&&Object.values(g.images).every(im=>im.naturalWidth>0),'Image decode failed'));
   test('starting coven buttons',()=>{g.ui.title();doc.querySelector('[data-coven="storm"]').click();doc.querySelector('#begin').click();check(g.player.coven==='storm'&&g.player.weapons.lightning===1,'Wrong starting witch');});
   test('real keyboard movement and dash',()=>{g.reset();key('KeyD');g.player.update(1/60);key('KeyD','keyup');check(g.player.x>0&&g.player.facing==='E','Movement failed');key('Space');key('Space','keyup');check(g.player.dashTimer>0&&g.stats.dashes===1,'Dash failed');});
   test('pause and resume buttons',()=>{key('Escape');check(g.state==='paused'&&doc.querySelector('#resume'),'Pause did not open');doc.querySelector('#resume').click();check(g.state==='playing','Resume failed');});
@@ -156,7 +156,7 @@ run.onclick=async()=>{
   });
   test('enemy state atlases and new spell areas render on Canvas',()=>{
     present('spells');check(g.combat.areas.active.length>=3,'New spell fields missing');check(g.combat.effects.active.some(e=>e.kind==='lance'),'Beam missing');
-    for(const e of g.enemies)check(g.images['enemy_atlas_'+e.type].naturalWidth===3168,'Enemy atlas wrong');g.draw();
+    for(const e of g.enemies)check(g.images['enemy_atlas_'+e.type].naturalWidth===2048&&win.NOCTURNE_PACKING['enemy_atlas_'+e.type].rects.length===264,'Enemy atlas wrong');g.draw();
   });
   test('all twelve learned spells coexist without an active spell limit',()=>{
     g.reset();g.player.level=40;for(const id of N.SPELL_IDS)g.player.upgradeWeapon(id);check(g.player.progress.equipped.length===12,'An active spell limit remains');
@@ -253,19 +253,43 @@ run.onclick=async()=>{
     const p=g.player;p.moving=true;p.speed=1400;g.reducedMotion=false;check(N.Motion.profile(p).strength>1,'Fast cloth did not strengthen');g.draw();check(N.Orbitals.cacheSize()>0&&N.Orbitals.cacheSize()<=160,'Satellite cache is unbounded or unused');
     check(N.Orbitals.color('cannon',1)!==N.Orbitals.color('cannon',5),'Rank colours are identical');g.reducedMotion=true;check(N.Motion.profile(p).strength===0,'Reduced motion did not stop cloth');g.draw();
   });
-  test('5.2.4 allied and hostile field identities stay distinct on real Canvas',()=>{
+  test('5.2.5 allied and hostile field identities stay distinct on real Canvas',()=>{
     setup();g.combat.clear();g.combat.addArea('thorn',-75,0,100,.1,3,10);g.combat.addArea('rift',75,0,95,.2,2,10);g.combat.hazard(0,30,100,1,10,.3);g.draw();
     check(N.Fields.info(g.combat.areas.active[0]).effect==='DAMAGE + SLOW','Green field described as healing');check(N.Fields.info(g.combat.hazards.active[0],true).team==='DANGER','Enemy ownership missing');
     g.ui.toggleGrimoire();check(doc.querySelector('.field-guide')?.textContent.includes('does not heal'),'Field guide is missing');g.ui.toggleGrimoire();
   });
-  test('5.2.4 dense allied fields preserve all real effects and every hostile warning',()=>{
+  test('5.2.5 dense allied fields preserve all real effects and every hostile warning',()=>{
     setup();g.combat.clear();for(let i=0;i<1500;i++)g.combat.addArea('thorn',i%7,i%9,100,.1,3,10);g.combat.hazard(0,0,180,.8,10,.3,{kind:'ring',inner:120,angle:0,gap:1});
     const before=JSON.stringify(g.combat.areas.active);g.quality='low';g.draw();check(N.Fields.plan(g).length<=6,'Friendly detail cap missing');check(g.combat.hazards.active.length===1&&JSON.stringify(g.combat.areas.active)===before,'Rendering removed real damage effects');
     check(!N.Fields.contains(g.combat.hazards.active[0],{x:150,y:0,radius:1}),'Open shock gap is marked unsafe');
   });
-  test('5.2.4 each automatic school has its own animated mechanism and quality-safe origin',()=>{
+  test('5.2.5 each automatic school has its own animated mechanism and quality-safe origin',()=>{
     setup();check(new Set(N.SPELL_IDS.map(id=>N.Orbitals.behaviour(id).mode)).size===12,'Schools share a generic mechanism');
     const p=g.player;g.time=2;const before=N.Orbitals.origin(p,'cannon');g.reducedMotion=true;g.quality='low';const after=N.Orbitals.origin(p,'cannon');check(before.x===after.x&&before.y===after.y,'Quality changed the shot origin');g.draw();
+  });
+  test('5.2.5 lossless packed cells draw exact logical pixels in every facing',()=>{
+    g.reducedMotion=false;const c1=new win.OffscreenCanvas(96,128),c2=new win.OffscreenCanvas(96,128),a=c1.getContext('2d'),b=c2.getContext('2d'),dirs=win.NOCTURNE_ENEMY_ATLAS.directions;
+    for(const type of Object.keys(N.ENEMY_TYPES))for(let row=0;row<8;row++){a.clearRect(0,0,96,128);b.clearRect(0,0,96,128);N.drawEnemy(a,g.images,{type,game:g,facing:dirs[row]},0,0,96,128,'walk',.5);const r=win.NOCTURNE_PACKING['enemy_atlas_'+type].rects[row*33+8];b.drawImage(g.images['enemy_atlas_'+type],r[0],r[1],r[2],r[3],r[4],r[5],r[2],r[3]);const x=a.getImageData(0,0,96,128).data,y=b.getImageData(0,0,96,128).data;check(x.every((v,i)=>v===y[i]),type+' crop offsets differ');}
+  });
+  test('5.2.5 isolated cloth cache is finite across both forms, every facing and clip',()=>{
+    setup();g.reducedMotion=false;g.quality='high';g.time=8;const canvas=new win.OffscreenCanvas(200,240),c=canvas.getContext('2d');
+    for(const demon of [false,true])for(const facing of win.NOCTURNE_ENEMY_ATLAS.directions)for(const state of ['idle','walk','cast','hurt','dash']){const p=new N.Player(g);p.progress.demonTime=demon?8:0;p.facing=facing;p.moving=true;p.speed=700;p.animator.state=state;p.animator.time=.12;p.draw(c);}
+    check(N.Motion.cacheSize()>0&&N.Motion.cacheSize()<=24,'Cloth tiles exceed the cache bound');
+  });
+  test('5.2.5 twelve schools and five grades produce real distinct Canvas hulls',()=>{
+    const canvas=new win.OffscreenCanvas(80,80),c=canvas.getContext('2d'),fingerprints=new Set();for(const id of N.SPELL_IDS){const grades=new Set();for(const rank of [1,2,4,8,16]){c.clearRect(0,0,80,80);c.save();c.translate(40,40);N.Orbitals.preview(c,id,rank,2);c.restore();const bytes=c.getImageData(0,0,80,80).data;let hash=2166136261;for(let i=0;i<bytes.length;i++)hash=Math.imul(hash^bytes[i],16777619);grades.add(hash);if(rank===1)fingerprints.add(hash);}check(grades.size===5,id+' grades are identical');}check(fingerprints.size===12,'School silhouettes repeat');
+  });
+  test('5.2.5 grimoire live inspection leaves owned progression untouched',()=>{
+    setup();g.state='playing';g.ui.toggleGrimoire();const before=JSON.stringify(g.player.progress),spells=JSON.stringify(g.player.weapons);check(doc.querySelector('#module-preview')&&doc.querySelector('#field-preview')&&doc.querySelector('#close-grimoire-top'),'Inspection controls missing');for(const id of N.SPELL_IDS){doc.querySelector('#lab-spell').value=id;g.ui.drawBuildLab();}for(const id of ['thorn','veil','rift','meteor','circle','seal','ring']){doc.querySelector('#lab-field').value=id;g.ui.drawBuildLab();}check(before===JSON.stringify(g.player.progress)&&spells===JSON.stringify(g.player.weapons),'Preview changed real progression');doc.querySelector('#close-grimoire-top').click();check(g.state==='playing','Top return did not close grimoire');
+  });
+  test('5.2.5 dense field selection retains a near field at an adversarial pool index',()=>{
+    setup();g.combat.clear();for(let i=0;i<1500;i++)g.combat.addArea('thorn',1200+i,0,50,.1,3,1);const a=g.combat.areas.active[719];a.x=g.player.x;a.y=g.player.y;check(N.Fields.plan(g).some(item=>item.area===a),'Nearest field was skipped');
+  });
+  test('5.2.5 actual hazard pixels preserve safe inner hole and angular opening',()=>{
+    const canvas=new win.OffscreenCanvas(512,512),c=canvas.getContext('2d');const h={kind:'ring',x:256,y:256,radius:200,inner:140,angle:0,gap:1,age:1.1,delay:1,duration:1};N.Fields.hostile(c,g,h,false);const alpha=(x,y)=>c.getImageData(Math.round(x),Math.round(y),1,1).data[3];check(alpha(306,256)===0,'Safe inner hole filled');check(alpha(256+175*Math.cos(.15),256+175*Math.sin(.15))===0,'Safe angular opening filled');check(alpha(86,256)>0,'Dangerous annulus missing');
+  });
+  test('5.2.5 biome materials and artwork remain available with file-independent assets',()=>{
+    for(const key of ['ground','ground_ember','ground_moon','prop_charred','prop_brazier','prop_obelisk','prop_wall'])check(g.images[key]?.naturalWidth>0,key+' missing');for(const wave of [1,4,7]){g.wave=wave;g.draw();}check(g.landmarks.size<=96,'Landmark cache exceeded cap');
   });
   output.textContent=results.join('\n')+`\n\n${passed} passed; ${failed} failed.`;status.textContent=`Browser checks: ${passed} passed; ${failed} failed.`;
   present('boss');status.textContent=`Browser checks: ${passed} passed; ${failed} failed. Warden fixture shown below.`;

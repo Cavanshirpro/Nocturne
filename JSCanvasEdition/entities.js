@@ -103,7 +103,7 @@
         c.beginPath();c.ellipse(this.x,this.y,26+8*t,12+4*t,0,0,Math.PI*2);c.stroke();
         for(let i=0;i<3;i++){const a=i*Math.PI*2/3+(this.game.reducedMotion?0:t*2);c.beginPath();c.arc(this.x+Math.cos(a)*30,this.y+Math.sin(a)*13,2,0,Math.PI*2);c.stroke();}c.restore();
       }
-      if(this.invulnerable>0)c.globalAlpha=this.game.reducedMotion?.75:Math.floor(this.invulnerable*16)%2===0?.5:1;
+      if(this.invulnerable>0)c.globalAlpha=.86;
       const appearance=N.Appearance.player(this);
       // Rear cloth/equipment and front attachments share the model's facing rig.
       N.Appearance.playerBack(c,this,appearance);
@@ -243,7 +243,7 @@
       const s=this.scale,bob=this.game.reducedMotion?0:Math.sin(this.phase)*1.3;
       c.save();const pose=N.EnemyMotion.pose(this);c.translate(this.x,this.y-pose.lift);c.rotate(pose.lean);c.scale(1+pose.stretch,1-pose.stretch);const squash=this.game.reducedMotion?0:Math.sin(this.hitSquash/.12*Math.PI)*.09;
       c.scale(1+squash,1-squash);
-      if(this.flash>0&&!this.game.reducedMotion)c.filter='brightness(2.1)';else if(this.frozen>0)c.filter='brightness(1.25) sepia(.3) hue-rotate(145deg)';
+      if(this.flash>0&&!this.game.reducedMotion)c.filter='brightness(1.35)';else if(this.frozen>0)c.filter='brightness(1.25) sepia(.3) hue-rotate(145deg)';
       if(!window.NOCTURNE_ENEMY_ATLAS?.rows&&this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
       N.drawEnemy(c,this.game.images,this,-40*s,-99*s+bob,80*s,107*s);
       c.restore();

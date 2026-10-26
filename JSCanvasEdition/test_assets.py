@@ -22,14 +22,25 @@ def data():
     return json.loads(text.split("Object.freeze(",1)[1].split(");",1)[0])
 
 
+@lru_cache(maxsize=1)
+def packing():
+    text=(ROOT/'assets.js').read_text(encoding='utf-8')
+    return json.loads(text.split('window.NOCTURNE_PACKING = Object.freeze(',1)[1].split(');',1)[0])
+
+
 @lru_cache(maxsize=64)
 def png(key):
-    return Image.open(io.BytesIO(base64.b64decode(data()[key].split(",",1)[1]))).convert("RGBA")
+    im=Image.open(io.BytesIO(base64.b64decode(data()[key].split(",",1)[1]))).convert("RGBA")
+    packed=packing()
+    if key not in packed:return im
+    meta=packed[key];logical=Image.new('RGBA',(meta['logicalWidth'],meta['logicalHeight']));columns=logical.width//96
+    for i,(x,y,w,h,ox,oy) in enumerate(meta['rects']):logical.paste(im.crop((x,y,x+w,y+h)),((i%columns)*96+ox,(i//columns)*128+oy))
+    return logical
 
 
 class AssetTests(unittest.TestCase):
     def test_all_embedded_images_are_valid(self):
-        self.assertEqual(len(data()),58)
+        self.assertEqual(len(data()),64)
         for key in data():
             im=png(key)
             self.assertGreater(im.width,0)
@@ -210,6 +221,41 @@ class AssetTests(unittest.TestCase):
             for frame in range(24):
                 box=im.crop((frame*96,0,(frame+1)*96,128)).getchannel('A').point(lambda v:255 if v>90 else 0).getbbox()
                 self.assertTrue(box and box[0]>0 and box[1]>0 and box[2]<96 and box[3]<128,(direction,frame,box))
+
+
+class EvolutionAssetTests(unittest.TestCase):
+    def test_packed_cells_reconstruct_original_rendered_pixels_losslessly(self):
+        from enemy_models import render_enemy
+        for kind in TYPES:
+            expected=render_enemy(kind,angle=315,action='idle',progress=.17/4)
+            actual=png('enemy_atlas_'+kind).crop((0,7*128,96,8*128))
+            self.assertEqual(hashlib.sha256(actual.getchannel('A').tobytes()).digest(),hashlib.sha256(expected.getchannel('A').tobytes()).digest(),kind)
+            black=Image.new('RGBA',(96,128),(0,0,0,255))
+            self.assertEqual(hashlib.sha256(Image.alpha_composite(black,actual).tobytes()).digest(),hashlib.sha256(Image.alpha_composite(black,expected).tobytes()).digest(),kind)
+        for kind in ('warden','overlord'):
+            expected=render_enemy(kind,angle=315,action='salvo',progress=0)
+            actual=png('enemy_ritual_'+kind).crop((0,14*128,96,15*128))
+            black=Image.new('RGBA',(96,128),(0,0,0,255))
+            self.assertEqual(hashlib.sha256(Image.alpha_composite(black,actual).tobytes()).digest(),hashlib.sha256(Image.alpha_composite(black,expected).tobytes()).digest(),kind)
+            self.assertEqual(hashlib.sha256(actual.getchannel('A').tobytes()).digest(),hashlib.sha256(expected.getchannel('A').tobytes()).digest(),kind)
+
+    def test_visible_cloth_masks_leave_head_and_staff_rigid_in_all_directions(self):
+        from witch_models import render_witch
+        for demon in (False,True):
+            for angle in range(0,360,45):
+                image,groups=render_witch(angle,phase=1.7,demon=demon,return_masks=True)
+                self.assertEqual(len(groups),3)
+                for runs in groups:
+                    for i in range(0,len(runs),3):
+                        x,y,w=runs[i:i+3]
+                        self.assertFalse(y==50 and x<=48<x+w,(angle,demon))
+                        self.assertGreaterEqual(y,35,(angle,demon))
+
+    def test_biomes_and_new_architecture_have_distinct_pixels_and_contact_points(self):
+        self.assertEqual(len({png(k).tobytes() for k in ('ground','ground_ember','ground_moon')}),3)
+        for key in ('prop_obelisk','prop_wall','prop_brazier','prop_charred'):
+            im=png(key);self.assertEqual(im.size,(160,200));self.assertEqual(im.getpixel((0,0))[3],0)
+            self.assertGreater(im.getchannel('A').getbbox()[3],170,key)
 
 
 if __name__=="__main__":

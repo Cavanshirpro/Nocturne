@@ -1,6 +1,6 @@
-# Orbit & Flow — v5.2.3
+# Orbitals — v5.2.5
 
-This edition remains Canvas 2D with baked directional sprites. Satellite hulls, circle ellipses, layering and atlas-band motion create depth; there is no live 3D model, WebGL requirement or cloth-physics solver.
+This edition remains Canvas 2D with baked directional sprites. Distinct satellite hulls, circle ellipses, layered wings and isolated baked cloth masks create depth; there is no live 3D model, WebGL requirement or cloth-physics solver.
 
 ## Mapping
 
@@ -27,11 +27,13 @@ Player directed rituals, manual Aegis and transformation retain deliberate body 
 
 ## Level language
 
-Ranks 1, 2, 4, 8 and 16 begin the five hull grades. Higher ranks remain valid but do not add unbounded geometry. Higher grades brighten the school hue, add hull facets/metal fins and increase the inset count. Evolved player modules gain gold fins; mastery adds at most three top insets. Passive ring category marks and thickness reflect the real, bounded appearance grades. Exact unbounded ranks are displayed in the grimoire.
+Ranks 1, 2, 4, 8 and 16 begin the five hull grades. Higher ranks remain valid but do not add unbounded geometry. Higher grades brighten the school hue and add collars, armor, paired fins and a partial crown. Each school has its own primary silhouette, even at grade one. Evolved player modules gain gold fins; mastery adds at most three top insets. Passive ring category marks and thickness reflect the real, bounded appearance grades. Exact unbounded ranks are displayed in the grimoire.
 
 ## Timing and saves
 
 `systems/orbitals.js` owns the shared positions. Stable school slots prevent learning a school from rearranging other modules. Orbit phase is derived from saved world time, so a resumed game retains the same muzzle positions. Low/high quality and reduced motion do not change projectile origins. In reduced motion the functional orbit still moves with world time; cloth flutter and cosmetic recoil stop. Gameplay projectiles keep moving as usual.
+
+The 5.2.4 authoritative origin formula is unchanged in 5.2.5. The visible muzzle is fixed on that anchor; only the rear hull slides during recoil. Rear hulls are dimmer and depth-scaled for readability.
 
 Muzzle timestamps are stored in a WeakMap and are intentionally not saved. A loaded game may lose the last fraction of a cosmetic flash, but shot positions, damage, world time and cooldowns remain saved. Drawing does not consume gameplay RNG or mutate actor state.
 
@@ -44,7 +46,7 @@ Walk/dash frame blending is limited to the final 30% of a frame interval so the 
 - At most 12 player schools and 10 shooting/active guardian modules; ordinary ranged enemies have one.
 - Existing projectile, hostile-shot and effect pools remain bounded. Extreme fire rates use the existing weighted batching.
 - Satellite hull cache: at most 160 small 64×64 surfaces; at most 2.5 MiB of raw pixel storage plus browser overhead. Vector fallback is available for authoring/test runtimes without OffscreenCanvas.
-- Fabric: at most six source bands, two on low quality and for ordinary enemies in crowds over 60, one for low-quality ordinary crowds, idle/reduced motion or non-cloth creatures. This is display-only and never changes collision geometry.
+- Fabric: only player mantle, skirt and ornament masks deform, with at most 24 cached frames / 96 surfaces (4.5 MiB raw pixels). Rigid anatomy/equipment remain intact. Low quality, reduced motion, frozen characters and ordinary enemies use their intact baked sprites. Momentum lives only in a cosmetic WeakMap. See EVOLUTION.md.
 - Passive rings: at most three groups; low-quality/dense ordinary enemies use one. Cosmetic growth is bounded even when gameplay stats/ranks keep increasing.
 
 ## Rebuild / verify

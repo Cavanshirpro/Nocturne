@@ -50,7 +50,8 @@
   N.radarLayout=g=>{
     const compact=g.width<701,short=g.height<520,size=short?96:compact?120:176;
     const range=compact||short?950:1200;
-    let x=g.width-size-(compact?14:28),y=short?96:compact?150:136;
+    let x=g.width-size-(compact?14:28),y=short?104:compact?150:136;
+    if(compact&&g.height<720&&window.matchMedia?.('(pointer:coarse)').matches){x=20;y=150;}
     // HUD panels have different heights in portrait, landscape and small windows.
     // Read their existing layout; never move gameplay state or persist UI geometry.
     const rect=id=>{const el=document.getElementById(id);if(!el||el.hidden)return null;const r=el.getBoundingClientRect?.();return r&&Number.isFinite(r.top)&&Number.isFinite(r.bottom)?r:null;};
@@ -74,7 +75,7 @@
     const diamond=(px,py,rr,col)=>{c.beginPath();c.moveTo(px,py-rr);c.lineTo(px+rr,py);c.lineTo(px,py+rr);c.lineTo(px-rr,py);c.closePath();c.fillStyle=col;c.fill();};
     const objective=g.sanctum|| (g.boss?.alive?g.boss:null);
     c.save();c.fillStyle='#0a151deb';c.fillRect(x-6,y-25,size+12,size+67);c.strokeStyle='#bca07166';c.lineWidth=1;c.strokeRect(x-6,y-25,size+12,size+67);
-    c.textAlign='left';c.font='bold 9px Arial';c.fillStyle='#dfc899';c.fillText('HOLLOW · '+Math.round(range)+'u',x+3,y-10);
+    c.textAlign='left';c.font='bold 9px Arial';c.fillStyle='#dfc899';c.fillText(['HOLLOW','EMBER','MOONLIT'][Math.floor(Math.max(0,g.wave-1)/3)%3]+' · '+Math.round(range)+'u',x+3,y-10);
     c.lineWidth=1;circle(cx,cy,r,'#152b30','#7d928777');circle(cx,cy,r-4,null,'#d3b88c40');
     c.save();c.beginPath();c.arc(cx,cy,r-5,0,Math.PI*2);c.clip();
     // Local world grid with a bounded number of lines even at extreme origins.

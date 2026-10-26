@@ -7,21 +7,23 @@ import math
 from PIL import Image, ImageDraw
 
 
-def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
+def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False, return_masks=False):
     S=3
     im=Image.new('RGBA',(96*S,128*S));draw=ImageDraw.Draw(im)
+    mask=Image.new('L',im.size);md=ImageDraw.Draw(mask);material=0
     a=math.radians(angle);co,si=math.cos(a),math.sin(a)
     cycle=phase if phase is not None else progress*math.tau
-    stride=math.sin(cycle)*1.35 if phase is not None else 0
-    cast=math.sin(progress*math.pi) if action=='cast' else 0
-    hurt=math.sin(progress*math.pi)*.8+progress*.12 if action=='hurt' else 0
-    dash=.25+.7*math.sin(progress*math.pi)+progress*.05 if action=='dash' else 0
+    stride=math.sin(cycle)*1.22 if phase is not None else 0
+    # Asymmetric anticipation, sharp release, and a visibly settling recovery.
+    cast=(progress/.4*.7 if progress<.4 else 1-(progress-.4)/.6) if action=='cast' else 0
+    hurt=(1-progress)**2*.9+progress*.08 if action=='hurt' else 0
+    dash=(.4+progress*1.2 if progress<.5 else 1-(progress-.5)*1.6) if action=='dash' else 0
     breath=math.sin(cycle)*.65 if action=='idle' else 0
-    bob=abs(stride)*1.65+breath
+    bob=abs(math.sin(cycle*2))*.65+breath
     faces=[]
-    cloth=(66,65,100) if not demon else (106,44,78)
+    cloth=(85,76,117) if not demon else (126,48,83)
     dark=(30,36,56) if not demon else (51,25,48)
-    light=(107,112,151) if not demon else (158,80,116)
+    light=(134,130,170) if not demon else (175,88,121)
     gold=(188,156,107) if not demon else (195,125,150)
     skin=(224,184,157) if not demon else (219,165,199)
     hair=(48,39,64) if not demon else (158,123,163)
@@ -42,10 +44,12 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         n=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
         length=math.sqrt(sum(x*x for x in n)) or 1
         # Two-sided cloth; faceted meshes keep a coherent camera-space light.
-        lum=1 if emissive else .56+.44*max(0,(-n[0]*.45+n[1]*.35+n[2]*.82)/length)
+        lum=1 if emissive else .48+.46*max(0,(-n[0]*.45+n[1]*.35+n[2]*.82)/length)+.08*max(0,n[0]/length)
+        # Soft warm key + cool rim are fixed in camera space, across facings.
         col=tuple(min(255,max(0,round(c*lum))) for c in color)+(255,)
         depth=sum(v[1]*.85+v[2]*.46 for v in vs)/len(vs)
-        faces.append((depth,[project(v) for v in vs],col))
+        tag=material if material!=2 or sum(v[2] for v in verts)/len(verts)<46 else 0
+        faces.append((depth,[project(v) for v in vs],col,tag))
     def rings(levels,color,segments=16):
         # Each level: center x/y/z, x/y radius. Flat ends are solid caps.
         rr=[]
@@ -84,7 +88,8 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
     # Split leather boots, rounded toes, separate legs and raised gold cuffs.
     for side in (-1,1):
         step=stride*side
-        foot=(side*7,step*11+side*2,5+max(0,-step)*4)
+        foot=(side*7,step*9+side*2,5+max(0,-step)*3)
+        # Planted foot stays low; the opposite heel clears the ground.
         knee=(side*7,step*4,24)
         limb((side*6,0,40),knee,4.1,dark);limb(knee,foot,3.7,dark)
         x,y,z=foot
@@ -92,16 +97,25 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         rings([(x,y,z,4.8,5.2),(x,y,z+12,4.1,4.5)],dark)
         rings([(x,y,z+10,4.3,4.7),(x,y,z+12.2,4.3,4.7)],gold)
     # A thick sculpted coat: rounded front/back, inset waist and flared hem.
-    sway=stride*1.8
-    rings([(sway,0,12,22,18),(sway*.6,0,29,17,15),(0,0,46,10,10),(0,0,58,12,10),(0,0,65,14,10)],cloth)
+    sway=stride*1.1
+    material=2
+    rings([(sway,0,12,22,19),(sway*.6,0,29,18,16),(0,0,46,11,11),(0,0,58,13,11),(0,0,65,14,11)],cloth)
     # Raised side panels have a filled center, replacing thin ornamental ticks.
     for side in (-1,1):
+        material=2
         face([(side*6,10,44),(side*11,14,30),(side*18+sway,14,13),(side*10+sway,18,14)],light)
         face([(side*6.3,10.3,44),(side*7.4,10.8,43),(side*13,17,15),(side*11.8,17.5,14)],gold)
         # Broad back mantle with curved, offset depth and a single gold hem.
+        material=1
         wind=math.sin(cycle+side*.8)*1.5+dash*6
-        face([(side*5,-11,64),(side*17,-11,60),(side*26+wind,-17,16),(side*10+wind,-20,11)],dark)
+        # Curved mantle has a solid folded edge and a raised inner-facing surface.
+        root=(side*5,-11,64);shoulder=(side*17,-11,60);fold=(side*21+wind*.6,-16,35);tip=(side*26+wind,-17,16);inner=(side*10+wind,-20,11)
+        face([root,shoulder,fold,inner],dark)
+        face([shoulder,tip,inner,fold],cloth)
+        face([tip,(tip[0],tip[1]-2,tip[2]+1),(inner[0],inner[1]-2,inner[2]+1),inner],gold)
+        face([root,fold,(inner[0],inner[1]+1.3,inner[2]+1)],light)
         face([(side*10+wind,-20.3,11),(side*26+wind,-17.3,16),(side*25+wind,-17.3,19),(side*10+wind,-20.3,14)],gold)
+    material=0
     # Chest, articulated shoulder caps, belt and a substantial center buckle.
     ellipsoid(0,3,56,10,10,11,dark)
     rings([(0,0,41,11.2,11.3),(0,0,44,11.2,11.3)],gold)
@@ -111,12 +125,19 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         elbow=(side*(17+cast*2),3-side*stride*3,51+cast*(9 if side<0 else 3))
         hand=(side*(20+cast*(5 if side<0 else 1)),7-side*stride*4,43+cast*(29 if side<0 else 12))
         limb(shoulder,elbow,5.4,cloth);limb(elbow,hand,4.2,cloth)
-        ellipsoid(*shoulder,7.2,9,4.5,gold)
+        ellipsoid(*shoulder,7.5,10,5.2,gold)
+        ellipsoid(shoulder[0],shoulder[1]+2,shoulder[2]+1,5.8,8.5,3.2,dark)
         ellipsoid(*hand,3.3,3.4,4,skin)
         cuff=tuple(hand[k]*.88+elbow[k]*.12 for k in range(3))
         ellipsoid(*cuff,4.6,4.5,2.3,gold)
         if side<0 and cast>.12:
             gem(hand[0],hand[1]+1,hand[2]+9,3+cast*2,glow)
+    # Two short weighted tassels, isolated in the cloth mask.
+    material=3
+    for side in (-1,1):
+        limb((side*10,11,41),(side*11+math.sin(cycle+side)*1.2,13,26),.9,gold)
+        gem(side*11+math.sin(cycle+side)*1.2,13,25,1.5,glow)
+    material=0
     # The face is an ellipsoid, with a physical nose and swept hair lobes.
     limb((0,0,63),(0,0,70),4,skin)
     ellipsoid(0,0,77,10.2,10,12.2,hair)
@@ -151,5 +172,17 @@ def render_witch(angle=0, phase=None, action='idle', progress=0, demon=False):
         rings([(0,0,95,16,13),(1,0,104,12,10),(0,0,113,8,7),(-5,1,120,4.5,4),(-10,2,123,.6,.8)],cloth,18)
         rings([(0,0,96,15.7,12.8),(0,0,100,14.2,11.7)],dark,18)
         gem(1,13,98,3.5,glow)
-    for _,verts,color in sorted(faces,key=lambda f:f[0]):draw.polygon(verts,fill=color)
-    return im.resize((96,128),Image.Resampling.LANCZOS)
+    for _,verts,color,tag in sorted(faces,key=lambda f:f[0]):
+        draw.polygon(verts,fill=color);md.polygon(verts,fill=tag)
+    result=im.resize((96,128),Image.Resampling.LANCZOS)
+    if not return_masks:return result
+    # Visible material IDs, not approximate horizontal body bands. Run-length
+    # rectangles are decoded into bounded, lazy Canvas tiles at runtime.
+    small=mask.resize((96,128),Image.Resampling.NEAREST);runs=[[],[],[]]
+    for y in range(128):
+        x=0
+        while x<96:
+            tag=small.getpixel((x,y));start=x;x+=1
+            while x<96 and small.getpixel((x,y))==tag:x+=1
+            if tag:runs[tag-1].extend((start,y,x-start))
+    return result,runs

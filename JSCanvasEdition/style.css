@@ -161,3 +161,39 @@ input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 /* v5.2.4 field guide: ownership is readable without relying on colour. */
 .field-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;text-align:left;margin:16px 0 25px}.field-guide article{padding:13px;border:1px solid #95b4ac40;background:#13242cc9}.field-guide b{font:10px Arial;letter-spacing:1px;color:#d9d9bd}.field-guide p{font:11px/1.65 Arial;color:#adbfba;margin:8px 0 0}@media(max-width:500px){.field-guide{grid-template-columns:1fr}}
+
+/* 5.2.5 · charcoal surfaces, antique gold edges, stronger information hierarchy. */
+:root{--ink:#12131a;--panel:#1c1e27;--ivory:#f0e9dc;--muted:#b2b3b5;--gold:#cfb580;--purple:#b9a4d1}
+.overlay{background:linear-gradient(125deg,#101119f2,#191923e8 55%,#11131cf4)}
+.card,.coven-choice,.spell-entry,.talent-grid article{background:linear-gradient(135deg,#292731eb,#191d25f2)}
+.card{border-color:#9a8b7045;box-shadow:inset 0 1px #e9d4a710,0 8px 24px #080a0f24}
+.card p,.spell-entry p{color:#bdc0bc;font-size:12px;line-height:1.75}.spell-entry .tag{font-size:10px;letter-spacing:1px}.spell-entry small{font-size:11px}.recipe{font-size:11px}
+.health{height:7px;border-radius:2px}.health i{background:linear-gradient(90deg,#945f65,#d4a296)}.dash-meter .bar{height:5px}.xp{height:5px}.bar{box-shadow:inset 0 1px 2px #080a0e88}.power-title{line-height:1.5}.aegis-control .bar{height:5px}.aegis-control button,.special-row button,#demon-button{min-height:38px}
+#boss-hud{padding:10px 12px;background:#14151edb;border:1px solid #9b7e6444;border-top:2px solid #c5a17a77;border-radius:2px}#boss-hud .bar{height:7px}#boss-phase{line-height:1.5;font-size:10px;letter-spacing:1px}#boss-hp{font-size:9px}#boss-fill{background:linear-gradient(90deg,#774d5b,#c69e92)}
+#spell-belt{gap:5px}.belt-spell{background:#141822b8}.belt-spell:not(.learned){opacity:.45}.belt-spell.learned{border-bottom:2px solid #b7a4cd99}.belt-spell small{font-size:9px}
+.build-lab{padding:20px;border:1px solid #aa936149;background:#151923;text-align:left;margin:20px 0}.lab-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}.lab-heading h3{font:23px Georgia;margin:7px 0;color:#e5d5bd}.lab-heading label{font-size:11px;color:#bebcae}.lab-heading select{display:block;max-width:100%;font:12px Arial;color:#e9ddc8;background:#252732;border:1px solid #8e7b5d88;padding:10px;margin-top:5px;min-height:40px;border-radius:2px}.build-lab canvas{display:block;width:100%;height:auto;max-height:250px;object-fit:contain;background:#111822}.build-lab .hint{margin:0 0 15px;font-size:11px}
+input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #dfc496;outline-offset:4px}
+@media(pointer:coarse){.icon-button,.resources .icon-button,#zoom-hud button,.lock,.special-row button,.aegis-control button,#demon-button{min-height:44px;min-width:44px}}
+@media(max-width:700px){.build-lab{padding:12px}.lab-heading{gap:8px}.lab-heading h3{font-size:21px}.regalia-panel{background:#191b29}.spell-entry{min-width:0}.spell-entry>div{min-width:0}.build-lab .hint{font-size:10px}.card p{font-size:12px}#boss-hud{padding:7px 8px}#boss-phase{font-size:8px}#boss-hud .bar{height:5px}}
+@media(max-height:600px){#boss-hud{top:112px}#power-hud .aegis-control,#power-hud .special-row{margin-top:4px}#power-hud #demon-preview{display:none}}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none!important}}
+
+.grimoire-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;position:sticky;top:-1px;z-index:3;padding:8px 12px;background:#14151ff5;border-bottom:1px solid #a68e6044;font:10px Arial;letter-spacing:1px;color:#cdb78d}.grimoire-toolbar .secondary{min-height:40px;padding:9px 14px}.menu[data-screen="grimoire"]>#close-grimoire{position:static;margin-top:20px;box-shadow:none}body:has(.menu[data-screen="grimoire"]):has(.overlay:not([hidden])) #toast{display:none}
+/* Touch actions occupy separate lanes from the power panel and compass. */
+@media(pointer:coarse) and (max-width:700px){#dash-button{left:144px;right:auto;bottom:132px;width:60px;height:60px;font-size:27px}#zoom-hud{left:18px;right:auto;bottom:240px}}
+@media(pointer:coarse) and (max-height:520px) and (min-width:701px){
+ #power-hud{left:auto;right:12px;bottom:112px;width:360px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ #power-hud .power-title,#power-hud>.bar{grid-column:1/-1;margin:0}#power-hud .power-title{font-size:8px;line-height:14px}#power-hud>.bar{height:3px}
+ #power-hud #demon-button{margin:0;min-height:44px;font-size:8px}#power-hud .aegis-control{margin:0;padding:0;gap:3px;border:0;background:transparent;grid-template-columns:auto 1fr}#power-hud .aegis-control button{min-height:44px}#power-hud .aegis-control .bar{display:none}
+ #power-hud .special-row{grid-column:1/-1;margin:0}#power-hud .special-row button{min-height:44px}#power-hud>small{display:none}
+ #boss-hud{top:90px;right:18px;left:auto;width:360px;display:grid;grid-template-columns:1fr 1fr;column-gap:10px;align-items:end}#boss-hud>div:first-child{grid-column:1/-1;margin-bottom:4px}#boss-hud #guardian-ward{margin-top:0!important}#boss-hud #guardian-ward-text{font-size:7px;letter-spacing:0}#boss-hud #guardian-ward .bar{margin-top:2px}#boss-hud:has(#guardian-ward[hidden])>.bar{grid-column:1/-1}
+ #dash-button{left:144px;right:auto;bottom:132px;width:60px;height:60px;font-size:27px}#zoom-hud{left:166px;right:auto;bottom:auto;top:94px}
+}
+
+#zoom-hud{bottom:112px}
+@media(pointer:coarse) and (max-width:700px){#zoom-hud{bottom:240px}}
+@media(pointer:coarse) and (max-width:700px) and (max-height:700px){#ritual-hud{display:none}}
+@media(pointer:coarse) and (max-height:520px) and (min-width:701px){#zoom-hud{bottom:auto}}
+@media(pointer:coarse) and (max-height:520px) and (min-width:701px){
+ #boss-hud{padding:6px 8px;line-height:10px}#boss-hud>div:first-child{font-size:8px;line-height:10px}#boss-phase{font-size:8px;line-height:10px}#boss-hud>.bar{height:5px}#boss-hud #guardian-ward{line-height:8px}#boss-hud #guardian-ward-text{display:block;line-height:8px;font-size:7px}
+}

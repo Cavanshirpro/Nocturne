@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.2.4';
+  N.VERSION = '5.2.5';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -408,51 +408,8 @@
     visible(x, y, margin = 100) {
       return Math.abs(x - this.camera.x) < this.viewWidth / 2 + margin && Math.abs(y - this.camera.y) < this.viewHeight / 2 + margin;
     }
-    drawGround(c) {
-      const x = this.camera.x - this.viewWidth / 2 - 20, y = this.camera.y - this.viewHeight / 2 - 20;
-      c.fillStyle = this.groundPattern; c.fillRect(x, y, this.viewWidth + 40, this.viewHeight + 40);
-      // Ancient inscription at the starting point; persistent world landmarks.
-      if (this.visible(0,0,180)) {
-        c.save(); c.strokeStyle = '#a2a78a20'; c.lineWidth = 1;
-        for (const r of [112, 119, 159]) { c.beginPath(); c.ellipse(0,0,r,r*.73,0,0,Math.PI*2); c.stroke(); }
-        for (let i=0;i<12;i++) {
-          const a = i * Math.PI/6;
-          c.beginPath(); c.moveTo(Math.cos(a)*125, Math.sin(a)*92); c.lineTo(Math.cos(a)*146, Math.sin(a)*107); c.stroke();
-        }
-        c.restore();
-      }
-      const size = 340;
-      const sx = Math.floor(x/size), sy = Math.floor(y/size);
-      for(let ix=0;ix<Math.ceil(this.viewWidth/size)+3;ix++){const gx=sx+ix;
-        for(let iy=0;iy<Math.ceil(this.viewHeight/size)+3;iy++){const gy=sy+iy;
-          const seed = Math.sin(gx*127.1+gy*311.7)*43758.5453;
-          const f = seed - Math.floor(seed);
-          const px = gx*size+f*200, py=gy*size+f*170;
-          c.fillStyle='#10171880'; c.beginPath(); c.ellipse(px+4,py+5,20,9,0,0,Math.PI*2); c.fill();
-          c.fillStyle='#363c3c'; c.beginPath(); c.moveTo(px-13,py); c.lineTo(px-8,py-12); c.lineTo(px+6,py-15); c.lineTo(px+16,py-5); c.lineTo(px+12,py+5); c.lineTo(px-8,py+5); c.closePath(); c.fill();
-          c.strokeStyle='#68706955';c.beginPath();c.moveTo(px-8,py-12);c.lineTo(px+6,py-15);c.lineTo(px+15,py-5);c.stroke();
-          c.strokeStyle='#58654c60';
-          for(let i=0;i<5;i++){c.beginPath();c.moveTo(px+25+i*3,py+14);c.lineTo(px+21+i*4,py+3-i%3*3);c.stroke();}
-        }
-      }
-    }
-    gatherLandmarks(list){
-      const size=440,minX=Math.floor((this.camera.x-this.viewWidth/2-160)/size),maxX=Math.ceil((this.camera.x+this.viewWidth/2+160)/size);
-      const minY=Math.floor((this.camera.y-this.viewHeight/2-200)/size),maxY=Math.ceil((this.camera.y+this.viewHeight/2+200)/size);
-      const used=new Set();
-      for(let ix=0;ix<Math.ceil(this.viewWidth/size)+5;ix++)for(let iy=0;iy<Math.ceil(this.viewHeight/size)+5;iy++){const gx=minX+ix,gy=minY+iy;
-        const key=gx+','+gy;used.add(key);let prop=this.landmarks.get(key);
-        if(!prop){
-          const f=Math.sin(gx*213.31+gy*179.17+81.6)*41971.321,n=f-Math.floor(f),kind=n<.2?'arch':n<.48?'tomb':'tree';
-          const x=gx*size+70+n*220,y=gy*size+80+n*200;
-          prop={x,y,draw:c=>{const scale=kind==='tree'?1.12:.8,near=Math.abs(this.player.x-x)<85*scale&&this.player.y>y-165*scale&&this.player.y<y+15;c.save();if(near)c.globalAlpha=.32;c.drawImage(this.images['prop_'+kind],x-80*scale,y-187*scale,160*scale,200*scale);c.restore();}};
-          this.landmarks.set(key,prop);
-        }
-        if(this.sanctum&&N.dist2(prop,this.sanctum)<(this.sanctum.radius+100)**2)continue;
-        if(this.visible(prop.x,prop.y,180))list.push(prop);
-      }
-      for(const key of this.landmarks.keys())if(!used.has(key))this.landmarks.delete(key);
-    }
+    drawGround(c) {N.Environment.ground(this,c);}
+    gatherLandmarks(list){N.Environment.gather(this,list);}
     draw() {
       const c = this.ctx;
       c.setTransform(this.dpr,0,0,this.dpr,0,0);
@@ -462,22 +419,13 @@
       c.translate(-this.camera.x+N.fxRand(-amount,amount),-this.camera.y+N.fxRand(-amount,amount));
       this.drawGround(c);
       c.fillStyle=this.biome().color;c.fillRect(this.camera.x-this.viewWidth/2-20,this.camera.y-this.viewHeight/2-20,this.viewWidth+40,this.viewHeight+40);
-      N.Sanctum.draw(this,c);this.combat.drawGround(c);this.abilities.draw(c);
+      N.Environment.ambient(this,c);N.Sanctum.draw(this,c);this.combat.drawGround(c);this.abilities.draw(c);
       for(const drop of this.loot) if(this.visible(drop.x,drop.y,30)) drop.draw(c);
       const list=this.renderList;list.length=0;
       for(const e of this.enemies) if(e.alive && this.visible(e.x,e.y)) list.push(e);
       this.gatherLandmarks(list);list.push(this.player);list.sort((a,b)=>a.y-b.y);
       for(const entity of list) entity.draw(c);
-      this.combat.draw(c);N.drawVitality(this.player,c);
-      if(!this.reducedMotion&&this.quality!=='low'){
-        c.save();c.globalCompositeOperation='lighter';c.fillStyle='#c9c5b833';
-        for(let i=0;i<20;i++){
-          const phase=this.time*(.1+(i%4)*.025)+i*2.39996;
-          const x=this.camera.x+Math.sin(phase)*this.viewWidth*.52,y=this.camera.y+Math.cos(phase*.77+i)*this.viewHeight*.48;
-          c.globalAlpha=.2+.35*Math.sin(phase+i)**2;c.beginPath();c.arc(x,y,i%3===0?1.5:1,0,Math.PI*2);c.fill();
-        }
-        c.restore();
-      }
+      this.combat.draw(c);N.drawVitality(this.player,c);N.Fields.foreground(this,c);
       c.restore();
       if(this.hurtFlash>0&&!this.reducedMotion){c.fillStyle=`rgba(160,65,57,${this.hurtFlash*.16})`;c.fillRect(0,0,this.width,this.height);}
       // Soft illumination follows the screen center, leaving UI legible.
@@ -500,7 +448,7 @@
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       const images = {};
-      await Promise.all(Object.entries(window.NOCTURNE_ASSETS).map(([name,src]) => new Promise((resolve,reject) => {
+      await Promise.all(Object.entries(window.NOCTURNE_ASSETS).filter(([name])=>!name.startsWith('enemy_walk_')).map(([name,src]) => new Promise((resolve,reject) => {
         const im = new Image();
         im.onload = () => { images[name] = im; resolve(); };
         im.onerror = () => reject(new Error(`Unable to decode asset: ${name}`)); im.src = src;

@@ -258,7 +258,7 @@
         if(!this.game.visible(r.x,r.y,100))continue;
         const t=Math.max(0,r.life/r.total);c.save();
         if(r.kind==='ghost'){
-          c.globalAlpha=t*.23;N.drawWitch(c,this.game.images,r.facing,r.frame,r.x-40,r.y-99);
+          c.globalAlpha=t*(this.game.quality==='low'?.08:.14);const a=window.NOCTURNE_ATLAS,sheet=this.game.images[(this.game.player.progress.demonTime>0?'demon':'witch')+'_atlas_'+r.facing],frame=a.clips.dash.start+1;c.drawImage(sheet,frame*a.width,0,a.width,a.height,r.x-40,r.y-99,80,107);
         }else if(r.kind==='corpse'){
           c.globalAlpha=t*.55;const s=r.scale*(.85+.15*t);
           N.drawEnemy(c,this.game.images,{type:r.type,facing:r.facing,game:this.game},r.x-40*s,r.y-99*s+(1-t)*5,80*s,107*s,'death',1-t);
@@ -292,6 +292,7 @@
       }
       for(const e of this.effects.active){
         c.globalAlpha=e.life/e.total;c.strokeStyle=e.color;c.lineWidth=2;
+        if(N.Presentation.effect(c,e,this.game))continue;
         if(e.kind==='slash'){const t=1-e.life/e.total;c.lineWidth=2+5*(1-t);for(let j=0;j<3;j++){c.beginPath();c.arc(e.x,e.y,Math.max(1,e.radius*(.55+t*.45)-j*10),e.x2-e.y2/2,e.x2+e.y2/2);c.stroke();}}
         else if(e.kind==='delivery'){const t=1-e.life/e.total,x=e.x+(e.x2-e.x)*t,y=e.y+(e.y2-e.y)*t-Math.sin(t*Math.PI)*35;c.fillStyle=e.color;c.beginPath();c.arc(x,y,3,0,Math.PI*2);c.fill();c.lineWidth=1;c.beginPath();c.moveTo(x,y);c.lineTo(x-(e.x2-e.x)*.08,y-(e.y2-e.y)*.08);c.stroke();}
         else if(e.kind==='ring'){c.beginPath();c.ellipse(e.x,e.y,Math.max(1,e.radius*(1-e.life/e.total)),Math.max(1,e.radius*.85*(1-e.life/e.total)),0,0,Math.PI*2);c.stroke();}

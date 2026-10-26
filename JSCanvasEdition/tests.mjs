@@ -18,15 +18,15 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(type,fn,options){if(!docEvents.has(type))docEvents.set(type,[]);docEvents.get(type).push({fn,options});},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/motion.js','systems/orbitals.js','systems/fields.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/motion.js','systems/orbitals.js','systems/fields.js','systems/environment.js','systems/presentation.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
 let passed=0,failed=0;
 function test(name,fn){memory.clear();seed=271828;try{fn();passed++;console.log(`PASS ${name}`);}catch(error){failed++;console.error(`FAIL ${name}\n${error.stack}`);}}
 
-test('all 58 procedural PNG assets are real, encoded images',()=>{
-  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,58);
+test('all 64 procedural PNG assets are real, encoded images',()=>{
+  assert.equal(Object.keys(sandbox.NOCTURNE_ASSETS).length,64);
   for(const src of Object.values(sandbox.NOCTURNE_ASSETS))assert.equal(Buffer.from(src.split(',')[1],'base64').subarray(1,4).toString(),'PNG');
   assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSETS).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_atlas_')).map(([,v])=>v)).size,8);
 });
@@ -642,7 +642,7 @@ test('huge spell range queries populated cells rather than iterating empty world
 test('enemy atlas renders walk, attack, hurt and death crops with real clip boundaries',()=>{
   const g=create();g.reset();const e=new N.Enemy(g,'skeleton',100,0,1),calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);
   try{for(const state of ['walk','attack','hurt','death'])N.drawEnemy(context,g.images,e,0,0,80,88,state,.6);}finally{context.drawImage=old;}
-  assert.equal(calls.length,4);for(let i=0;i<calls.length;i++){const clip=sandbox.NOCTURNE_ENEMY_ATLAS.clips[['walk','attack','hurt','death'][i]];assert.ok(calls[i][1]>=clip.start*96&&calls[i][1]<(clip.start+clip.frames)*96);}
+  assert.equal(calls.length,4);for(let i=0;i<calls.length;i++){const clip=sandbox.NOCTURNE_ENEMY_ATLAS.clips[['walk','attack','hurt','death'][i]];const rect=sandbox.NOCTURNE_PACKING.enemy_atlas_skeleton.rects[clip.start+Math.floor(.6*clip.frames)];assert.deepEqual(calls[i].slice(1,5),Array.from(rect.slice(0,4)));assert.equal(calls[i][5],rect[4]*(80/96));assert.equal(calls[i][6],rect[5]*(88/128));}
 });
 test('audio starts quiet and never creates a looping noise buffer',()=>{
   const g=create(),a=new FakeAudioContext(),engine=g.combat.audioEngine;engine.attach(a);engine.setEnabled(true);engine.transport(true);
@@ -721,7 +721,7 @@ test('actual v4 data upgrades without resetting armor, spells, or checkpoint',()
 test('enemy atlas has eight rows and correct facing for all six states',()=>{
  const g=create();g.reset();const calls=[],old=context.drawImage;context.drawImage=(...args)=>calls.push(args);
  try{for(const dir of sandbox.NOCTURNE_ENEMY_ATLAS.directions)for(const state of Object.keys(sandbox.NOCTURNE_ENEMY_ATLAS.clips))N.drawEnemy(context,g.images,{type:'overlord',game:g,facing:dir},0,0,80,107,state,.5);}finally{context.drawImage=old;}
- assert.equal(calls.length,48);for(let i=0;i<calls.length;i++)assert.equal(calls[i][2],Math.floor(i/6)*128);
+ assert.equal(calls.length,48);for(let i=0;i<calls.length;i++){const clip=Object.values(sandbox.NOCTURNE_ENEMY_ATLAS.clips)[i%6],rect=sandbox.NOCTURNE_PACKING.enemy_atlas_overlord.rects[Math.floor(i/6)*33+clip.start+Math.floor(.5*clip.frames)];assert.deepEqual(calls[i].slice(1,5),Array.from(rect.slice(0,4)));assert.equal(calls[i][6],rect[5]*(107/128));}
 });
 test('new snapshot validation rejects corrupted form and projectile content',()=>{
  const g=create();g.reset();g.checkpoint('wave');const c=JSON.parse(JSON.stringify(g.save.data.checkpoint));c.player.progress.demonTime=NaN;assert.equal(g.save.validCheckpoint(c),false);c.player.progress.demonTime=0;c.player.progress.arsenal.slash=-1;assert.equal(g.save.validCheckpoint(c),false);
@@ -1208,13 +1208,14 @@ test('5.2.3 passive ring grades and active module shapes grow without unbounded 
  const g=create();g.reset();for(const rank of [1,2,4,8,64,1e100]){g.player.weapons.cannon=rank;const grade=N.Orbitals.band(rank);assert.ok(grade>=1&&grade<=5);assert.ok(/^#[0-9a-f]{6}$/.test(N.Orbitals.color('cannon',grade)));}
  const elite=new N.Enemy(g,'skeleton',0,0,2,true,{level:160,trait:'armored',tier:'veteran'});assert.ok(N.Orbitals.passive(elite).length>0);elite.draw(context);assert.equal(N.Orbitals.ids(elite).length,0);
 });
-test('5.2.3 speed cloth grows with real movement and stays within draw budgets',()=>{
- const g=create();g.reset();const p=g.player;p.moving=true;p.lastX=1;g.time=1;const normal=N.Motion.profile(p).strength;p.speed=1600;assert.ok(N.Motion.profile(p).strength>normal);
- const draw=()=>{const calls=[];const c={drawImage(...a){calls.push(a)}};N.Motion.draw(c,{},0,0,96,128,0,0,80,107,p);return calls;};
- g.quality='high';assert.equal(draw().length,6);g.quality='low';assert.equal(draw().length,2);g.reducedMotion=true;assert.equal(draw().length,1);g.reducedMotion=false;p.moving=false;assert.equal(draw().length,1);
+test('5.2.5 cosmetic cloth momentum responds to speed and settles without actor writes',()=>{
+ const g=create();g.reset();const p=g.player;p.moving=true;p.lastX=1;g.time=1;const normal=N.Motion.profile(p).strength;p.speed=1600;g.time+=.1;p.x+=160;assert.ok(N.Motion.profile(p).strength>normal);
+ p.moving=false;const before=JSON.stringify(p,(k,v)=>k==='game'?undefined:v);g.time+=.1;const settling=N.Motion.profile(p);assert.ok(settling.strength>0);for(let i=0;i<30;i++){g.time+=.1;N.Motion.profile(p);}assert.equal(N.Motion.profile(p).strength,0);assert.equal(JSON.stringify(p,(k,v)=>k==='game'?undefined:v),before);
+ g.reducedMotion=true;assert.equal(N.Motion.profile(p).strength,0);
 });
-test('5.2.3 dense low-quality ordinary cloth uses one draw while the player stays expressive',()=>{
- const g=create();g.reset();g.quality='low';g.enemies=Array.from({length:120},()=>({}));const e=new N.Enemy(g,'cultist',0,0,200);e.moving=true;let calls=0;const c={drawImage(){calls++;}};N.Motion.draw(c,{},0,0,96,128,0,0,80,107,e);assert.equal(calls,1);g.player.moving=true;calls=0;N.Motion.draw(c,{},0,0,96,128,0,0,80,107,g.player);assert.equal(calls,2);
+test('5.2.5 intact low-quality and non-OffscreenCanvas fallbacks never shift rigid anatomy',()=>{
+ const g=create();g.reset();g.enemies=Array.from({length:120},()=>({}));const e=new N.Enemy(g,'cultist',0,0,200);e.moving=true;const calls=[],c={drawImage(...a){calls.push(a);}};g.player.moving=true;
+ for(const actor of [e,g.player])for(const quality of ['high','low']){calls.length=0;g.quality=quality;N.Motion.draw(c,{},0,0,96,128,2,3,80,107,actor);assert.equal(calls.length,1);assert.deepEqual(calls[0].slice(5),[2,3,80,107]);}
 });
 test('5.2.4 field identities distinguish ally Thorn from healing and hostile silence',()=>{
  const base={x:0,y:0,radius:90,delay:.5,duration:2,age:.2};
@@ -1235,5 +1236,30 @@ test('5.2.4 orbital mechanics and passive ring animations have distinct bounded 
  const g=create();g.reset();const p=g.player,ids=N.SPELL_IDS;assert.equal(new Set(ids.map(id=>N.Orbitals.behaviour(id).mode)).size,12);
  g.time=1;const poses=ids.map(id=>N.Orbitals.animation(p,id,4,.5));assert.ok(poses.every(x=>Number.isFinite(x.phase)&&x.recoil<=4.5));assert.notEqual(N.Orbitals.animation(p,'rapid',4,.5).phase,N.Orbitals.animation(p,'cannon',4,.5).phase);
  const at=N.Orbitals.origin(p,'cannon');g.quality='low';g.reducedMotion=true;assert.deepEqual(N.Orbitals.origin(p,'cannon'),at);for(const id of ids){const a=N.Orbitals.animation(p,id,4,1);assert.equal(a.phase,0);assert.equal(a.recoil,0);}
+});
+test('5.2.5 visible cloth masks isolate three materials in every form, facing and clip',()=>{
+ const masks=sandbox.NOCTURNE_CLOTH;assert.equal(Object.keys(masks).length,16);
+ for(const frames of Object.values(masks)){assert.equal(frames.length,24);for(const groups of frames){assert.equal(groups.length,3);for(const runs of groups){assert.equal(runs.length%3,0);assert.ok(runs.length<=3000);for(let i=0;i<runs.length;i+=3){assert.ok(runs[i]>=0&&runs[i]+runs[i+2]<=96);assert.ok(runs[i+1]>=0&&runs[i+1]<128);assert.ok(runs[i+2]>0);}}}}
+});
+test('5.2.5 packed enemy textures retain every logical frame with smaller decoded area',()=>{
+ let packed=0,logical=0;for(const [key,m] of Object.entries(sandbox.NOCTURNE_PACKING)){const bytes=Buffer.from(sandbox.NOCTURNE_ASSETS[key].split(',')[1],'base64'),w=bytes.readUInt32BE(16),h=bytes.readUInt32BE(20);assert.equal(w,2048);assert.ok(h<=4096);logical+=m.logicalWidth*m.logicalHeight;packed+=w*h;assert.equal(m.rects.length,key.startsWith('enemy_ritual')?528:264);for(const [x,y,rw,rh,ox,oy]of m.rects){assert.ok(x>0&&y>0&&x+rw<=w&&y+rh<=h);assert.ok(ox>=0&&oy>=0&&ox+rw<=96&&oy+rh<=128);}}
+ assert.ok(packed<logical*.78,JSON.stringify({packed,logical}));
+});
+test('5.2.5 nearest allied fields cannot be lost between sampling strides',()=>{
+ const g=create();g.reset();g.visible=()=>true;for(let i=0;i<5000;i++)g.combat.addArea('thorn',600+i,0,30,.1,3,1);const near=g.combat.areas.active[2013];near.x=2;near.y=0;near.radius=20;g.combat.addArea('veil',3,0,20,.1,3,0);g.combat.addArea('rift',4,0,20,.1,3,1);const before=JSON.stringify(g.combat.areas.active),plan=N.Fields.plan(g);assert.ok(plan.some(v=>v.area===near));assert.ok(plan.some(v=>v.area.kind==='veil'));assert.ok(plan.some(v=>v.area.kind==='rift'));assert.equal(JSON.stringify(g.combat.areas.active),before);assert.ok(plan.length<=12);
+});
+test('5.2.5 imminent and expiration art keep exact warning and collision timing',()=>{
+ const a={kind:'ring',x:0,y:0,radius:200,inner:130,angle:.5,gap:1,delay:1,duration:.8,age:.8};assert.equal(N.Fields.stage(a),'imminent');assert.equal(N.Fields.phase(a),'warning');a.age=1.01;assert.equal(N.Fields.stage(a),'active');a.age=1.75;assert.equal(N.Fields.stage(a),'expiring');assert.equal(N.Fields.phase(a),'active');a.age=1.8;assert.equal(N.Fields.stage(a),'expired');
+});
+test('5.2.5 every satellite grade, evolution and mastery renders within a fixed path budget',()=>{
+ const g=create();g.reset();let count=0,depth=0;const c=new Proxy({save(){depth++;},restore(){depth--;assert.ok(depth>=0);}}, {get:(o,k)=>k in o?o[k]:(...args)=>{count++;for(const a of args)if(typeof a==='number')assert.ok(Number.isFinite(a),k);},set:(o,k,v)=>(o[k]=v,true)});
+ for(const id of N.SPELL_IDS)for(const rank of [1,2,4,8,16,1e100]){count=0;N.Orbitals.inspect(c,g.player,id,rank,2,true,1e100);assert.ok(count<300,id+':'+count);assert.equal(depth,0);}
+});
+test('5.2.5 render-only systems never consume gameplay RNG or mutate hazards and actors',()=>{
+ const g=create();g.reset();g.player.moving=true;g.combat.addArea('rift',0,0,100,.1,2,10);g.combat.hazard(10,20,100,1,10,.3);const before=JSON.stringify({fields:g.combat.areas.active,hazards:g.combat.hazards.active,progress:g.player.progress}),rng=seed;
+ for(let i=0;i<8;i++){g.time=i*.05;g.draw();}assert.equal(seed,rng);assert.equal(JSON.stringify({fields:g.combat.areas.active,hazards:g.combat.hazards.active,progress:g.player.progress}),before);
+});
+test('5.2.5 environment uses distinct deterministic biomes and bounded landmark caches',()=>{
+ const g=create();g.reset();const keys=new Set();for(const wave of [1,4,7]){g.wave=wave;keys.add(N.Environment.themes[N.Environment.index(g)].ground);g.draw();}assert.equal(keys.size,3);assert.ok(g.landmarks.size<=96);const hash=N.Environment.hash(12,-19);assert.equal(N.Environment.hash(12,-19),hash);g.viewWidth=15000;g.viewHeight=15000;const list=[];N.Environment.gather(g,list);assert.ok(list.length<=48);g.quality='low';const low=[];N.Environment.gather(g,low);assert.ok(low.length<=24);assert.ok(g.landmarks.size<=96);
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;

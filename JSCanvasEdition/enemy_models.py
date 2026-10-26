@@ -39,8 +39,8 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
     death = progress if action == 'death' else 0
     breath = math.sin(progress*math.tau+.4)*.7 if action == 'idle' else 0
     bob = abs(gait)*1.7+breath+(math.sin(cycle*.8)*2.4 if kind in ('wraith','overlord') and action!='death' else 0)
-    if action=='channel': bob+=math.sin(progress*math.pi)*5
-    if action=='blink': bob+=math.sin(progress*math.pi)*7
+    if action=='channel': bob+=math.sin(progress*math.pi)*(2.5 if kind=='warden' else 4.5)
+    if action=='blink': bob+=math.sin(progress*math.pi)*5
     palette = {
         'slime': ('#244d46', '#699780', '#bdd9a8'),
         'skeleton': ('#64605b', '#d1c5a7', '#8bd7c6'),
@@ -79,6 +79,14 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
 
     def poly(points, color):
         d.polygon([project(*v) for v in points], fill=color)
+
+    def bevel(points, fill, edge, depth=2):
+        # A raised material face and a visible dark side wall. Rotates with body.
+        back=[(x,y-depth,z) for x,y,z in points]
+        for i in range(len(points)):
+            j=(i+1)%len(points);poly([back[i],back[j],points[j],points[i]],dark)
+        poly(points,fill)
+        line([points[0],points[1],points[2]],edge,.9)
 
     def line(points, color, width=1):
         d.line([project(*v) for v in points], fill=color, width=max(1, round(width*scale)), joint='curve')
@@ -213,7 +221,11 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
         wing = math.sin(cycle*1.3)*7+gait*3+attack*12
         for side in (-1, 1):
             pts=[(side*9, -4, 68), (side*35, -7, 91+wing), (side*41, -4, 55+wing*.4), (side*30, -2, 60), (side*22, -1, 44), (side*13, 0, 56)]
+            poly([(x,y-2,z+1) for x,y,z in pts],light)
             poly(pts, dark)
+            # Folded membrane surfaces meet at a distinct elbow.
+            bevel([(side*9,-4,68),(side*23,-8,79+wing*.5),(side*35,-7,91+wing),(side*29,-4,66)],'#79536e' if kind=='overlord' else '#586374',light,1.5)
+            oval(side*23,-6,79+wing*.5,2,2,glow)
             for j,(x,z) in enumerate(((35,91+wing),(30,60),(22,44))):
                 poly([(side*10,-4,67),(side*x,-5,z),(side*(x-4),-3,z-8)],'#6b506b' if kind=='overlord' else '#626875')
                 line([(side*(x-4),-3,z-8),(side*x,-5,z)],glow,.65)
@@ -284,7 +296,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             oval(hand_x,hand_y+1,hand_z,5.5,6,'#eac4ed')
             oval(hand_x,hand_y+2,hand_z+1,2.4,3,'#fff1e5')
         if kind in ('warden', 'overlord'):
-            poly([(side*9, 0, 70), (side*23, 0, 69), (side*24, 1, 56), (side*13, 3, 58)], light)
+            bevel([(side*9, 0, 70), (side*23, 0, 69), (side*24, 3, 56), (side*13, 4, 58)],light,glow,3)
             line([(side*12, 2, 67), (side*21, 2, 65)], glow, 1)
             for j in range(3):
                 poly([(side*12,4,62-j*5),(side*23,3,62-j*5),(side*22,6,56-j*5),(side*14,7,54-j*5)],'#665865')
@@ -339,7 +351,7 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
     if kind=='overlord':
         # Sovereign crown, chest sigil and chains distinguish it from the Warden.
         for x in (-9, -4, 0, 4, 9):
-            poly([(x-2, 1, 95), (x, 1, 114-abs(x)*.7), (x+2, 1, 95)], '#cfac93')
+            bevel([(x-2, 1, 95), (x, 1, 114-abs(x)*.7), (x+2, 3, 95)],'#c5a294','#e7c2b0',1.5)
         oval(0, 10, 59, 5, 7, glow)
         for side in (-1, 1):
             line([(side*15, 5, 67), (side*9, 9, 56), (math.sin(cycle+side)*3, 10, 53)], '#b69a80', 1)
@@ -355,7 +367,8 @@ def render_enemy(kind, angle=0, phase=None, action='idle', progress=0):
             oval(side*15,6,83,1.7,2.8,glow)
     if kind=='warden':
         for side in (-1,1):
-            poly([(side*9,4,72),(side*25,1,70),(side*27,2,60),(side*18,6,62)],'#7a8283')
+            bevel([(side*9,4,72),(side*25,1,70),(side*27,2,60),(side*18,6,62)],'#89908d','#d1c8a7',3)
+            bevel([(side*13,3,54),(side*22,3,53),(side*20,7,40),(side*13,8,42)],'#59696d','#b9b4a1',2)
             line([(side*12,5,70),(side*22,4,68)],'#e6cf9e',1)
         if front>-.1:
             poly([(-7,8,87),(0,12,91),(7,8,87),(5,11,77),(0,13,73),(-5,11,77)],'#a9a99b')

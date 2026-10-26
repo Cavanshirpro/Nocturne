@@ -21,6 +21,13 @@ S = 3
 
 def encode(im):
     buf = io.BytesIO()
+    # Lossless palette conversion where possible. Transparent RGB is normalized
+    # before PNG compression; invisible colour carries no rendering information.
+    if im.mode=='RGBA':
+        alpha=im.getchannel('A');clean=Image.new('RGBA',im.size)
+        clean.paste(im,mask=alpha.point(lambda a:255 if a else 0));im=clean
+        colors=im.getcolors(256)
+        if colors:im=im.convert('P',palette=Image.Palette.ADAPTIVE,colors=256)
     im.save(buf, format="PNG", optimize=True)
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
@@ -33,22 +40,34 @@ def enemy(kind, phase=None, action="idle", progress=0, angle=0):
     return render_enemy(kind, angle=angle, phase=phase, action=action, progress=progress)
 
 
-def ground():
-    rng = random.Random(7281)
+def ground(biome=0):
+    rng = random.Random(7281+biome*911)
     im = Image.new("RGB", (256,256))
     px = im.load()
     for y in range(256):
         for x in range(256):
             n = rng.randrange(-4,5)
-            px[x,y] = (23+n,28+n,29+n)
+            base=[(24,29,30),(31,25,25),(24,27,36)][biome]
+            px[x,y] = tuple(v+n for v in base)
     d = ImageDraw.Draw(im)
     # Modulo-wrapped marks make a seamless, repeatable surface.
-    for _ in range(115):
+    for _ in range(42):
         x,y = rng.randrange(256),rng.randrange(256)
-        col = rng.choice(["#252c2b", "#303536", "#1d2425"])
+        col = rng.choice(["#252c2b", "#282f30", "#1d2425"])
         for dx in (-256,0,256):
             for dy in (-256,0,256):
                 d.line([(x+dx,y+dy),(x+dx+4,y+dy-3),(x+dx+8,y+dy-2)],fill=col,width=1)
+    # Seamless masonry / cooled cracks / ancient moonstone. All values stay
+    # subdued, leaving red warnings and actor silhouettes above the material.
+    for _ in range(10):
+        x,y=rng.randrange(256),rng.randrange(256)
+        for dx in (-256,0,256):
+            for dy in (-256,0,256):
+                col=['#29352d','#382b26','#2e3141'][biome]
+                d.line([(x+dx,y+dy),(x+dx+13,y+dy-7),(x+dx+24,y+dy-3)],fill=col,width=1)
+                if biome==0:d.ellipse((x+dx-3,y+dy-1,x+dx+7,y+dy+2),fill='#2a3831')
+                if biome==1:d.line([(x+dx+13,y+dy-7),(x+dx+15,y+dy-12)],fill='#4a3429',width=1)
+                if biome==2:d.rectangle((x+dx,y+dy,x+dx+3,y+dy+2),outline='#39394d')
     return im.convert("RGBA")
 
 
@@ -70,7 +89,35 @@ def prop(kind):
     def line(pts,color,width=2):d.line([(x*S,y*S) for x,y in pts],fill=color,width=width*S,joint="curve")
     def el(box,color):d.ellipse(tuple(v*S for v in box),fill=color)
     el((20,173,144,195),(4,10,13,85))
-    if kind=="tree":
+    if kind in ('obelisk','wall','brazier','charred'):
+        if kind=='obelisk':
+            poly([(55,182),(59,75),(75,29),(90,28),(104,76),(110,182)],'#3f4359')
+            poly([(59,75),(75,29),(77,171),(55,182)],'#686a7b')
+            poly([(77,34),(90,28),(103,78),(98,174),(77,171)],'#4d4e68')
+            line([(76,51),(76,160)],'#aaa4bd',2)
+            for y in (85,109,133):line([(82,y),(91,y+6),(82,y+12)],'#8884ae',1)
+            poly([(44,186),(49,172),(112,172),(121,186)],'#5f6271')
+        elif kind=='wall':
+            for row in range(4):
+                for col in range(3):
+                    x=29+col*32+(row%2)*4;y=180-row*21
+                    if row==3 and col==2:continue
+                    poly([(x,y),(x,y-19),(x+29,y-21),(x+30,y-2)],'#464a53' if row%2 else '#4e5359')
+                    line([(x+2,y-18),(x+26,y-20)],'#777974',1)
+            line([(47,179),(57,154),(50,136)],'#292d34',2)
+        elif kind=='brazier':
+            poly([(52,184),(60,157),(65,106),(94,106),(98,158),(109,184)],'#423637')
+            poly([(45,105),(55,127),(104,127),(116,105),(108,99),(54,99)],'#776152')
+            line([(52,107),(109,107)],'#b19b7a',2)
+            poly([(61,102),(65,87),(76,94),(85,76),(91,95),(102,103)],'#a86640')
+            poly([(72,102),(79,91),(87,101)],'#d6aa63')
+            for y in (143,162):line([(66,y),(93,y)],'#9c8365',1)
+        else:
+            poly([(64,185),(73,91),(54,63),(69,72),(77,30),(85,45),(83,94),(109,58),(104,87),(88,113),(96,184)],'#342d32')
+            line([(72,179),(80,102),(80,49)],'#74615b',3)
+            line([(82,108),(100,89)],'#8a6651',2)
+            line([(67,182),(55,190),(82,185),(110,189)],'#51413b',3)
+    elif kind=="tree":
         poly([(65,182),(73,83),(62,53),(78,74),(90,27),(89,88),(109,63),(94,104),(101,181)],"#282e33")
         line([(72,177),(83,95),(92,58)],"#586064",3)
         for x,y,r in [(44,90,29),(91,50,33),(118,91,30),(58,42,25),(40,123,26),(111,123,29),(76,102,35)]:
@@ -98,11 +145,36 @@ def prop(kind):
     return im.resize((160,200),Image.Resampling.LANCZOS)
 
 
+def pack_atlas(atlas, key, packing):
+    """Lossless transparent trimming, shelf-packed into <=2048-wide textures.
+
+    Offsets retain the logical 96x128 cell. Even 1-alpha antialias pixels are
+    preserved. No quantization, scaling, or animation changes are involved.
+    """
+    cells=[]
+    for y in range(0,atlas.height,128):
+        for x in range(0,atlas.width,96):
+            cell=atlas.crop((x,y,x+96,y+128));box=cell.getchannel('A').getbbox() or (0,0,1,1)
+            cells.append((cell.crop(box),box))
+    order=sorted(range(len(cells)),key=lambda i:(-cells[i][0].height,i))
+    x=y=row_h=0;rects=[None]*len(cells)
+    for i in order:
+        im,box=cells[i]
+        if x+im.width+2>2048:x=0;y+=row_h+2;row_h=0
+        rects[i]=[x+1,y+1,im.width,im.height,box[0],box[1]]
+        x+=im.width+2;row_h=max(row_h,im.height)
+    height=y+row_h+2
+    result=Image.new('RGBA',(2048,height))
+    for (im,_),r in zip(cells,rects):result.paste(im,(r[0],r[1]))
+    packing[key]={'logicalWidth':atlas.width,'logicalHeight':atlas.height,'rects':rects}
+    return result
+
+
 def main():
     dirs={"S":0,"SW":45,"W":90,"NW":135,"N":180,"NE":225,"E":270,"SE":315}
     assets={"witch_"+name:encode(witch(angle)) for name,angle in dirs.items()}
     assets.update({name:encode(enemy(name)) for name in KINDS})
-    assets.update(orb=encode(orb()),ground=encode(ground()))
+    assets.update(orb=encode(orb()),ground=encode(ground()),ground_ember=encode(ground(1)),ground_moon=encode(ground(2)))
     walk_frames={name:[witch(angle,i*math.tau/8) for i in range(8)] for name,angle in dirs.items()}
     clips={"idle":{"frames":4,"duration":1.8,"loop":True,"priority":0},
            "walk":{"frames":8,"duration":.45,"loop":True,"priority":0},
@@ -115,19 +187,22 @@ def main():
         w,h=frames[0].size;result=Image.new("RGBA",(w*len(frames),h))
         for i,frame in enumerate(frames):result.paste(frame,(i*w,0))
         return result
+    cloth_masks={};packing={}
     for name,angle in dirs.items():
         frames=[]
         for state,clip in clips.items():
             for i in range(clip["frames"]):
                 t=i/(clip["frames"]-1) if not clip["loop"] else i/clip["frames"]
-                frames.append(walk_frames[name][i] if state=="walk" else witch(angle,action=state,progress=t))
+                pose,masks=render_witch(angle,i*math.tau/8 if state=='walk' else None,state,t,return_masks=True)
+                frames.append(pose);cloth_masks.setdefault('witch_atlas_'+name,[]).append(masks)
         assets["witch_atlas_"+name]=encode(sheet(frames))
     for name,angle in dirs.items():
         frames=[]
         for state,clip in clips.items():
             for i in range(clip['frames']):
                 t=i/(clip['frames']-1) if not clip['loop'] else i/clip['frames']
-                frames.append(render_witch(angle,i*math.tau/8 if state=='walk' else None,state,t,demon=True))
+                pose,masks=render_witch(angle,i*math.tau/8 if state=='walk' else None,state,t,demon=True,return_masks=True)
+                frames.append(pose);cloth_masks.setdefault('demon_atlas_'+name,[]).append(masks)
         assets['demon_atlas_'+name]=encode(sheet(frames))
     for name in KINDS:
         assets["enemy_walk_"+name]=encode(sheet([enemy(name,i*math.tau/4) for i in range(4)]))
@@ -140,7 +215,7 @@ def main():
                     t=i/(clip['frames']-1) if state in ('attack','hurt','death') else (i+.17)/clip['frames']
                     pose=enemy(name,t*math.tau if state=='walk' else None,action=state,progress=t,angle=angle)
                     atlas.paste(pose,((clip['start']+i)*96,row*128))
-        assets['enemy_atlas_'+name]=encode(atlas)
+        assets['enemy_atlas_'+name]=encode(pack_atlas(atlas,'enemy_atlas_'+name,packing))
     ritual_states=RITUALS
     for name in ('warden','overlord'):
         # Two rows per facing keep every texture below 4096px on either axis.
@@ -150,10 +225,12 @@ def main():
                 for i in range(6):
                     frame=state_index*6+i
                     atlas.paste(render_enemy(name,angle=angle,action=state,progress=i/5),((frame%33)*96,(row*2+frame//33)*128))
-        assets['enemy_ritual_'+name]=encode(atlas)
-    for name in ("tree","arch","tomb"):assets["prop_"+name]=encode(prop(name))
+        assets['enemy_ritual_'+name]=encode(pack_atlas(atlas,'enemy_ritual_'+name,packing))
+    for name in ("tree","arch","tomb","obelisk","wall","brazier","charred"):assets["prop_"+name]=encode(prop(name))
     output="// Generated by generate_assets.py; embedded PNGs, zero runtime requests.\n"
     output+="window.NOCTURNE_ASSETS = Object.freeze("+json.dumps(assets,indent=2)+");\n"
+    output+='window.NOCTURNE_PACKING = Object.freeze('+json.dumps(packing,separators=(',',':'))+');\n'
+    output+='window.NOCTURNE_CLOTH = Object.freeze('+json.dumps(cloth_masks,separators=(',',':'))+');\n'
     output+='window.NOCTURNE_ANIMATIONS = Object.freeze({witch:{frames:8,width:96,height:128},enemy:{frames:8,width:96,height:128}});\n'
     output+='window.NOCTURNE_ATLAS = Object.freeze('+json.dumps({"version":1,"width":96,"height":128,"totalFrames":cursor,"clips":clips})+');\n'
     output+='window.NOCTURNE_ENEMY_ATLAS = Object.freeze('+json.dumps({'version':2,'width':96,'height':128,'rows':8,'directions':list(DIRECTIONS),'totalFrames':33,'clips':enemy_clips})+');\n'

@@ -1,12 +1,24 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.4 · Read the Battle**
+**Version 5.2.5 · Visual Evolution & Polish**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.2.4
+## What's new in 5.2.5
+
+- Deeper Witch/Demon models, folded mantles, articulated wing panels and clearer weighted animation.
+- Isolated mantle/skirt/ornament masks keep rigid anatomy and equipment stable; bounded cosmetic momentum replaces whole-body atlas bands.
+- Twelve distinct satellite hulls, five structural grades, restrained passive rings and fixed real muzzle anchors.
+- Near-player field selection, growing brambles, mist, inward rifts and staged hostile warnings; exact danger rims remain visible over combat effects.
+- Separate Hollow / Ember / Moonlit materials and architecture, faded occluding props, stronger boss armor and school-specific projectile art.
+- Refined charcoal/gold HUD and a Grimoire renderer lab for normal/evolved/mastered modules and field behaviours.
+- Lossless packed enemy atlases reduce the calculated active raw RGBA image area from 182 MiB to 98 MiB; see [PERFORMANCE.md](PERFORMANCE.md) for measured frame costs and caveats.
+
+Open [visual-gallery.html](visual-gallery.html) for the actual renderer's comparisons. [EVOLUTION.md](EVOLUTION.md) describes this release, [VALIDATION.md](VALIDATION.md) its checks. The earlier design notes below are release history; current circles/satellites and isolated cloth supersede older costume fixtures and horizontal bands.
+
+## Previous changes in 5.2.4
 
 - **Readable fields:** Thorn uses vines and means ally damage + slow, not healing. Veil uses cyan feathers, Rift has inward spirals, Meteor has a crater/impact motif. Ownership tags and a grimoire field guide explain them.
 - **Clear hostile warnings:** solid hatched danger boundaries, activation timers, a distinct Void Seal lock, and a truly empty shock-ring opening with mint exit guides. The visible outer circles/annuli now follow their real collision geometry. The boss arena uses quiet segmented stone architecture instead of a red attack-like floor.
