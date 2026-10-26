@@ -45,38 +45,19 @@
       const action=q.dodgeWindup>0||q.dodgeTime>0?'riftstep':q.action||(q.salvo>0?'salvo':q.releaseTime>0?q.lastAction:q.ward>0?'aegis':null);
       if(!action)return null;
       const style=action==='riftstep'?'blink':['salvo','slash','lances'].includes(action)?'sweep':['aegis','shockwave','soulring'].includes(action)?'guard':'channel';
-      const t=q.dodgeWindup>0?.45*(1-q.dodgeWindup/.22):q.dodgeTime>0?.45+.55*(1-q.dodgeTime/.24):q.windup>0?.45*(1-q.windup/q.windupTotal):q.releaseTime>0?.45+.55*(1-q.releaseTime/.55):q.salvo>0?.5+(q.shotIndex%4)*.12:((e.phase||0)/7)%1;
+      const t=q.dodgeWindup>0?.45*(1-q.dodgeWindup/.22):q.dodgeTime>0?.45+.55*(1-q.dodgeTime/.24):q.windup>0?.45*(1-q.windup/q.windupTotal):q.releaseTime>0?.45+.55*(1-q.releaseTime/.55):q.salvo>0?.5+(q.shotIndex%4)*.12:.35;
       return {action,style,t};
     },
-    pose(e){
-      if(e.game.reducedMotion||e.frozen>0)return {lean:0,lift:0,stretch:0};
-      const cycle=e.phase||0,walking=e.moving!==false&&e.spawnDelay<=0;
-      const ritual=this.ritual(e),power=ritual?Math.sin(ritual.t*Math.PI):0;
-      return {lean:ritual?.style==='sweep'?Math.sin(ritual.t*Math.PI*2)*.13:walking?Math.sin(e.gait||0)*(e.boss?.07:.065):Math.sin(cycle)*.018,
-        lift:e.type==='wraith'||e.type==='overlord'?Math.sin(cycle*.8)*3:walking?Math.abs(Math.sin(e.gait||0))*1.5:0,
-        stretch:ritual?.style==='blink'?power*.12:e.type==='slime'?Math.sin(cycle)*.06:e.charge>0?.07:0};
-    },
+    pose(e){return N.HostileVisuals.pose(e);},
     accents(c,e){this.intent(c,e);},
-    intent(c,e){
-      const r=this.ritual(e);if(!r)return;
-      const size=17+(e.game.reducedMotion?0:Math.sin(r.t*Math.PI)*5);
-      c.save();c.translate(e.x+57*e.scale,e.y-82*e.scale);c.strokeStyle=['voidseal','riftstep'].includes(r.action)?'#d6b3ff':['starfall','meteors'].includes(r.action)?'#ffbc8c':'#e8d5ee';c.fillStyle=c.strokeStyle;c.lineWidth=2;
-      const line=(x,y,a,b)=>{c.beginPath();c.moveTo(x,y);c.lineTo(a,b);c.stroke();};
-      if(['salvo','lances','starfall'].includes(r.action)){for(let i=-1;i<=1;i++){const x=i*size*.7;line(x,-size,x+(r.action==='lances'?i*7:0),size);if(r.action==='starfall'){line(x-4,0,x+4,0);line(x,-5,x,5);}}}
-      else if(['meteors','crossfire','soulring'].includes(r.action)){const count=r.action==='meteors'?3:r.action==='crossfire'?2:8;for(let i=0;i<count;i++){const a=i*Math.PI*2/count+(e.game.reducedMotion?0:r.t*.8);c.beginPath();c.arc(Math.cos(a)*size,Math.sin(a)*size,r.action==='crossfire'?8:3,0,Math.PI*2);c.stroke();}}
-      else if(r.action==='slash'){c.beginPath();c.arc(0,0,size,-1.2,1.2);c.stroke();line(0,-size,size,0);}
-      else if(r.action==='aegis'){c.beginPath();for(let i=0;i<=6;i++){const a=i*Math.PI/3;c[i?'lineTo':'moveTo'](Math.cos(a)*size,Math.sin(a)*size);}c.stroke();line(-6,0,6,0);line(0,-6,0,6);}
-      else if(r.action==='shockwave'){for(let i=0;i<3;i++){c.beginPath();c.arc(0,0,8+i*7,-2.8,-.3);c.stroke();}}
-      else if(r.action==='riftstep'){for(const x of [-10,10]){c.beginPath();c.ellipse(x,0,7,size,0,0,Math.PI*2);c.stroke();}}
-      else{c.beginPath();c.moveTo(0,-size);c.lineTo(size,0);c.lineTo(0,size);c.lineTo(-size,0);c.closePath();c.stroke();line(-8,-8,8,8);line(-8,8,8,-8);}
-      c.restore();
-    }
+    intent(c,e){N.HostileVisuals.ritual(c,e);}
   };
   N.drawEnemy=(c,images,enemy,x,y,w,h,state=null,progress=null)=>{
     let atlas=window.NOCTURNE_ENEMY_ATLAS,key='enemy_atlas_'+enemy.type,sheet=images[key];
     if(!sheet||!atlas){c.drawImage(images[enemy.type],x,y,w,h);return;}
     const q=enemy.guardian;
     const ritual=state===null&&progress===null?N.EnemyMotion.ritual(enemy):null;
+    if(!ritual&&state===null&&progress===null){const summon=N.HostileVisuals.summonProgress(enemy);if(summon>=0){state='attack';progress=.1+summon*.8;}}
     if(ritual&&images['enemy_ritual_'+enemy.type]){atlas=window.NOCTURNE_RITUAL_ATLAS;key='enemy_ritual_'+enemy.type;sheet=images[key];state=atlas.clips[ritual.action]?ritual.action:ritual.style;progress=ritual.t;}
     if(!state){state=enemy.terrified?'fear':q?.windup>0||(!['cultist','wraith'].includes(enemy.type)&&enemy.windup>0)||enemy.charge>0?'attack':enemy.hitSquash>0?'hurt':enemy.castTimer>0?'attack':enemy.frozen>0||enemy.moving===false?'idle':'walk';}
     const clip=atlas.clips[state];let t=progress;
@@ -86,7 +67,7 @@
       else t=(((state==='idle'||state==='fear'?enemy.phase:enemy.gait)||0)+(enemy.type==='gargoyle'?(enemy.phase||0)*.65:0))/(Math.PI*2)%1;
     }
     t=N.clamp(t,0,.999999);const position=t*clip.frames,index=Math.floor(position);
-    const row=atlas.rows?Math.max(0,atlas.directions.indexOf(enemy.facing||'S')):0;
+    const row=atlas.rows?Math.max(0,atlas.directions.indexOf(N.HostileVisuals.facing(enemy))):0;
     const draw=i=>{const frame=clip.start+i,columns=atlas.columns||Infinity,logicalRow=row*(atlas.rowStride||1)+Math.floor(frame/columns),logicalColumn=frame%columns,packing=window.NOCTURNE_PACKING?.[key],rect=packing?.rects[logicalRow*(packing.logicalWidth/atlas.width)+logicalColumn];
      if(rect){const [px,py,pw,ph,ox,oy]=rect;c.drawImage(sheet,px,py,pw,ph,x+ox*(w/atlas.width),y+oy*(h/atlas.height),pw*(w/atlas.width),ph*(h/atlas.height));}
      else N.Motion.draw(c,sheet,logicalColumn*atlas.width,logicalRow*atlas.height,atlas.width,atlas.height,x,y,w,h,enemy);};

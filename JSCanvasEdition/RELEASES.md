@@ -1,3 +1,13 @@
+# v5.2.6 — Enemy & Sovereign · 26 October 2026
+
+Built on the completed 5.2.5 package. Rebuilt all nine enemy families with depth-sorted offline solids, eight-direction anatomy-specific animation, distinct physical/spectral hit responses and family-specific collapse. Wardens gain enclosed heavy armor; Overlords gain regal layered armor, mantle and thick articulated wings. Eleven existing ritual poses follow authoritative preparation/release/recovery clocks. Low-health armor/wing changes derive from existing rage state.
+
+Added bounded level/trait structures, elite/veteran materials, blue-pennant summoned commanders, the principal Sovereign crown, and actual-child summoning cues. Boss satellites stay quiet when dormant; active mechanisms and Wraith emitters retain exact real firing origins. Automatic ranged fire keeps the body walking. Crowd detail and a 96-surface cache bound extra work without removing enemies, field effects or hostile warnings.
+
+Player art, cloth, environment, UI and field systems remain from 5.2.5. No gameplay/save migration, AI, collision, damage, spawn-count, attack-timing or reward change. Actual galleries, source generators, test results and measured performance are included. See [HOSTILES.md](HOSTILES.md), [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md). This source archive creates no GitHub release or tag.
+
+---
+
 # v5.2.5 — Visual Evolution & Polish · 26 October 2026
 
 Visual-only evolution from 5.2.4: deeper Witch/Demon coats and shoulders, articulated wing panels, isolated visible cloth masks and settling, distinct school hulls/grades, fixed muzzle/rear-recoil alignment, quieter passive rings, nearest-field selection, staged exact hostile outlines, biome materials/architecture, raised boss armor, projectile silhouettes and live Grimoire references.

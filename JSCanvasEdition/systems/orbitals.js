@@ -42,13 +42,14 @@ function origin(e,id){
 function emit(e,id){let f=flashes.get(e);if(!f){f=new Map();flashes.set(e,f);}f.set(id,e.game.time||0);return origin(e,id);}
 function flash(e,id){const t=flashes.get(e)?.get(id);return t===undefined?0:Math.min(1,Math.max(0,1-((e.game.time||0)-t)/.18));}
 function sprite(c,id,grade,col,size=1){
- const base=alias[id]||id,r=4.8+grade*.34,enemy=powers.includes(id)||base==='hostile';
+ const base=id==='spectral_hostile'?'hostile':alias[id]||id,r=4.8+grade*.34,enemy=powers.includes(id)||base==='hostile';
  c.save();c.scale(size,size);c.lineWidth=.9;c.strokeStyle=col;c.fillStyle=enemy?'#3e283b':'#273341';
  const poly=(pts,fill,stroke=true)=>{c.fillStyle=fill;c.beginPath();pts.forEach(([x,y],i)=>c[i?'lineTo':'moveTo'](x,y));c.closePath();c.fill();if(stroke)c.stroke();};
  const diamond=(x,y,rx,ry,fill)=>poly([[x-rx,y],[x,y-ry],[x+rx,y],[x,y+ry]],fill);
  c.fillStyle='#060b1455';c.beginPath();c.ellipse(0,7,r+2,2.3,0,0,TAU);c.fill();
  // Each school owns a silhouette: these are structures, not the same badge.
- if(base==='bolt'){diamond(0,0,r*.75,r*1.45,'#514664');poly([[-r*.75,0],[0,-r*1.45],[0,r*.8]],col,false);poly([[0,-r*1.45],[r*.75,0],[0,-1]],'#eee0f8',false);}
+ if(id==='spectral_hostile'){poly([[-6,-8],[-2,-4],[-4,2],[0,7],[-5,5],[-8,-1]],'#315566');poly([[3,-7],[7,-3],[6,5],[2,8],[3,2]],col);diamond(0,0,2.2,4,'#cde6eb');}
+ else if(base==='bolt'){diamond(0,0,r*.75,r*1.45,'#514664');poly([[-r*.75,0],[0,-r*1.45],[0,r*.8]],col,false);poly([[0,-r*1.45],[r*.75,0],[0,-1]],'#eee0f8',false);}
  else if(base==='orbit'){poly([[-7,-4],[-1,-6],[6,-1],[7,3],[0,5],[-5,1]],'#413b58');diamond(1,0,3,3,col);}
  else if(base==='lightning'){poly([[-6,-6],[-3,-6],[-2,3],[3,3],[4,-6],[7,-5],[6,6],[-6,6]],'#50606b');c.fillStyle=col;c.fillRect(-5,-6,2,4);c.fillRect(4,-6,2,4);diamond(0,1,2,3,'#d4f8f6');}
  else if(base==='nova'){for(let j=0;j<4;j++){c.save();c.rotate(j*TAU/4);diamond(0,-5,2.8,4,'#7387a8');c.restore();}diamond(0,0,3,3,col);}
@@ -103,7 +104,7 @@ function ringMotion(c,e,ring,r,col,low){
   for(let j=0;j<count;j++){const a=j*TAU/count+.08;arc(a,a+.32,r+1.4);}
   if(!low&&(player?ring.values[2]:ring.values[1])>0&&e.hp<e.maxHp){c.globalAlpha=.5;arc(t*.6,t*.6+.5,r-2);}
  }else if(ring.id==='mobility'){
-  const direction=player?Math.atan2(e.lastY??0,e.lastX??1):({E:0,SE:Math.PI/4,S:Math.PI/2,SW:Math.PI*.75,W:Math.PI,NW:-Math.PI*.75,N:-Math.PI/2,NE:-Math.PI/4}[e.facing]||0);
+  const direction=player?Math.atan2(e.lastY??0,e.lastX??1):({E:0,SE:Math.PI/4,S:Math.PI/2,SW:Math.PI*.75,W:Math.PI,NW:-Math.PI*.75,N:-Math.PI/2,NE:-Math.PI/4}[N.HostileVisuals?N.HostileVisuals.facing(e):e.facing]||0);
   c.globalAlpha=e.dashTimer>0?.9:e.moving?.55:.15;const run=frozen?0:t*(e.dashTimer>0?5:2);
   arc(direction+Math.PI+Math.sin(run)*.2-.45,direction+Math.PI+Math.sin(run)*.2+.45,r+1.5);
   if(!low){const q=player?1-Math.min(1,(e.dashRemaining||0)/Math.max(.01,e.dashCooldown)): .5;arc(direction-.2,direction-.2+q*.6,r-2);}
@@ -143,10 +144,11 @@ function satellites(c,e,front){
  const list=ids(e),player=isPlayer(e),s=player?1:Math.min(1.8,e.scale||1),low=e.game.quality==='low'||(!player&&!e.boss&&e.game.enemies.length>80);
  const target=player?e.game.combat.nearest():e.game.player;
  for(const id of list){if(player&&id==='orbit')continue;const p=origin(e,id);if((p.depth>=0)!==front)continue;
- const grade=band(rank(e,id)),col=color(id,grade),f=flash(e,id);c.save();c.translate(p.x,p.y);
+ const grade=band(rank(e,id)),col=id==='hostile'&&e.type==='wraith'?'#9ccbd6':color(id,grade),f=flash(e,id);c.save();c.translate(p.x,p.y);
  const aim=target?Math.atan2(target.y-12-p.y,target.x-p.x):p.angle;
- const visualScale=s*(player?.68+.18*(p.depth+1)/2:.82);if(!front)c.globalAlpha*=.72;
- moduleDraw(c,e,id,grade,col,visualScale,aim,f,low,player&&e.evolved(id),player?e.progress.mastery[id]||0:0);
+ const q=e.guardian||e.tactics,awake=player||!e.boss||q?.action===id||(q?.releaseTime>0&&q.lastAction===id)||f>.03;
+ const visualScale=s*(player?.68+.18*(p.depth+1)/2:.82)*(awake?1:.44);if(!front)c.globalAlpha*=.72;if(!awake)c.globalAlpha*=.28;
+ moduleDraw(c,e,id,grade,col,visualScale,aim,f,low||!awake,player&&e.evolved(id),player?e.progress.mastery[id]||0:0);
 
  c.restore();
  }
@@ -155,7 +157,7 @@ function moduleDraw(c,e,id,grade,col,s,aim,f,low,evolved=false,mastery=0){
  c.save();c.rotate(aim);
  const anim=animation(e,id,grade,f),recoil=anim.recoil;
  // The emitter centre is the gameplay muzzle. Only the breech slides back.
- c.save();c.translate(-10*s-recoil,0);hull(c,id,grade,col,s);c.restore();
+ c.save();c.translate(-10*s-recoil,0);hull(c,id==='hostile'&&e.type==='wraith'?'spectral_hostile':id,grade,col,s);c.restore();
  c.save();c.translate(-10*s,0);c.scale(s,s);mechanism(c,e,id,grade,col,f,low);c.restore();
  c.strokeStyle=col;c.lineWidth=1.1;c.beginPath();c.moveTo(-5*s,0);c.lineTo(0,0);c.stroke();
  c.fillStyle=f>0?'#fff0d3':col;c.fillRect(-s,-1.1*s,2*s,2.2*s);

@@ -1,12 +1,23 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.5 · Visual Evolution & Polish**
+**Version 5.2.6 · Enemy & Sovereign**
 
 **JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
 
 The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
 
-## What's new in 5.2.5
+## What's new in 5.2.6
+
+- Rebuilt all nine enemy families as solid, depth-sorted baked models with individual anatomy and eight-direction animation.
+- Gelatinous Slime, jointed Skeleton, articulated stone wings, four-legged Hound, layered Cultist/Reaper cloth and translucent spectral Wraith motion.
+- Broad armored Wardens and regal winged Overlords with different proportions, mass, gestures and low-health appearances.
+- Trait structures, bounded level grades, elite/veteran regalia and blue-pennant summoned commanders distinct from the principal crowned Sovereign.
+- Eleven existing boss powers receive synchronized preparation, imminent release, activation and recovery. Automatic ranged firing retains its real emitter and does not repeat full-body casting.
+- Bounded hostile appearance caches, crowd detail priority and quality/reduced-motion fallbacks; existing gameplay, saves, player, fields and environment are preserved.
+
+Open [visual-gallery.html](visual-gallery.html) for real before/after art and animated sequences. [HOSTILES.md](HOSTILES.md) documents the current enemy system; [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md) contain executed checks and measurements.
+
+## Previous changes in 5.2.5
 
 - Deeper Witch/Demon models, folded mantles, articulated wing panels and clearer weighted animation.
 - Isolated mantle/skirt/ornament masks keep rigid anatomy and equipment stable; bounded cosmetic momentum replaces whole-body atlas bands.

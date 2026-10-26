@@ -258,5 +258,64 @@ class EvolutionAssetTests(unittest.TestCase):
             self.assertGreater(im.getchannel('A').getbbox()[3],170,key)
 
 
+class HostileAssetTests(unittest.TestCase):
+    def test_all_enemy_profiles_retain_solid_anatomical_depth(self):
+        regions={'slime':(80,111),'skeleton':(58,90),'gargoyle':(55,90),'hound':(70,104),'cultist':(65,100),'wraith':(65,100),'reaper':(65,100),'warden':(55,90),'overlord':(58,94)}
+        for kind,(top,bottom) in regions.items():
+            widths={}
+            for direction,row in [('S',0),('W',2),('E',6)]:
+                a=png('enemy_atlas_'+kind).crop((0,row*128,96,(row+1)*128)).getchannel('A');spans=[]
+                for y in range(top,bottom):
+                    xs=[x for x in range(20,77) if a.getpixel((x,y))>160]
+                    if xs:spans.append(max(xs)-min(xs)+1)
+                widths[direction]=sum(spans)/max(1,len(spans))
+            for direction in ('W','E'):
+                self.assertGreater(widths[direction],7 if kind=='skeleton' else 11,(kind,widths))
+                self.assertGreater(widths[direction]/max(1,widths['S']),.28,(kind,widths))
+
+    def test_all_eleven_boss_powers_change_geometry_not_only_colour(self):
+        for kind in ('warden','overlord'):
+            im=png('enemy_ritual_'+kind);shapes=[]
+            for state in range(11):
+                frame=state*6+2;x=frame%33*96;y=(14+frame//33)*128
+                a=im.crop((x,y,x+96,y+128)).getchannel('A').point(lambda v:255 if v>160 else 0)
+                shapes.append(hashlib.sha256(a.tobytes()).digest())
+            self.assertGreaterEqual(len(set(shapes)),10,kind)
+
+    def test_hound_has_distinct_four_leg_contact_poses(self):
+        im=png('enemy_atlas_hound');feet=[im.crop(((4+i)*96,101,(5+i)*96,128)).tobytes() for i in range(8)]
+        self.assertGreaterEqual(len(set(feet)),6)
+
+    def test_warden_and_overlord_have_different_silhouette_proportions(self):
+        widths={}
+        for kind in ('warden','overlord'):
+            a=png('enemy_atlas_'+kind).crop((0,25,96,77)).getchannel('A').point(lambda v:255 if v>150 else 0)
+            b=a.getbbox();widths[kind]=b[2]-b[0]
+        self.assertGreater(widths['overlord'],widths['warden']*1.18,widths)
+
+    def test_gel_and_spectral_materials_have_visible_translucent_interiors(self):
+        for kind in ('slime','wraith'):
+            a=png('enemy_atlas_'+kind).crop((0,0,96,128)).getchannel('A');count=0
+            for y in range(10,120):
+                for x in range(10,86):
+                    if 45<a.getpixel((x,y))<225 and all(a.getpixel((x+dx,y+dy))>0 for dx,dy in ((-1,0),(1,0),(0,-1),(0,1))):count+=1
+            self.assertGreater(count,70,(kind,count))
+
+    def test_transparent_faces_preserve_internal_opaque_colour(self):
+        from enemy_geometry import Mesh
+        m=Mesh(0);m.face([(-6,5,38),(6,5,38),(6,5,53),(-6,5,53)],(255,0,0,255),True)
+        m.face([(-6,10,38),(6,10,38),(6,10,53),(-6,10,53)],(0,0,255,128),True)
+        color=m.render().getpixel((48,79));self.assertGreater(color[0],60);self.assertGreater(color[2],60);self.assertGreater(color[3],230)
+
+    def test_new_mesh_rendering_is_deterministic_without_global_randomness(self):
+        from enemy_models import render_enemy
+        import random
+        state=random.getstate()
+        for kind in TYPES:
+            a=render_enemy(kind,angle=315,phase=1.2,action='walk').tobytes();b=render_enemy(kind,angle=315,phase=1.2,action='walk').tobytes()
+            self.assertEqual(hashlib.sha256(a).digest(),hashlib.sha256(b).digest(),kind)
+        self.assertEqual(random.getstate(),state)
+
+
 if __name__=="__main__":
     unittest.main(verbosity=2)

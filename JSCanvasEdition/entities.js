@@ -204,7 +204,7 @@
       this.lastHit=2;
       const dealt=Math.min(this.hp,damage);this.game.stats.damage+=dealt;
       this.game.stats.weapons[source]=(this.game.stats.weapons[source]||0)+dealt;
-      this.hp-=damage;this.flash=.1;this.hitSquash=.12;this.knockX+=vx*(this.boss?12:85);this.knockY+=vy*(this.boss?12:85);
+      this.hp-=damage;this.flash=.1;this.hitSquash=.12;N.HostileVisuals.noteHit(this,crit,vx,vy);this.knockX+=vx*(this.boss?12:85);this.knockY+=vy*(this.boss?12:85);
       if(this.boss){this.knockX=N.clamp(this.knockX,-45,45);this.knockY=N.clamp(this.knockY,-45,45);}
       const g=this.game;
       g.combat.burst(this.x,this.y-13,crit?13:7,'#fff9ee');
@@ -238,21 +238,21 @@
         c.beginPath();c.ellipse(this.x,this.y,r*t,r*.55*t,0,0,Math.PI*2);c.stroke();c.restore();return;
       }
       const appearance=N.Appearance.enemy(this);N.Appearance.enemyBack(c,this,appearance);
-      c.save();c.fillStyle='#080e1066';c.beginPath();c.ellipse(this.x,this.y+2,this.radius+3,this.radius*.4,0,0,Math.PI*2);c.fill();
+      c.save();N.HostileVisuals.shadow(c,this);
       if(this.elite||this.boss){c.strokeStyle=this.boss?'#cda57888':'#b8a17488';c.lineWidth=1.5;c.beginPath();c.ellipse(this.x,this.y+2,this.radius+5,this.radius*.5,0,0,Math.PI*2);c.stroke();}
-      const s=this.scale,bob=this.game.reducedMotion?0:Math.sin(this.phase)*1.3;
-      c.save();const pose=N.EnemyMotion.pose(this);c.translate(this.x,this.y-pose.lift);c.rotate(pose.lean);c.scale(1+pose.stretch,1-pose.stretch);const squash=this.game.reducedMotion?0:Math.sin(this.hitSquash/.12*Math.PI)*.09;
-      c.scale(1+squash,1-squash);
-      if(this.flash>0&&!this.game.reducedMotion)c.filter='brightness(1.35)';else if(this.frozen>0)c.filter='brightness(1.25) sepia(.3) hue-rotate(145deg)';
+      const s=this.scale,bob=this.game.reducedMotion?0:Math.sin(this.phase)*(this.type==='wraith'?.65:this.type==='overlord'?.3:0);
+      c.save();const pose=N.EnemyMotion.pose(this);c.translate(this.x,this.y-pose.lift);c.rotate(pose.lean);c.scale(1+pose.stretch,1-pose.stretch);
+      if(this.flash>0&&!this.game.reducedMotion&&this.game.quality!=='low')c.filter='brightness(1.15)';
       if(!window.NOCTURNE_ENEMY_ATLAS?.rows&&this.type==='hound'&&(this.windup>0||this.charge>0?this.chargeX<0:this.game.player.x<this.x))c.scale(-1,1);
       N.drawEnemy(c,this.game.images,this,-40*s,-99*s+bob,80*s,107*s);
+      N.HostileVisuals.local(c,this);
       c.restore();
       N.Appearance.enemyFront(c,this,appearance);N.EnemyMotion.accents(c,this);N.FinalGuardian.draw(this.game,this,c);N.Warfare.drawDodge(c,this);
       if(this.castTimer>0){c.globalCompositeOperation='lighter';c.strokeStyle='#d3b3d288';c.beginPath();c.arc(this.x,this.y-35*s,12+this.castTimer*30,0,Math.PI*2);c.stroke();c.globalCompositeOperation='source-over';}
-      if(this.hp<this.maxHp&&!this.boss){
+      if(this.hp<this.maxHp&&!this.boss&&(this.game.enemies.length<=100||N.dist2(this,this.game.player)<240**2)){
         c.fillStyle='#101617';c.fillRect(this.x-15,this.y-75*s,30,3);c.fillStyle=this.elite?'#d7b579':'#b8a293';c.fillRect(this.x-15,this.y-75*s,30*Math.max(0,this.hp/this.maxHp),3);
       }
-      if(this.boss||this.elite||this.hp<this.maxHp||N.dist2(this,this.game.player)<430**2){
+      if(this.boss||this.elite||this.tier==='veteran'||this.game.enemies.length<80&&(this.hp<this.maxHp||N.dist2(this,this.game.player)<430**2)){
         const trait=N.ENEMY_TRAITS[this.trait];c.fillStyle=this.tier==='veteran'?'#ecd09e':this.tier==='fodder'?'#9ea99f':trait.color;c.textAlign='center';c.font='9px Arial';c.fillText(`L${N.fmt(this.level)}${trait.icon?' '+trait.icon:''}`,this.x,this.y-82*s);
       }
       if(this.terrified){c.fillStyle='#e8b0d6';c.font='bold 13px Georgia';c.textAlign='center';c.fillText('FEAR',this.x,this.y-105*s);}

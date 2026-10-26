@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '5.2.5';
+  N.VERSION = '5.2.6';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);
@@ -422,7 +422,7 @@
       N.Environment.ambient(this,c);N.Sanctum.draw(this,c);this.combat.drawGround(c);this.abilities.draw(c);
       for(const drop of this.loot) if(this.visible(drop.x,drop.y,30)) drop.draw(c);
       const list=this.renderList;list.length=0;
-      for(const e of this.enemies) if(e.alive && this.visible(e.x,e.y)) list.push(e);
+      for(const e of this.enemies) if(e.alive && this.visible(e.x,e.y,e.boss?250:120)) list.push(e);
       this.gatherLandmarks(list);list.push(this.player);list.sort((a,b)=>a.y-b.y);
       for(const entity of list) entity.draw(c);
       this.combat.draw(c);N.drawVitality(this.player,c);N.Fields.foreground(this,c);

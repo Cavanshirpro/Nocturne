@@ -1,3 +1,9 @@
+# Enemy & Sovereign — v5.2.6
+
+[HOSTILES.md](HOSTILES.md) describes the current nine-family enemy models, anatomy, traits, hierarchy, phases and runtime bounds. The player/cloth/field/environment systems from v5.2.5 remain current. Open the [renderer gallery](visual-gallery.html) for executed art comparisons; see [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md) for results.
+
+---
+
 # Visual Evolution & Polish — v5.2.5
 
 The current art system is documented in [EVOLUTION.md](EVOLUTION.md), with measured costs in [PERFORMANCE.md](PERFORMANCE.md). See the real-renderer [gallery](visual-gallery.html). The following sections are historical release notes and do not override the current isolated cloth masks, packed atlases and orbital system.

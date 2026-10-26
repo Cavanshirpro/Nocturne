@@ -261,7 +261,7 @@
           c.globalAlpha=t*(this.game.quality==='low'?.08:.14);const a=window.NOCTURNE_ATLAS,sheet=this.game.images[(this.game.player.progress.demonTime>0?'demon':'witch')+'_atlas_'+r.facing],frame=a.clips.dash.start+1;c.drawImage(sheet,frame*a.width,0,a.width,a.height,r.x-40,r.y-99,80,107);
         }else if(r.kind==='corpse'){
           c.globalAlpha=t*.55;const s=r.scale*(.85+.15*t);
-          N.drawEnemy(c,this.game.images,{type:r.type,facing:r.facing,game:this.game},r.x-40*s,r.y-99*s+(1-t)*5,80*s,107*s,'death',1-t);
+          N.drawEnemy(c,this.game.images,{type:r.type,facing:r.facing,game:this.game},r.x-40*s,r.y-99*s+(1-t)*5,80*s,107*s,'death',1-t);N.HostileVisuals.defeat(c,r,t,this.game);
         }else{
           c.globalAlpha=t*.22;c.fillStyle='#9ca18e';c.beginPath();c.ellipse(r.x,r.y,r.radius*(2-t),r.radius*.55*(2-t),0,0,Math.PI*2);c.fill();
         }

@@ -1,0 +1,7 @@
+PASS exact 5.2.5 gameplay parity: initiate (720 fixed updates, interleaved rendering)
+PASS exact 5.2.5 gameplay parity: full-arsenal (720 fixed updates, interleaved rendering)
+PASS exact 5.2.5 gameplay parity: sovereign (720 fixed updates, interleaved rendering)
+PASS exact 5.2.5 gameplay parity: dense-fields (720 fixed updates, interleaved rendering)
+PASS exact 5.2.5 gameplay parity: hostile-traits (720 fixed updates, interleaved rendering)
+PASS exact 5.2.5 gameplay parity: command-hierarchy (720 fixed updates, interleaved rendering)
+PASS exact 5.2.5 gameplay parity: all-powers (1650 fixed updates, interleaved rendering)

@@ -1,0 +1,4 @@
+Command: node tests.mjs
+Final source including shared hostile attachment cache
+Exit status: 0
+264 test groups passed; 0 failed.

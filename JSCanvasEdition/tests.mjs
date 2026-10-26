@@ -18,7 +18,7 @@ const memory=new Map();
 const sandbox={console,Math:seededMath,Float32Array,localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame(){},document:{hidden:false,addEventListener(type,fn,options){if(!docEvents.has(type))docEvents.set(type,[]);docEvents.get(type).push({fn,options});},getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener(){},matchMedia:()=>({matches:false})};
 sandbox.window=sandbox;
 vm.createContext(sandbox);
-for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/motion.js','systems/orbitals.js','systems/fields.js','systems/environment.js','systems/presentation.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
+for(const name of ['assets.js','game.js','systems/progression.js','systems/difficulty.js','systems/abilities.js','systems/warfare.js','systems/guardian.js','systems/encounters.js','systems/vitality.js','systems/director.js','systems/balance.js','systems/animation.js','systems/appearance.js','systems/motion.js','systems/orbitals.js','systems/fields.js','systems/environment.js','systems/presentation.js','systems/hostile_visuals.js','systems/volumetric_regalia.js','systems/snapshots.js','systems/storage.js','systems/audio.js','entities.js','combat.js','ui.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),sandbox,{filename:name});
 const N=sandbox.Nocturne;
 const images=Object.fromEntries(Object.keys(sandbox.NOCTURNE_ASSETS).map(k=>[k,{}]));
 const create=()=>new N.Game({getContext:()=>context},images);
@@ -1261,5 +1261,36 @@ test('5.2.5 render-only systems never consume gameplay RNG or mutate hazards and
 });
 test('5.2.5 environment uses distinct deterministic biomes and bounded landmark caches',()=>{
  const g=create();g.reset();const keys=new Set();for(const wave of [1,4,7]){g.wave=wave;keys.add(N.Environment.themes[N.Environment.index(g)].ground);g.draw();}assert.equal(keys.size,3);assert.ok(g.landmarks.size<=96);const hash=N.Environment.hash(12,-19);assert.equal(N.Environment.hash(12,-19),hash);g.viewWidth=15000;g.viewHeight=15000;const list=[];N.Environment.gather(g,list);assert.ok(list.length<=48);g.quality='low';const low=[];N.Environment.gather(g,low);assert.ok(low.length<=24);assert.ok(g.landmarks.size<=96);
+});
+test('5.2.6 all nine anatomical motion profiles are distinct and freeze cleanly',()=>{
+ const g=create();g.reset();const signatures=new Set();for(const type of Object.keys(N.ENEMY_TYPES)){const e=new N.Enemy(g,type,0,0,1);e.moving=true;e.phase=1.2;e.gait=.8;const p=N.HostileVisuals.pose(e);assert.ok(Object.values(p).every(Number.isFinite));signatures.add(JSON.stringify(p));e.frozen=1;assert.deepEqual(JSON.parse(JSON.stringify(N.HostileVisuals.pose(e))),{lean:0,lift:0,stretch:0});}assert.equal(signatures.size,9);
+});
+test('5.2.6 hound charge artwork keeps its locked real charge direction without changing facing state',()=>{
+ const g=create();g.reset();const e=new N.Enemy(g,'hound',100,0,1);e.facing='S';e.chargeX=-1;e.chargeY=0;e.windup=.4;assert.equal(N.HostileVisuals.facing(e),'W');assert.equal(e.facing,'S');e.windup=0;e.charge=.2;assert.equal(N.HostileVisuals.facing(e),'W');e.charge=0;assert.equal(N.HostileVisuals.facing(e),'S');
+});
+test('5.2.6 hostile progression has five bounded grades and distinct existing roles',()=>{
+ const g=create();g.reset();const e=new N.Enemy(g,'overlord',0,0,1);for(const [level,expected]of [[1,0],[8,1],[20,2],[40,3],[80,4],[160,5],[1e100,5]]){e.level=level;assert.equal(N.HostileVisuals.grade(e),expected);}assert.equal(N.HostileVisuals.role(e),'boss');e.summonedBy=7;assert.equal(N.HostileVisuals.role(e),'commander');delete e.summonedBy;e.guardian={};assert.equal(N.HostileVisuals.role(e),'sovereign');const soldier=new N.Enemy(g,'skeleton',0,0,2);soldier.summonedBy=1;assert.equal(N.HostileVisuals.role(soldier),'soldier');
+});
+test('5.2.6 every family and trait draws finite, balanced, read-only art in both qualities and reduced motion',()=>{
+ const g=create();g.reset();let depth=0;const c=new Proxy({globalAlpha:1,save(){depth++;},restore(){depth--;assert.ok(depth>=0);}}, {get:(o,k)=>k in o?o[k]:(...args)=>{for(const x of args)if(typeof x==='number')assert.ok(Number.isFinite(x),String(k));},set:(o,k,v)=>{if(typeof v==='number')assert.ok(Number.isFinite(v),String(k));o[k]=v;return true;}});
+ for(const type of Object.keys(N.ENEMY_TYPES))for(const trait of ['none','armored','swift','mending','volatile']){const e=new N.Enemy(g,type,30,40,2,true,{level:160,tier:'veteran',trait});e.facing='NW';e.hitSquash=.1;e.burn=1;e.hp=e.maxHp*.3;g.enemies=[e];const before=JSON.stringify(N.captureWorld(g)),rng=seed;for(const quality of ['high','low'])for(const reduced of [false,true]){g.quality=quality;g.reducedMotion=reduced;e.draw(c);assert.equal(depth,0);}assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.equal(seed,rng);}
+});
+test('5.2.6 boss stages follow existing windup and release timers for all eleven powers',()=>{
+ const g=strongFight(),e=g.boss,q=e.guardian;const actions=['salvo','meteors','slash','aegis','soulring','riftstep','lances','starfall','crossfire','shockwave','voidseal'];for(const action of actions){q.action=action;q.lastAction=action;q.windupTotal=1;q.releaseTime=0;q.windup=.7;assert.equal(N.HostileVisuals.state(e).stage,'preparation');q.windup=.12;assert.equal(N.HostileVisuals.state(e).stage,'imminent');q.windup=0;q.action=null;q.releaseTime=.5;assert.equal(N.HostileVisuals.state(e).stage,'activation');q.releaseTime=.2;assert.equal(N.HostileVisuals.state(e).stage,'recovery');N.HostileVisuals.ritual(context,e);}q.releaseTime=0;q.ward=q.wardMax*.5;assert.equal(N.HostileVisuals.state(e).stage,'defending');
+});
+test('5.2.6 an idle active ward uses a steady guard pose instead of repeated chanting',()=>{
+ const g=strongFight(),e=g.boss,q=e.guardian;q.action=null;q.releaseTime=0;q.windup=0;q.salvo=0;q.dodgeTime=q.dodgeWindup=0;q.ward=q.wardMax/2;e.phase=0;const t=N.EnemyMotion.ritual(e).t;e.phase=19;assert.equal(N.EnemyMotion.ritual(e).t,t);assert.equal(N.EnemyMotion.ritual(e).action,'aegis');
+});
+test('5.2.6 ordinary hostile automatic fire keeps real origins and does not cast the body repeatedly',()=>{
+ const g=create();g.reset();g.time=4;for(const type of ['cultist','wraith']){const e=new N.Enemy(g,type,250,0,1);e.attackTimer=0;e.castTimer=0;const origin=N.Orbitals.origin(e,'hostile');e.update(.01);const shot=g.combat.hostile.active.at(-1);assert.equal(shot.x,origin.x);assert.equal(shot.y,origin.y);assert.equal(e.castTimer,0);assert.equal(N.EnemyMotion.ritual(e),null);}
+});
+test('5.2.6 private directional critical feedback never enters actor snapshots or gameplay RNG',()=>{
+ const g=create();g.reset();const e=new N.Enemy(g,'hound',100,0,2);g.enemies=[e];g.time=2;const before=JSON.stringify(N.captureWorld(g)),rng=seed;N.HostileVisuals.noteHit(e,true,10,-20);N.HostileVisuals.feedback(context,e);g.time=1;N.HostileVisuals.feedback(context,e);assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.equal(seed,rng);assert.ok(!Object.hasOwn(e,'visualHit'));
+});
+test('5.2.6 actual summon hierarchy yields commander and soldier art without changing any spawn data',()=>{
+ const g=strongFight(),e=g.boss;e.guardian.tier=4;g.summonMinions(e);const commander=g.enemies.find(x=>x.summonedBy===e.id&&x.type==='overlord');assert.ok(commander);assert.equal(N.HostileVisuals.role(commander),'commander');assert.equal(N.HostileVisuals.role(e),'sovereign');const before=JSON.stringify(N.captureWorld(g));assert.ok(N.HostileVisuals.summonProgress(e)>=0);N.HostileVisuals.summoning(context,e);assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.ok(g.enemies.filter(x=>x.summonedBy).length<=18);
+});
+test('5.2.6 defeat fragments consume no pools and introduce no reward or lifetime delay',()=>{
+ const g=create();g.reset();const before=JSON.stringify(N.captureWorld(g)),pools=['effects','particles','remnants'].map(k=>g.combat[k].active.length);for(const type of ['warden','overlord','wraith'])for(const quality of ['high','low']){g.quality=quality;N.HostileVisuals.defeat(context,{type,x:0,y:0,scale:2.2},.4,g);}assert.deepEqual(['effects','particles','remnants'].map(k=>g.combat[k].active.length),pools);assert.equal(JSON.stringify(N.captureWorld(g)),before);
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;
