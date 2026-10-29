@@ -1,4 +1,4 @@
-"""v5.2.6 solid hostile anatomy. Baked mesh artwork, not live 3D.
+"""v0.7.6 solid hostile anatomy. Baked mesh artwork, not live 3D.
 
 The logical atlas, eight facings, six ordinary clips and eleven ritual names
 are preserved. Pose progress is supplied by the existing authoritative timers.

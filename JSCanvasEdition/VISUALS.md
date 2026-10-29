@@ -1,22 +1,22 @@
-# Enemy & Sovereign — v5.2.6
+# Enemy & Sovereign — v0.7.6
 
-[HOSTILES.md](HOSTILES.md) describes the current nine-family enemy models, anatomy, traits, hierarchy, phases and runtime bounds. The player/cloth/field/environment systems from v5.2.5 remain current. Open the [renderer gallery](visual-gallery.html) for executed art comparisons; see [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md) for results.
+[HOSTILES.md](HOSTILES.md) describes the current nine-family enemy models, anatomy, traits, hierarchy, phases and runtime bounds. The player/cloth/field/environment systems from v0.7.5 remain current. Open the [renderer gallery](visual-gallery.html) for executed art comparisons; see [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md) for results.
 
 ---
 
-# Visual Evolution & Polish — v5.2.5
+# Visual Evolution & Polish — v0.7.5
 
 The current art system is documented in [EVOLUTION.md](EVOLUTION.md), with measured costs in [PERFORMANCE.md](PERFORMANCE.md). See the real-renderer [gallery](visual-gallery.html). The following sections are historical release notes and do not override the current isolated cloth masks, packed atlases and orbital system.
 
 ---
 
-# Read the Battle — v5.2.4 visual guide
+# Read the Battle — v0.7.4 visual guide
 
-See [FIELDS.md](FIELDS.md) for current field meanings, ownership, danger geometry, clutter limits and individual orbital mechanisms. [ORBITALS.md](ORBITALS.md) describes the shared emitter and save rules inherited from 5.2.3. Historical costume descriptions below do not override the current passive-circle/active-satellite system.
+See [FIELDS.md](FIELDS.md) for current field meanings, ownership, danger geometry, clutter limits and individual orbital mechanisms. [ORBITALS.md](ORBITALS.md) describes the shared emitter and save rules inherited from 0.7.3. Historical costume descriptions below do not override the current passive-circle/active-satellite system.
 
 ---
 
-# Orbit & Flow — v5.2.3 art guide
+# Orbit & Flow — v0.7.3 art guide
 
 The current visual system is documented in [ORBITALS.md](ORBITALS.md). Old costume badge/fitted-fixture sections below are historical and are superseded by passive circles and active emitters. Character meshes are baked only; live rendering uses Canvas sprites, ellipses, cached hulls and a bounded atlas-band effect.
 
@@ -24,7 +24,7 @@ The new `previews/orbital-system.gif` shows passive circles, automatic player fi
 
 ---
 
-# Sculpted Realms — v5.2.2 art guide
+# Sculpted Realms — v0.7.2 art guide
 
 The current player artwork comes from `witch_models.py`: a small offline mesh renderer with depth-sorted surfaces, a fixed orthographic camera and camera-space shading. Ellipsoids, oriented limb tubes and thick ring profiles give the body and clothing real depth before baking. The game still uses Canvas 2D and embedded PNG atlases; it does not require WebGL.
 
@@ -40,9 +40,9 @@ The following sections document the earlier visual passes and the underlying gam
 
 # Living Regalia — v5.2.x art guide
 
-## v5.2.1: Sculpted Silhouettes
+## v0.7.1: Sculpted Silhouettes
 
-The v5.2.1 model pass corrects profile-specific collapse of planar clothing and hat elements. The offline Pillow model now produces deeper robe cross sections, a pitched elliptical hat brim, volumetric skull shading, profile facial details and staggered boot heels. A Canvas pass adds projection-consistent skirt facets and rim occlusion.
+The v0.7.1 model pass corrects profile-specific collapse of planar clothing and hat elements. The offline Pillow model now produces deeper robe cross sections, a pitched elliptical hat brim, volumetric skull shading, profile facial details and staggered boot heels. A Canvas pass adds projection-consistent skirt facets and rim occlusion.
 
 Thirteen permanent stat channels are represented by three grouped equipment systems, with constrained sub-marks instead of dozens of overlapping symbols. Learned spells keep all twelve dedicated attachment slots and ranks; mastery, evolutions, relics, talents, rituals, oath, essence and Demon upgrades remain readable. All drawing reads existing gameplay fields without storing cosmetic progression.
 
@@ -50,7 +50,7 @@ Thirteen permanent stat channels are represented by three grouped equipment syst
 
 
 
-This release changes presentation: models, costume composition, animation, projectile art and a read-only grimoire portrait. It retains the v5.1.3 simulation, AI, difficulty, hitboxes, damage, timers, summons and save schema.
+This release changes presentation: models, costume composition, animation, projectile art and a read-only grimoire portrait. It retains the v0.6.3 simulation, AI, difficulty, hitboxes, damage, timers, summons and save schema.
 
 Open **[visual-gallery.html](visual-gallery.html)** for animated comparisons made with the actual game renderer. Motion can be paused, and the gallery respects reduced-motion preferences. Images are local and work offline. Enemy comparison models use a normalized drawing scale; actual game sizes stay unchanged.
 

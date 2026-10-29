@@ -1,91 +1,50 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**Version 5.2.6 · Enemy & Sovereign**
+**<!-- version -->v0.7.6<!-- /version --> · Enemy & Sovereign · Initial development**
 
-**JSCanvasEdition** is the HTML5 Canvas and JavaScript implementation of [Nocturne — Witch of Ash](https://github.com/Cavanshirpro/Nocturne), a dark-fantasy, top-down arena survival game. Move through the Hollow, build a spell arsenal, gather loot, and defeat each wave's final guardian.
+The HTML5 Canvas and JavaScript edition of [Nocturne — Witch of Ash](../README.md). Survive the Hollow, build a spell arsenal, gather loot and defeat each wave's Final Sovereign.
 
-The game runs locally in a modern browser. No game engine, account, build step, npm package, or internet connection is required for play. Images are embedded in `assets.js`; sound effects are synthesized through Web Audio.
+[Download ZIP](https://github.com/Cavanshirpro/Nocturne/releases/latest) · [Play](#play) · [Controls](#controls) · [Release notes](RELEASES.md) · [Versioning](../VERSIONING.md)
 
-## What's new in 5.2.6
+![Upgraded Witch, Final Sovereign, attack warnings and the current HUD](previews/gameplay.png)
 
-- Rebuilt all nine enemy families as solid, depth-sorted baked models with individual anatomy and eight-direction animation.
-- Gelatinous Slime, jointed Skeleton, articulated stone wings, four-legged Hound, layered Cultist/Reaper cloth and translucent spectral Wraith motion.
-- Broad armored Wardens and regal winged Overlords with different proportions, mass, gestures and low-health appearances.
-- Trait structures, bounded level grades, elite/veteran regalia and blue-pennant summoned commanders distinct from the principal crowned Sovereign.
-- Eleven existing boss powers receive synchronized preparation, imminent release, activation and recovery. Automatic ranged firing retains its real emitter and does not repeat full-body casting.
-- Bounded hostile appearance caches, crowd detail priority and quality/reduced-motion fallbacks; existing gameplay, saves, player, fields and environment are preserved.
+*Demonstration scene captured from this version's actual renderer.*
 
-Open [visual-gallery.html](visual-gallery.html) for real before/after art and animated sequences. [HOSTILES.md](HOSTILES.md) documents the current enemy system; [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md) contain executed checks and measurements.
+## Visual examples
 
-## Previous changes in 5.2.5
+### Witch and Demon progression
 
-- Deeper Witch/Demon models, folded mantles, articulated wing panels and clearer weighted animation.
-- Isolated mantle/skirt/ornament masks keep rigid anatomy and equipment stable; bounded cosmetic momentum replaces whole-body atlas bands.
-- Twelve distinct satellite hulls, five structural grades, restrained passive rings and fixed real muzzle anchors.
-- Near-player field selection, growing brambles, mist, inward rifts and staged hostile warnings; exact danger rims remain visible over combat effects.
-- Separate Hollow / Ember / Moonlit materials and architecture, faded occluding props, stronger boss armor and school-specific projectile art.
-- Refined charcoal/gold HUD and a Grimoire renderer lab for normal/evolved/mastered modules and field behaviours.
-- Lossless packed enemy atlases reduce the calculated active raw RGBA image area from 182 MiB to 98 MiB; see [PERFORMANCE.md](PERFORMANCE.md) for measured frame costs and caveats.
+![Witch and Demon progression with learned spell equipment](previews/player-regalia.gif)
 
-Open [visual-gallery.html](visual-gallery.html) for the actual renderer's comparisons. [EVOLUTION.md](EVOLUTION.md) describes this release, [VALIDATION.md](VALIDATION.md) its checks. The earlier design notes below are release history; current circles/satellites and isolated cloth supersede older costume fixtures and horizontal bands.
+*Actual rendered player progression and Demon form.* [Still image](previews/player-regalia.png)
 
-## Previous changes in 5.2.4
+### Enemy roles
 
-- **Readable fields:** Thorn uses vines and means ally damage + slow, not healing. Veil uses cyan feathers, Rift has inward spirals, Meteor has a crater/impact motif. Ownership tags and a grimoire field guide explain them.
-- **Clear hostile warnings:** solid hatched danger boundaries, activation timers, a distinct Void Seal lock, and a truly empty shock-ring opening with mint exit guides. The visible outer circles/annuli now follow their real collision geometry. The boss arena uses quiet segmented stone architecture instead of a red attack-like floor.
-- **Less allied clutter:** nearby overlapping allied fields share a visual representation, with bounded field/detail/label budgets and stronger limits during boss battles. All real effects still exist and deal their original damage. Every visible hostile warning remains drawn.
-- **Individual satellite animation:** twelve school mechanisms: crystal, comet, coil, petals, embers, rail, leaves, iris, rotor, piston, triad and shards. Orbital hover, recoil and cached shaded hulls share the real emitter positions.
-- **Individual passive-ring behaviour:** defence reacts to hits/healing, mobility follows movement/dash, and focus arcs react to charging. Quality and reduced-motion settings limit decorative work without moving shots to another muzzle.
+![Regular, elite veteran, summoned commander and Final Sovereign](previews/hostile-roles-v526.png)
 
-Open [visual-gallery.html](visual-gallery.html) for the animated field and mechanism comparisons. See [FIELDS.md](FIELDS.md) for the exact meanings and visual limits.
+Nine families have solid, eight-direction artwork and individual motion. Traits, veteran regalia and command roles remain readable as your build grows.
 
-## Previous changes in 5.2.3
+### Boss attack stages
 
+![Preparation, imminent release, activation and recovery for Warden and Overlord attacks](previews/boss-stages-v526.png)
 
-- **Passive circles, active satellites:** defence, movement and focus upgrades appear in restrained rings. Automatic spells have distinct orbiting emitter hulls instead of costume badges. Enemy armour/mending/swiftness and ranged/boss skills use the same system.
-- **Real emission points:** primary bolts, Rapid Fire, Heavy Cannon, Burst and Glacial Seed start at their visible satellite. Lightning and beams originate there; targeted fields have delivery trails. Twin Gates retain their warned remote portal origins.
-- **Clear body animation:** automatic fire leaves idle/walk animation alone. Deliberate directed rituals, Aegis, transformation, hurt and dash retain body poses. Ordinary ranged enemies and sustained guardian salvos follow the same separation.
-- **Motion and cloth:** longer strides, stronger hand gestures and speed-reactive lower-sprite bands suggest fabric movement without a live mesh, physics solver or WebGL. Two bands on low quality/dense ordinary crowds, at most six otherwise; reduced motion uses one static atlas draw.
-- **Readable growth:** hull facets, brighter tones and inset grade marks grow in five bounded grades. Gold fins mark evolution; small top insets mark mastery. Passive ring colour and thickness reflect their current grades. Exact ranks remain in the grimoire.
-- **Complete offline source:** regenerated directional sprites, an animated shared-system demonstration and a five-grade comparison are included.
+Eleven boss powers synchronize body gestures and warning stages with their real attack clocks. The crowned guardian is distinct from its summoned commanders.
 
-See [ORBITALS.md](ORBITALS.md) for the exact mapping and implementation boundaries. Open [visual-gallery.html](visual-gallery.html) for the actual renderings.
+### Spell mechanisms and field warnings
 
-## Previous changes in 5.2.2
+![Animated spell emitters and field warning examples](previews/mechanisms-v525.gif)
 
+Twelve school-specific satellite mechanisms, bounded visual grades, allied field motifs and exact hostile warning boundaries. [Still image](previews/mechanisms-v525.png)
 
-- **Solid sculpted characters:** the Witch and Demon are rebuilt from shaded, depth-sorted meshes baked into all eight directional sprite atlases. Rounded shoulders, thick sleeves, faces, boots, fitted coats and a solid hat brim replace the earlier flat panels.
-- **Fitted equipment:** twelve different solid spell fixtures, a chest cuirass, focus bracer, boot fittings and compact inset ornaments preserve progression without stacking long floating outlines. All thirteen permanent training categories have visible effects.
-- **Tactical compass minimap:** fixed local scale, player heading, north, separate boss/elite markers, valuable pickups, sanctum boundaries and a distance label. Distant targets stay visible at the edge. Dense swarms share map cells to limit marker drawing. Responsive placement avoids the boss and power panels.
-- **Right-click modal fix:** the browser context menu is suppressed even if a level-up menu appears while charging. Editable text fields retain their clipboard menus.
-- **Complete offline package:** regenerated artwork, animated eight-direction gallery, map examples and all source files are included. Runtime version and versioned script URLs identify this build as 5.2.2.
+Open **[visual-gallery.html](visual-gallery.html)** locally for the complete animated gallery, enemy states, boss rituals and historical comparisons. It includes pause and reduced-motion support. Some comparison images retain old development labels; [VERSIONING.md](../VERSIONING.md#historical-numbering-migration) maps them to the current scheme.
 
-Open [visual-gallery.html](visual-gallery.html) for the new player, direction and minimap galleries.
+## Current release
 
-## Previous visual work (5.2.1)
+**<!-- version -->v0.7.6<!-- /version --> — Enemy & Sovereign** rebuilds nine enemy families, distinguishes elites and commanders, and synchronizes eleven boss rituals. It retains the previous player, field, environment and gameplay systems. The versioning update normalizes labels and release packaging without changing save schemas or gameplay.
 
+See [HOSTILES.md](HOSTILES.md) for the enemy renderer, [RELEASES.md](RELEASES.md) for the full history, and [VALIDATION.md](VALIDATION.md) / [PERFORMANCE.md](PERFORMANCE.md) for archived validation and measurement details. Earlier visual systems are documented in [EVOLUTION.md](EVOLUTION.md), [FIELDS.md](FIELDS.md), [ORBITALS.md](ORBITALS.md) and [VISUALS.md](VISUALS.md).
 
-
-- Deeper robe, skull, hat and boot geometry keeps side views solid in all eight directions. This is lightweight 2.5D artwork rendered with Canvas, not a real-time 3D engine.
-- Permanent upgrades form three readable equipment groups: offensive focus, defensive cuirass and mobility fittings. All twelve spell attachments, mastery, evolutions, talents and relics remain represented.
-- Atlas-frame blending smooths motion at normal/high quality. Low quality and reduced motion keep a single sprite draw.
-- All embedded atlases and player previews are included and regenerated. Open `index.html` to play; no patch installer or asset generation is needed.
-
-## Features inherited from 5.2.0
-
-- **Living Regalia:** learned spells become visible staff, bracer, shoulder, belt and mantle equipment. All twelve spell pieces coexist; mastery, evolutions, relics, talents, directed rituals, oath and permanent upgrades refine the costume.
-- **Rebuilt player model:** layered brocade, jointed arms, fingers, individual boots, moving hair, a face plane, a sculpted hat and a forked staff. Coven palettes and five level milestones change the regalia.
-- **Demon Ascendant:** a separate eight-direction model with 192 frames, plus articulated wings, antlers and armor that grow with stacked form power. Your learned equipment stays visible.
-- **Nine renewed enemy families:** engraved armor, masks, manes, spectral ribbons, wing facets, skull cores and articulated weapons. Level, traits, elite status and commander identity appear on their bodies.
-- **Eleven distinct boss casting rigs:** 1,056 directional power frames, supported by attack-specific body effects. No generic casting pose shared by all eleven attacks.
-- **Readable magic:** different projectile shapes, charge-sensitive ward facets and a large, read-only current-costume portrait in the grimoire. High-haste casting remains visibly animated.
-- **Visual release:** v5.1.3 damage, AI, difficulty, summons, timers, hitboxes, controls, progression and save rules are retained.
-
-![Living Regalia player progression](previews/player-regalia.png)
-
-Open **[visual-gallery.html](visual-gallery.html)** for animated player/enemy/boss comparisons. See **[VISUALS.md](VISUALS.md)** for the complete equipment mapping and art notes.
-
-See [RELEASES.md](RELEASES.md) for version-specific changes and migration notes.
+The game runs locally in a modern browser. No game engine, account, build step, npm package or internet connection is required for play. Images are embedded in `assets.js`; sound effects use Web Audio.
 
 ## Play
 
@@ -213,7 +172,7 @@ There are **24 independent local save slots**, with renaming and JSON backup exp
 
 Export a backup from **SAVES** before upgrading. Replace the edition's files together, then use the same browser, profile, and game address. Clearing site data, private browsing, a different localhost port, or a different browser can make local saves unavailable. Direct-file save behavior depends on the browser.
 
-v5.2.0 accepts the supported v5.1.3/v5.1.2/v5.1.1/v5.1.0/v5.0 saves. Player progression, essence, merchant stock, health, sanctums, attacks and cooldowns remain. A fighting v5.1.2 guardian receives tactics once **without changing its current or maximum vitality**; its ward percentage and attack clocks remain, and the arena expands. Earlier guardians follow their existing vitality migration. Snapshots preserve army ownership/depth, the primary guardian's identity, sidestep clocks, suppression, ring gaps and seal warnings. Appearance is derived from existing state; v5.2.0 needs no cosmetic save migration. Saves made after migration load exactly without repeating it. Older supported v3/v4 data still follows the existing migration path.
+The current release retains support for v0.6.3/v0.6.2/v0.6.1/v0.6.0/v0.5.0 saves. Player progression, essence, merchant stock, health, sanctums, attacks and cooldowns remain. A fighting v0.6.2 guardian receives tactics once **without changing its current or maximum vitality**; its ward percentage and attack clocks remain, and the arena expands. Earlier guardians follow their existing vitality migration. Snapshots preserve army ownership/depth, the primary guardian's identity, sidestep clocks, suppression, ring gaps and seal warnings. Appearance is derived from existing state; no cosmetic save migration is needed. Saves made after migration load exactly without repeating it. Older supported saves (legacy v3/v4 labels) still follow the existing migration path. Release renumbering does not change save schemas, local storage keys or stored character progress.
 
 ## Source layout
 

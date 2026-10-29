@@ -1,6 +1,6 @@
-# v5.1.3 balance calibration
+# v0.6.3 balance calibration
 
-Retained by the v5.2.0 visual release; gameplay tuning is unchanged.
+Retained by the v0.7.0 visual release; gameplay tuning is unchanged.
 
 The objective is a readable challenge for both a lightly equipped character and a heavily upgraded merchant build at the **same character level**. Permanent upgrades are retained. Ordinary swarm pressure has limits; final-guardian vitality follows damage output beyond those limits.
 
@@ -13,9 +13,9 @@ The objective is a readable challenge for both a lightly equipped character and 
 - The guardian snapshots the live build on encounter entry. Its vitality is estimated single-target DPS × `(32 + min(8, wave × 0.5) + 2 × pressure)`, with a small 300-health minimum. Unlike swarm pressure, the offensive health budget has no low multiplier ceiling. A numerical representation guard of 1e150 prevents overflow.
 - Guardian attack budgeting uses vitality and sublinear armor scaling. Each attack also has a separate effective-health ceiling; armor and player shields still apply. Temporary Demon bonuses and stored essence do not inflate permanent difficulty.
 
-## v5.1.3 offensive pressure
+## v0.6.3 offensive pressure
 
-Vitality tuning is retained from v5.1.2. Combat tier `clamp(max(floor((rating−100)/160), floor((effectiveLevel−20)/30)), 0, 4)` now drives actual offense and defense. Main recovery is `3.8 / (1 + 0.45 × tier)` seconds, or `2.8 / (1 + 0.45 × tier)` when enraged, in addition to visible windups/bursts. Tier 2+ adds a separate marked ground impact every `4.8 − 0.5 × tier` seconds. Wards grow from 8% to 18% of boss health, with finite duration and a reactive-burst cooldown. No dodge grants invulnerability. Tier 1+ attacks have a minimum threat floor of `min(0.55 × per-hit ceiling, attack fraction × (0.25 + 0.1 × tier))` of snapshotted effective health, bounded by the existing upper ceiling. At tier 4, a salvo shot retains at least 9.75% maximum-vitality pressure after armor; armor still protects against other enemies and larger raw hits.
+Vitality tuning is retained from v0.6.2. Combat tier `clamp(max(floor((rating−100)/160), floor((effectiveLevel−20)/30)), 0, 4)` now drives actual offense and defense. Main recovery is `3.8 / (1 + 0.45 × tier)` seconds, or `2.8 / (1 + 0.45 × tier)` when enraged, in addition to visible windups/bursts. Tier 2+ adds a separate marked ground impact every `4.8 − 0.5 × tier` seconds. Wards grow from 8% to 18% of boss health, with finite duration and a reactive-burst cooldown. No dodge grants invulnerability. Tier 1+ attacks have a minimum threat floor of `min(0.55 × per-hit ceiling, attack fraction × (0.25 + 0.1 × tier))` of snapshotted effective health, bounded by the existing upper ceiling. At tier 4, a salvo shot retains at least 9.75% maximum-vitality pressure after armor; armor still protects against other enemies and larger raw hits.
 
 Arena radius considers build tier and attack range (maximum 1,700). Leaving the boundary by more than 65 units reduces boss damage taken by 90%; targeted attacks still follow remote positions with a warning. HP never resets. Higher tiers summon at most two commanders and 18 total army members; summon depth forbids recursion. These bounds prevent overwhelming entity counts while keeping spawned troops relevant to high builds.
 

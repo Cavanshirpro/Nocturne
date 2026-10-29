@@ -1,4 +1,4 @@
-# Fields — v5.2.5 Visual Evolution & Polish
+# Fields — v0.7.5 Visual Evolution & Polish
 
 ## What the green areas mean
 

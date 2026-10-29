@@ -1,4 +1,4 @@
-# Orbitals — v5.2.5
+# Orbitals — v0.7.5
 
 This edition remains Canvas 2D with baked directional sprites. Distinct satellite hulls, circle ellipses, layered wings and isolated baked cloth masks create depth; there is no live 3D model, WebGL requirement or cloth-physics solver.
 
@@ -33,11 +33,11 @@ Ranks 1, 2, 4, 8 and 16 begin the five hull grades. Higher ranks remain valid bu
 
 `systems/orbitals.js` owns the shared positions. Stable school slots prevent learning a school from rearranging other modules. Orbit phase is derived from saved world time, so a resumed game retains the same muzzle positions. Low/high quality and reduced motion do not change projectile origins. In reduced motion the functional orbit still moves with world time; cloth flutter and cosmetic recoil stop. Gameplay projectiles keep moving as usual.
 
-The 5.2.4 authoritative origin formula is unchanged in 5.2.5. The visible muzzle is fixed on that anchor; only the rear hull slides during recoil. Rear hulls are dimmer and depth-scaled for readability.
+The 0.7.4 authoritative origin formula is unchanged in 0.7.5. The visible muzzle is fixed on that anchor; only the rear hull slides during recoil. Rear hulls are dimmer and depth-scaled for readability.
 
 Muzzle timestamps are stored in a WeakMap and are intentionally not saved. A loaded game may lose the last fraction of a cosmetic flash, but shot positions, damage, world time and cooldowns remain saved. Drawing does not consume gameplay RNG or mutate actor state.
 
-Projectile starts and Lance corridors move with the emitters by design; this is not a claim of pixel-identical collision behaviour with 5.2.2. Target selection, damage, volley counts, cooldowns and travel distances retain their original formulas.
+Projectile starts and Lance corridors move with the emitters by design; this is not a claim of pixel-identical collision behaviour with 0.7.2. Target selection, damage, volley counts, cooldowns and travel distances retain their original formulas.
 
 Walk/dash frame blending is limited to the final 30% of a frame interval so the main pose remains crisp while fabric motion stays continuous. Deliberate gestures retain their smoother transitions.
 

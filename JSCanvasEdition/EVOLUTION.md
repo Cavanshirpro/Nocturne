@@ -1,6 +1,6 @@
-# v5.2.5 — Visual Evolution & Polish
+# v0.7.5 — Visual Evolution & Polish
 
-The baseline is the complete 5.2.4 **Read the Battle** package. This release changes the active Canvas renderers and their offline artwork. It does not change the game rules or save schema.
+The baseline is the complete 0.7.4 **Read the Battle** package. This release changes the active Canvas renderers and their offline artwork. It does not change the game rules or save schema.
 
 ## Art direction
 
@@ -22,7 +22,7 @@ A WeakMap keeps cosmetic directional momentum and delayed settling; it is outsid
 
 All twelve schools now have different primary hull silhouettes: faceted crystal, comet body, twin conductors, crystalline petals, ember rock, narrow rail, organic thorn leaves, framed aperture, twin-barrel rotor, broad cannon breech, three prongs and floating ice shards. Existing individual internal clocks remain, with restrained tails and body/slide mechanisms. Five grades introduce collars, armor, paired fins and an open crown; evolution adds gold structures and mastery adds three bounded insets.
 
-The **5.2.4 `origin()` formula is unchanged**. Visible muzzle marks sit on that origin. Recoil slides only the rear hull, leaving the barrel/energy anchor fixed. Learning another school, switching quality or reduced motion never changes these coordinates. Rear modules are dimmer and player hulls use a small depth scale, keeping a complete twelve-school build readable. Boss modules use the same shapes with threatening spikes. Moon Wisps retain their original real contact orbits.
+The **0.7.4 `origin()` formula is unchanged**. Visible muzzle marks sit on that origin. Recoil slides only the rear hull, leaving the barrel/energy anchor fixed. Learning another school, switching quality or reduced motion never changes these coordinates. Rear modules are dimmer and player hulls use a small depth scale, keeping a complete twelve-school build readable. Boss modules use the same shapes with threatening spikes. Moon Wisps retain their original real contact orbits.
 
 Normal passive rings are calmer. Defence segments brighten on protection/hits, mobility trails respond to movement and dash, and counter-rotating focus arcs strengthen during deliberate charging. These are small attached ellipses, distinct from world-space fields.
 

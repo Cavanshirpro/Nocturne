@@ -1,6 +1,6 @@
-# Enemy & Sovereign — v5.2.6
+# Enemy & Sovereign — v0.7.6
 
-This release starts from the completed v5.2.5 package. Player art, isolated cloth, field meanings, environment, HUD and progression rules are retained. The active enemy path is `Enemy.draw → drawEnemy / EnemyMotion → packed atlases`, with shared `Appearance / Orbitals` and the new `HostileVisuals` overlays. The older generic Presentation boss costume is no longer drawn over these bodies.
+This release starts from the completed v0.7.5 package. Player art, isolated cloth, field meanings, environment, HUD and progression rules are retained. The active enemy path is `Enemy.draw → drawEnemy / EnemyMotion → packed atlases`, with shared `Appearance / Orbitals` and the new `HostileVisuals` overlays. The older generic Presentation boss costume is no longer drawn over these bodies.
 
 ## Anatomy and movement
 
@@ -42,7 +42,7 @@ Every gesture reads `guardian` or `tactics` windup/release/dodge/ward state. Pre
 | Crown Shockwaves | Downward gesture; the existing ground rings retain their exact safe gaps |
 | Void Seal | Eye-shaped preparation motif; the existing silence field is authoritative |
 
-Boss modules stay small and subdued while dormant and become full-sized during their action/release or actual muzzle feedback. Their internal mechanisms retain school-specific motion. The `origin`, `emit` and `flash` functions match v5.2.5 exactly. Ordinary Cultist/Wraith firing does not repeatedly trigger a full-body cast.
+Boss modules stay small and subdued while dormant and become full-sized during their action/release or actual muzzle feedback. Their internal mechanisms retain school-specific motion. The `origin`, `emit` and `flash` functions match v0.7.5 exactly. Ordinary Cultist/Wraith firing does not repeatedly trigger a full-body cast.
 
 The gallery shows all eleven poses on both boss rigs to compare their anatomy. This is an animation showcase; it does not grant every pose as a new ability to ordinary Wardens. Compact hand marks are decorative, while the existing danger renderer alone defines dangerous ground geometry.
 
@@ -57,11 +57,11 @@ Automatic firing origins, collision shapes, movement speeds, cooldowns, warnings
 
 ## Gallery and reproduction
 
-Open [visual-gallery.html](visual-gallery.html) for actual v5.2.5/v5.2.6 families, 54 family/state cells, 54 trait cells, the command hierarchy, four attack stages and 22 boss pose sequences. The gallery has a pause control and respects reduced motion.
+Open [visual-gallery.html](visual-gallery.html) for actual v0.7.5/v0.7.6 families, 54 family/state cells, 54 trait cells, the command hierarchy, four attack stages and 22 boss pose sequences. The gallery has a pause control and respects reduced motion.
 
 ```bash
 python3 generate_assets.py
-node scripts/render_hostiles.cjs /path/to/v5.2.5/JSCanvasEdition
+node scripts/render_hostiles.cjs /path/to/v0.7.5/JSCanvasEdition
 node scripts/render_visuals.cjs
 ```
 

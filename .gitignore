@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+node_modules/
+.venv/
+dist/
+.DS_Store
+Thumbs.db
+JSCanvasEdition/nocturne-browser-verification.json
+JSCanvasEdition/nocturne-benchmark.json

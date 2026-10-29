@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import shutil
+import tempfile
 import unittest
 from functools import lru_cache
 
@@ -177,10 +179,18 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(gif.info['loop'],0)
 
     def test_generation_is_deterministic(self):
-        paths=[ROOT/"assets.js",ROOT/"walking-preview.gif",ROOT/"animation-preview.gif",ROOT/"enemy-animation-preview.gif",ROOT/"enemy-directions-preview.gif",ROOT/"boss-ritual-preview.gif"]
-        before=[hashlib.sha256(p.read_bytes()).digest() for p in paths]
-        subprocess.run([sys.executable,str(ROOT/"generate_assets.py")],check=True,stdout=subprocess.DEVNULL)
-        self.assertEqual(before,[hashlib.sha256(p.read_bytes()).digest() for p in paths])
+        # Determinism is measured within one toolchain. Pillow/platform changes
+        # can change encoded bytes and rasterization; never overwrite checked-in
+        # artwork while running verification.
+        names=['assets.js','walking-preview.gif','animation-preview.gif','enemy-animation-preview.gif','enemy-directions-preview.gif','boss-ritual-preview.gif']
+        with tempfile.TemporaryDirectory(prefix='nocturne-assets-') as directory:
+            output=Path(directory)
+            for name in ['generate_assets.py','witch_models.py','enemy_models.py','enemy_geometry.py']:
+                shutil.copyfile(ROOT/name,output/name)
+            def generate():
+                subprocess.run([sys.executable,str(output/'generate_assets.py')],check=True,stdout=subprocess.DEVNULL)
+                return [hashlib.sha256((output/name).read_bytes()).digest() for name in names]
+            self.assertEqual(generate(),generate())
 
     def test_boss_rituals_have_eleven_distinct_articulated_clips(self):
         for kind in ('warden','overlord'):

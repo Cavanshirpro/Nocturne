@@ -851,7 +851,7 @@ test('guardian windups, partial wards and salvo clocks freeze during pause',()=>
 test('guardian attack, aim, partial ward and health survive an exact world save',()=>{
  const g=finalFight(100,5),q=g.boss.guardian;q.next=0;q.cooldown=0;guardianTick(g,1.2);q.ward=Math.min(123,q.wardMax*.5);q.wardTime=1.75;g.boss.hp-=150;const before=JSON.stringify(q),hp=g.boss.hp,id=g.boss.id;g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));assert.ok(g.continueRun());assert.equal(JSON.stringify(g.boss.guardian),before);assert.equal(g.boss.hp,hp);assert.equal(g.boss.id,id);
 });
-test('v5.1.0 fighting guardian upgrades once while preserving health fraction and identity',()=>{
+test('v0.6.0 fighting guardian upgrades once while preserving health fraction and identity',()=>{
  const g=finalFight(20,5);g.checkpoint('wave');const c=g.save.data.checkpoint,b=c.world.enemies.find(e=>e.id===c.world.sanctum.bossId);delete b.guardian;b.type='warden';b.maxHp=800;b.hp=300;const id=b.id;assert.ok(g.save.validCheckpoint(c));g.continueRun();assert.equal(g.boss.id,id);assert.ok(g.boss.guardian);assert.ok(Math.abs(g.boss.hp/g.boss.maxHp-.375)<1e-10);const hp=g.boss.hp;g.checkpoint('wave');g.continueRun();assert.equal(g.boss.hp,hp);
 });
 test('corrupt guardian state is rejected instead of bypassing attack or ward recovery',()=>{
@@ -922,7 +922,7 @@ test('retry retains the current oath, prepared oath and merchant locks without c
  const g=create();g.reset();g.player.gold=200;g.player.progress.activeOath='stone';g.player.progress.shield=3;g.player.progress.preparedOath='fortune';g.ui.rollSlot(g.ui.slots[0]);g.ui.slots[0].locked=true;const id=g.ui.slots[0].item.id,price=g.ui.slots[0].price;g.die();g.retryWave();assert.equal(g.player.progress.activeOath,'stone');assert.equal(g.player.progress.shield,35);assert.equal(g.player.progress.preparedOath,'fortune');assert.equal(g.ui.slots[0].item.id,id);assert.equal(g.ui.slots[0].price,price);assert.equal(g.ui.slots[0].locked,true);
 });
 
-// v5.1.2: exercise distinct builds at the same character level.
+// v0.6.2: exercise distinct builds at the same character level.
 function equipStrong(p){Object.assign(p,{damage:600,attackInterval:.1,projectileCount:16,maxHp:500,armor:2});Object.assign(p.weapons,{rapid:4,cannon:3,lightning:4});p.hp=p.maxHp;}
 test('shop stats increase encounter pressure without a level gain',()=>{
  const g=create();g.reset();g.player.level=25;g.wave=5;N.Difficulty.start(g);const before={...g.difficulty.plan};equipStrong(g.player);N.Difficulty.start(g);const after=g.difficulty.plan;
@@ -1007,7 +1007,7 @@ test('Triune Lances hold their aim and are absorbed by the player Aegis',()=>{
 test('guardian reacts to distant or close players only after the opening rotation',()=>{
  const g=finalFight(),b=g.boss,q=b.guardian;q.next=7;g.player.x=b.x+q.range;N.FinalGuardian.begin(g,b);assert.equal(q.action,'starfall');q.next=8;g.player.x=b.x+20;g.player.y=b.y;N.FinalGuardian.begin(g,b);assert.equal(q.action,'riftstep');q.next=10;N.FinalGuardian.begin(g,b);assert.equal(q.action,'aegis');
 });
-test('v5.1.1 guardian migration preserves health, ward fractions and warning clocks once',()=>{
+test('v0.6.1 guardian migration preserves health, ward fractions and warning clocks once',()=>{
  const g=finalFight(25,5),b=g.boss,q=b.guardian;b.maxHp=200000;b.hp=70000;Object.assign(q,{schema:1,wardMax:8000,ward:2000,wardTime:2,windup:.65,action:'salvo',next:1});for(const k of ['pressure','rating','hitBudget','destinationX','destinationY'])delete q[k];
  g.checkpoint('wave');assert.ok(g.save.validCheckpoint(g.save.data.checkpoint));g.continueRun();const upgraded=g.boss;assert.equal(upgraded.guardian.schema,3);assert.ok(Math.abs(upgraded.hp/upgraded.maxHp-.35)<1e-10);assert.equal(upgraded.guardian.ward/upgraded.guardian.wardMax,.25);assert.equal(upgraded.guardian.windup,.65);const hp=upgraded.hp;g.checkpoint('wave');g.continueRun();assert.equal(g.boss.hp,hp);
 });
@@ -1087,7 +1087,7 @@ test('world saves retain army roles, primary boss identity, seal and ring warnin
 test('casting suppression saves exactly, freezes on pause and clears on death retry',()=>{
  const g=create();g.reset();N.Warfare.silence(g);g.checkpoint('wave');g.continueRun();assert.equal(g.player.progress.silenceTime,1.25);g.state='paused';g.update(20);assert.equal(g.player.progress.silenceTime,1.25);g.state='playing';g.die();g.retryWave();assert.equal(g.player.progress.silenceTime,0);assert.equal(g.player.progress.silenceGrace,0);
 });
-test('v5.1.2 guardians gain tactics once without changing their existing health',()=>{
+test('v0.6.2 guardians gain tactics once without changing their existing health',()=>{
  const g=strongFight(),b=g.boss;b.hp*=.4;const hp=b.hp,max=b.maxHp;b.guardian.schema=2;g.sanctum.radius=330;g.checkpoint('wave');assert.ok(g.continueRun());assert.equal(g.boss.hp,hp);assert.equal(g.boss.maxHp,max);assert.equal(g.boss.guardian.schema,3);assert.ok(g.sanctum.radius>330);g.checkpoint('wave');const state=JSON.stringify(g.boss.guardian);g.continueRun();assert.equal(JSON.stringify(g.boss.guardian),state);
 });
 test('corrupt new hazards, tactical clocks, army roles and suppression are rejected',()=>{
@@ -1107,7 +1107,7 @@ test('high-tier attack floors retain pressure against huge armor while respectin
 test('rapid impacts cannot pin a guardian or shift its main attack warning',()=>{
  const g=strongFight(),b=g.boss,q=b.guardian;for(let i=0;i<30;i++)b.hit(1,false,1,0);assert.ok(b.knockX<=45);q.next=6;N.FinalGuardian.begin(g,b);const x=b.x,y=b.y;b.update(.01);assert.equal(b.x,x);assert.equal(b.y,y);
 });
-test('v5.2 appearance is read-only across fully upgraded player, enemies and all eleven boss poses',()=>{
+test('v0.7.0 appearance is read-only across fully upgraded player, enemies and all eleven boss poses',()=>{
  const g=strongFight(),p=g.player;p.level=160;for(const id of N.SPELL_IDS){p.weapons[id]=8;p.relics[N.WEAPONS[id].relic]=true;p.progress.mastery[id]=20;}for(const id of Object.keys(N.TALENTS))p.progress.talents[id]=8;p.progress.demonTime=5;p.progress.demonPower=3;p.progress.demonDuration=30;
  const before=JSON.stringify(N.captureWorld(g)),player=JSON.stringify(Object.fromEntries(N.PLAYER_FIELDS.map(k=>[k,p[k]]))),progress=JSON.stringify(p.progress),random=seed;
  for(let i=0;i<4;i++){p.draw(context);for(const e of g.enemies)e.draw(context);N.Appearance.player(p);N.Appearance.enemy(g.boss);}
@@ -1158,7 +1158,7 @@ test('reduced motion disables cloth and recoil while functional emitters keep ex
 test('ward facets consume no charge and the grimoire portrait never changes player coordinates',()=>{
  const g=create();g.reset();g.abilities.shield();const charge=g.player.progress.aegis,x=g.player.x,y=g.player.y;g.player.draw(context);assert.equal(g.player.progress.aegis,charge);g.ui.toggleGrimoire();g.ui.drawRegaliaPortrait();assert.equal(g.player.x,x);assert.equal(g.player.y,y);
 });
-test('5.2.1 sprite blending respects quality and motion without changing animation state',()=>{
+test('0.7.1 sprite blending respects quality and motion without changing animation state',()=>{
  const g=create();g.reset();const a=g.player.animator,clip=sandbox.NOCTURNE_ATLAS.clips.walk;
  a.play('walk',{restart:true});a.time=clip.duration*2.85/clip.frames;
  const before=JSON.stringify(a),calls=[];
@@ -1167,130 +1167,130 @@ test('5.2.1 sprite blending respects quality and motion without changing animati
  calls.length=0;a.draw(c,images,'E',0,0,80,107,'witch',null,'low');assert.equal(calls.length,1);
  a.reduced=true;calls.length=0;a.draw(c,images,'E',0,0);assert.equal(calls.length,1);assert.equal(calls[0][1],clip.start*96);
 });
-test('5.2.2 context menu capture survives charging level-up and preserves editable menus',()=>{
+test('0.7.2 context menu capture survives charging level-up and preserves editable menus',()=>{
  const g=create();g.reset();g.state='playing';g.abilities.begin();assert.ok(g.abilities.charging);g.player.pendingLevels=1;g.ui.afterLevel='playing';g.ui.levelUp();assert.equal(g.abilities.charging,false);
  const listener=docEvents.get('contextmenu').at(-1);assert.equal(listener.options,true);
  for(const state of ['playing','levelup','paused']){g.state=state;const e={target:{closest:()=>null},defaultPrevented:false,preventDefault(){this.defaultPrevented=true;}};listener.fn(e);assert.equal(e.defaultPrevented,true,state);}
  const edit={target:{closest:()=>({})},preventDefault(){throw Error('Blocked text editing context menu');}};listener.fn(edit);
 });
-test('5.2.2 radar remains local, clamps distant goals and respects short screens',()=>{
+test('0.7.2 radar remains local, clamps distant goals and respects short screens',()=>{
  const g=create();g.reset();g.state='playing';
  for(const [width,height] of [[390,844],[844,390],[1440,900]]){g.width=width;g.height=height;const layout=N.radarLayout(g),before=layout.scale;g.sanctum={x:1e12,y:-1e12,radius:330,phase:'waiting'};const point=N.radarPoint(g,g.sanctum);assert.equal(N.radarLayout(g).scale,before);assert.ok(point.offscreen);assert.ok(point.x>=layout.x&&point.x<=layout.x+layout.size);assert.ok(point.y>=layout.y&&point.y<=layout.y+layout.size);assert.ok(layout.y+layout.size+42<=height);const snapshot=JSON.stringify(g.sanctum);N.drawRadar(g,context);assert.equal(JSON.stringify(g.sanctum),snapshot);}
 });
-test('5.2.2 minimap marker work stays bounded for dense swarms',()=>{
+test('0.7.2 minimap marker work stays bounded for dense swarms',()=>{
  const g=create();g.reset();g.state='playing';g.enemies=Array.from({length:10000},(_,i)=>({alive:true,x:i%50,y:i%30}));let dots=0;const c=new Proxy({save(){},restore(){},arc(){dots++;}},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});N.drawRadar(g,c);assert.ok(dots<200,dots);
 });
-test('5.2.2 every permanent upgrade category changes actual drawn equipment',()=>{
+test('0.7.2 every permanent upgrade category changes actual drawn equipment',()=>{
  const g=create();g.reset();g.player.facing='S';
  const trace=p=>{const out=[];const c=new Proxy({save(){},restore(){}},{get:(o,k)=>k in o?o[k]:(...a)=>out.push([k,...a]),set:(o,k,v)=>{out.push([k,v]);o[k]=v;return true;}});N.Appearance.playerBack(c,p);N.Appearance.playerFront(c,p);return JSON.stringify(out);};
  const before=trace(g.player);
  for(const [key,value] of [['damage',10000],['attackInterval',.01],['projectileCount',100],['critChance',8],['critMultiplier',20],['projectileSpeed',10000],['armor',100],['maxHp',10000],['regen',100],['speed',3000],['dashCooldown',.1],['pickupRadius',3000],['pierce',100]]){const p=Object.assign(Object.create(g.player),{[key]:value});assert.notEqual(trace(p),before,key+' has no visible equipment effect');}
 });
-test('5.2.3 automatic projectile families start at their visible satellite and never body-cast',()=>{
+test('0.7.3 automatic projectile families start at their visible satellite and never body-cast',()=>{
  const g=create();g.reset();const p=g.player,e=new N.Enemy(g,'warden',240,0,1);g.enemies=[e];p.projectileCount=1;p.projectileSpeed=510;
  for(const id of ['bolt','rapid','cannon','burst','glacier']){g.combat.clear();p.weapons[id]=8;g.time=1.75;const at=N.Orbitals.origin(p,id);if(id==='bolt')g.combat.fire(e);else g.combat.directedSpell(id);const shots=g.combat.projectiles.active.filter(b=>b.source===id);assert.ok(shots.length,id);for(const b of shots){assert.equal(b.x,at.x,id);assert.equal(b.y,at.y,id);}assert.equal(p.castTimer,0,id);assert.notEqual(p.animator.state,'cast',id);}
 });
-test('5.2.3 lightning, beam and targeted areas show emission without automatic gestures',()=>{
+test('0.7.3 lightning, beam and targeted areas show emission without automatic gestures',()=>{
  const g=create();g.reset();const p=g.player,e=new N.Enemy(g,'warden',180,0,1);g.enemies=[e];g.hash.insert(e);
  for(const id of ['lightning','lance','meteor','nova','thorn','rift']){p.weapons[id]=4;g.combat[id]();assert.equal(p.castTimer,0,id);assert.ok(N.Orbitals.flash(p,id)>0,id);}
  assert.ok(g.combat.effects.active.some(e=>e.kind==='delivery'));const beam=g.combat.effects.active.find(e=>e.kind==='lance'),at=N.Orbitals.origin(p,'lance');assert.equal(beam.x,at.x);assert.equal(beam.y,at.y);
 });
-test('5.2.3 hostile and guardian salvos use the common emitter; remote portals stay remote',()=>{
+test('0.7.3 hostile and guardian salvos use the common emitter; remote portals stay remote',()=>{
  const g=strongFight(),e=g.boss;g.time=3;g.combat.hostile.clear();
  for(const id of ['salvo','soulring']){const at=N.Orbitals.origin(e,id);g.combat.enemyShot(e.x,e.y,g.player.x,g.player.y,150,1,e,id);const b=g.combat.hostile.active.at(-1);assert.equal(b.x,at.x);assert.equal(b.y,at.y);}
  g.combat.enemyShot(400,500,0,0,100,1,e,'crossfire',true);assert.equal(g.combat.hostile.active.at(-1).x,400);assert.equal(g.combat.hostile.active.at(-1).y,500);
  const ranged=new N.Enemy(g,'cultist',g.player.x+200,g.player.y,999);assert.deepEqual(Array.from(N.Orbitals.ids(ranged)),['hostile']);ranged.attackTimer=0;ranged.update(.01);assert.equal(ranged.castTimer,0);assert.ok(N.Orbitals.flash(ranged,'hostile')>0);
 });
-test('5.2.3 orbital origin survives exact saves and is quality-independent',()=>{
+test('0.7.3 orbital origin survives exact saves and is quality-independent',()=>{
  const g=create();g.reset();g.time=17.2;g.player.weapons.cannon=8;const at=N.Orbitals.origin(g.player,'cannon');g.quality='low';g.reducedMotion=true;assert.deepEqual(N.Orbitals.origin(g.player,'cannon'),at);g.checkpoint('wave');assert.ok(g.continueRun());assert.deepEqual(N.Orbitals.origin(g.player,'cannon'),at);
 });
-test('5.2.3 passive ring grades and active module shapes grow without unbounded geometry',()=>{
+test('0.7.3 passive ring grades and active module shapes grow without unbounded geometry',()=>{
  const g=create();g.reset();for(const rank of [1,2,4,8,64,1e100]){g.player.weapons.cannon=rank;const grade=N.Orbitals.band(rank);assert.ok(grade>=1&&grade<=5);assert.ok(/^#[0-9a-f]{6}$/.test(N.Orbitals.color('cannon',grade)));}
  const elite=new N.Enemy(g,'skeleton',0,0,2,true,{level:160,trait:'armored',tier:'veteran'});assert.ok(N.Orbitals.passive(elite).length>0);elite.draw(context);assert.equal(N.Orbitals.ids(elite).length,0);
 });
-test('5.2.5 cosmetic cloth momentum responds to speed and settles without actor writes',()=>{
+test('0.7.5 cosmetic cloth momentum responds to speed and settles without actor writes',()=>{
  const g=create();g.reset();const p=g.player;p.moving=true;p.lastX=1;g.time=1;const normal=N.Motion.profile(p).strength;p.speed=1600;g.time+=.1;p.x+=160;assert.ok(N.Motion.profile(p).strength>normal);
  p.moving=false;const before=JSON.stringify(p,(k,v)=>k==='game'?undefined:v);g.time+=.1;const settling=N.Motion.profile(p);assert.ok(settling.strength>0);for(let i=0;i<30;i++){g.time+=.1;N.Motion.profile(p);}assert.equal(N.Motion.profile(p).strength,0);assert.equal(JSON.stringify(p,(k,v)=>k==='game'?undefined:v),before);
  g.reducedMotion=true;assert.equal(N.Motion.profile(p).strength,0);
 });
-test('5.2.5 intact low-quality and non-OffscreenCanvas fallbacks never shift rigid anatomy',()=>{
+test('0.7.5 intact low-quality and non-OffscreenCanvas fallbacks never shift rigid anatomy',()=>{
  const g=create();g.reset();g.enemies=Array.from({length:120},()=>({}));const e=new N.Enemy(g,'cultist',0,0,200);e.moving=true;const calls=[],c={drawImage(...a){calls.push(a);}};g.player.moving=true;
  for(const actor of [e,g.player])for(const quality of ['high','low']){calls.length=0;g.quality=quality;N.Motion.draw(c,{},0,0,96,128,2,3,80,107,actor);assert.equal(calls.length,1);assert.deepEqual(calls[0].slice(5),[2,3,80,107]);}
 });
-test('5.2.4 field identities distinguish ally Thorn from healing and hostile silence',()=>{
+test('0.7.4 field identities distinguish ally Thorn from healing and hostile silence',()=>{
  const base={x:0,y:0,radius:90,delay:.5,duration:2,age:.2};
  const thorn=N.Fields.info({...base,kind:'thorn'});assert.equal(thorn.team,'ALLY');assert.equal(thorn.effect,'DAMAGE + SLOW');assert.equal(thorn.phase,'warning');
  assert.equal(N.Fields.info({...base,kind:'veil'}).effect,'SLOW ONLY');assert.equal(N.Fields.info({...base,kind:'seal'},true).effect,'SILENCE');assert.equal(N.Fields.info({...base,kind:'circle',age:.7},true).phase,'active');assert.equal(N.Fields.info({...base,kind:'circle',age:3},true).phase,'expired');
 });
-test('5.2.4 shock ring opening and inner circle remain safe in the visible geometry',()=>{
+test('0.7.4 shock ring opening and inner circle remain safe in the visible geometry',()=>{
  const h={x:0,y:0,radius:200,inner:140,kind:'ring',angle:0,gap:1},p={x:170,y:0,radius:1};assert.equal(N.Fields.contains(h,p),false);p.x=-170;assert.equal(N.Fields.contains(h,p),true);p.x=-50;assert.equal(N.Fields.contains(h,p),false);
  const g=create();g.reset();g.state='playing';g.player.x=170;g.player.y=0;g.player.radius=1;g.combat.hazards.active=[{...h,age:.1,delay:1,duration:1,damage:1}];let labels=0;const c=new Proxy({fillText(){labels++;}},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});N.Fields.hud(g,c);assert.equal(labels,0);g.player.x=-170;N.Fields.hud(g,c);assert.equal(labels,1);
 });
-test('5.2.4 overlapping ally fields group visually with bounded plans and no simulation mutation',()=>{
+test('0.7.4 overlapping ally fields group visually with bounded plans and no simulation mutation',()=>{
  const g=create();g.reset();for(let i=0;i<2000;i++)g.combat.addArea('thorn',i%8,i%7,100,.1,3,10,4);const before=JSON.stringify(g.combat.areas.active),plan=N.Fields.plan(g);assert.ok(plan.length<=12);g.quality='low';assert.ok(N.Fields.plan(g).length<=6);N.Fields.draw(g,context);assert.equal(JSON.stringify(g.combat.areas.active),before);assert.equal(g.combat.areas.active.length,2000);
 });
-test('5.2.4 every hostile boundary remains drawn when allied clutter reaches its cap',()=>{
+test('0.7.4 every hostile boundary remains drawn when allied clutter reaches its cap',()=>{
  const g=create();g.reset();g.state='playing';for(let i=0;i<100;i++)g.combat.addArea('thorn',i*2,0,70,.1,3,10);for(let i=0;i<24;i++)g.combat.hazard(i*3,0,80,.8,10,.3);let arcs=0;const c=new Proxy({arc(...args){arcs++;assert.ok(args.every(Number.isFinite));}},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>{o[k]=v;return true;}});g.quality='low';N.Fields.draw(g,c);assert.ok(arcs>=24*3);assert.equal(g.combat.hazards.active.length,24);
 });
-test('5.2.4 orbital mechanics and passive ring animations have distinct bounded identities',()=>{
+test('0.7.4 orbital mechanics and passive ring animations have distinct bounded identities',()=>{
  const g=create();g.reset();const p=g.player,ids=N.SPELL_IDS;assert.equal(new Set(ids.map(id=>N.Orbitals.behaviour(id).mode)).size,12);
  g.time=1;const poses=ids.map(id=>N.Orbitals.animation(p,id,4,.5));assert.ok(poses.every(x=>Number.isFinite(x.phase)&&x.recoil<=4.5));assert.notEqual(N.Orbitals.animation(p,'rapid',4,.5).phase,N.Orbitals.animation(p,'cannon',4,.5).phase);
  const at=N.Orbitals.origin(p,'cannon');g.quality='low';g.reducedMotion=true;assert.deepEqual(N.Orbitals.origin(p,'cannon'),at);for(const id of ids){const a=N.Orbitals.animation(p,id,4,1);assert.equal(a.phase,0);assert.equal(a.recoil,0);}
 });
-test('5.2.5 visible cloth masks isolate three materials in every form, facing and clip',()=>{
+test('0.7.5 visible cloth masks isolate three materials in every form, facing and clip',()=>{
  const masks=sandbox.NOCTURNE_CLOTH;assert.equal(Object.keys(masks).length,16);
  for(const frames of Object.values(masks)){assert.equal(frames.length,24);for(const groups of frames){assert.equal(groups.length,3);for(const runs of groups){assert.equal(runs.length%3,0);assert.ok(runs.length<=3000);for(let i=0;i<runs.length;i+=3){assert.ok(runs[i]>=0&&runs[i]+runs[i+2]<=96);assert.ok(runs[i+1]>=0&&runs[i+1]<128);assert.ok(runs[i+2]>0);}}}}
 });
-test('5.2.5 packed enemy textures retain every logical frame with smaller decoded area',()=>{
+test('0.7.5 packed enemy textures retain every logical frame with smaller decoded area',()=>{
  let packed=0,logical=0;for(const [key,m] of Object.entries(sandbox.NOCTURNE_PACKING)){const bytes=Buffer.from(sandbox.NOCTURNE_ASSETS[key].split(',')[1],'base64'),w=bytes.readUInt32BE(16),h=bytes.readUInt32BE(20);assert.equal(w,2048);assert.ok(h<=4096);logical+=m.logicalWidth*m.logicalHeight;packed+=w*h;assert.equal(m.rects.length,key.startsWith('enemy_ritual')?528:264);for(const [x,y,rw,rh,ox,oy]of m.rects){assert.ok(x>0&&y>0&&x+rw<=w&&y+rh<=h);assert.ok(ox>=0&&oy>=0&&ox+rw<=96&&oy+rh<=128);}}
  assert.ok(packed<logical*.78,JSON.stringify({packed,logical}));
 });
-test('5.2.5 nearest allied fields cannot be lost between sampling strides',()=>{
+test('0.7.5 nearest allied fields cannot be lost between sampling strides',()=>{
  const g=create();g.reset();g.visible=()=>true;for(let i=0;i<5000;i++)g.combat.addArea('thorn',600+i,0,30,.1,3,1);const near=g.combat.areas.active[2013];near.x=2;near.y=0;near.radius=20;g.combat.addArea('veil',3,0,20,.1,3,0);g.combat.addArea('rift',4,0,20,.1,3,1);const before=JSON.stringify(g.combat.areas.active),plan=N.Fields.plan(g);assert.ok(plan.some(v=>v.area===near));assert.ok(plan.some(v=>v.area.kind==='veil'));assert.ok(plan.some(v=>v.area.kind==='rift'));assert.equal(JSON.stringify(g.combat.areas.active),before);assert.ok(plan.length<=12);
 });
-test('5.2.5 imminent and expiration art keep exact warning and collision timing',()=>{
+test('0.7.5 imminent and expiration art keep exact warning and collision timing',()=>{
  const a={kind:'ring',x:0,y:0,radius:200,inner:130,angle:.5,gap:1,delay:1,duration:.8,age:.8};assert.equal(N.Fields.stage(a),'imminent');assert.equal(N.Fields.phase(a),'warning');a.age=1.01;assert.equal(N.Fields.stage(a),'active');a.age=1.75;assert.equal(N.Fields.stage(a),'expiring');assert.equal(N.Fields.phase(a),'active');a.age=1.8;assert.equal(N.Fields.stage(a),'expired');
 });
-test('5.2.5 every satellite grade, evolution and mastery renders within a fixed path budget',()=>{
+test('0.7.5 every satellite grade, evolution and mastery renders within a fixed path budget',()=>{
  const g=create();g.reset();let count=0,depth=0;const c=new Proxy({save(){depth++;},restore(){depth--;assert.ok(depth>=0);}}, {get:(o,k)=>k in o?o[k]:(...args)=>{count++;for(const a of args)if(typeof a==='number')assert.ok(Number.isFinite(a),k);},set:(o,k,v)=>(o[k]=v,true)});
  for(const id of N.SPELL_IDS)for(const rank of [1,2,4,8,16,1e100]){count=0;N.Orbitals.inspect(c,g.player,id,rank,2,true,1e100);assert.ok(count<300,id+':'+count);assert.equal(depth,0);}
 });
-test('5.2.5 render-only systems never consume gameplay RNG or mutate hazards and actors',()=>{
+test('0.7.5 render-only systems never consume gameplay RNG or mutate hazards and actors',()=>{
  const g=create();g.reset();g.player.moving=true;g.combat.addArea('rift',0,0,100,.1,2,10);g.combat.hazard(10,20,100,1,10,.3);const before=JSON.stringify({fields:g.combat.areas.active,hazards:g.combat.hazards.active,progress:g.player.progress}),rng=seed;
  for(let i=0;i<8;i++){g.time=i*.05;g.draw();}assert.equal(seed,rng);assert.equal(JSON.stringify({fields:g.combat.areas.active,hazards:g.combat.hazards.active,progress:g.player.progress}),before);
 });
-test('5.2.5 environment uses distinct deterministic biomes and bounded landmark caches',()=>{
+test('0.7.5 environment uses distinct deterministic biomes and bounded landmark caches',()=>{
  const g=create();g.reset();const keys=new Set();for(const wave of [1,4,7]){g.wave=wave;keys.add(N.Environment.themes[N.Environment.index(g)].ground);g.draw();}assert.equal(keys.size,3);assert.ok(g.landmarks.size<=96);const hash=N.Environment.hash(12,-19);assert.equal(N.Environment.hash(12,-19),hash);g.viewWidth=15000;g.viewHeight=15000;const list=[];N.Environment.gather(g,list);assert.ok(list.length<=48);g.quality='low';const low=[];N.Environment.gather(g,low);assert.ok(low.length<=24);assert.ok(g.landmarks.size<=96);
 });
-test('5.2.6 all nine anatomical motion profiles are distinct and freeze cleanly',()=>{
+test('0.7.6 all nine anatomical motion profiles are distinct and freeze cleanly',()=>{
  const g=create();g.reset();const signatures=new Set();for(const type of Object.keys(N.ENEMY_TYPES)){const e=new N.Enemy(g,type,0,0,1);e.moving=true;e.phase=1.2;e.gait=.8;const p=N.HostileVisuals.pose(e);assert.ok(Object.values(p).every(Number.isFinite));signatures.add(JSON.stringify(p));e.frozen=1;assert.deepEqual(JSON.parse(JSON.stringify(N.HostileVisuals.pose(e))),{lean:0,lift:0,stretch:0});}assert.equal(signatures.size,9);
 });
-test('5.2.6 hound charge artwork keeps its locked real charge direction without changing facing state',()=>{
+test('0.7.6 hound charge artwork keeps its locked real charge direction without changing facing state',()=>{
  const g=create();g.reset();const e=new N.Enemy(g,'hound',100,0,1);e.facing='S';e.chargeX=-1;e.chargeY=0;e.windup=.4;assert.equal(N.HostileVisuals.facing(e),'W');assert.equal(e.facing,'S');e.windup=0;e.charge=.2;assert.equal(N.HostileVisuals.facing(e),'W');e.charge=0;assert.equal(N.HostileVisuals.facing(e),'S');
 });
-test('5.2.6 hostile progression has five bounded grades and distinct existing roles',()=>{
+test('0.7.6 hostile progression has five bounded grades and distinct existing roles',()=>{
  const g=create();g.reset();const e=new N.Enemy(g,'overlord',0,0,1);for(const [level,expected]of [[1,0],[8,1],[20,2],[40,3],[80,4],[160,5],[1e100,5]]){e.level=level;assert.equal(N.HostileVisuals.grade(e),expected);}assert.equal(N.HostileVisuals.role(e),'boss');e.summonedBy=7;assert.equal(N.HostileVisuals.role(e),'commander');delete e.summonedBy;e.guardian={};assert.equal(N.HostileVisuals.role(e),'sovereign');const soldier=new N.Enemy(g,'skeleton',0,0,2);soldier.summonedBy=1;assert.equal(N.HostileVisuals.role(soldier),'soldier');
 });
-test('5.2.6 every family and trait draws finite, balanced, read-only art in both qualities and reduced motion',()=>{
+test('0.7.6 every family and trait draws finite, balanced, read-only art in both qualities and reduced motion',()=>{
  const g=create();g.reset();let depth=0;const c=new Proxy({globalAlpha:1,save(){depth++;},restore(){depth--;assert.ok(depth>=0);}}, {get:(o,k)=>k in o?o[k]:(...args)=>{for(const x of args)if(typeof x==='number')assert.ok(Number.isFinite(x),String(k));},set:(o,k,v)=>{if(typeof v==='number')assert.ok(Number.isFinite(v),String(k));o[k]=v;return true;}});
  for(const type of Object.keys(N.ENEMY_TYPES))for(const trait of ['none','armored','swift','mending','volatile']){const e=new N.Enemy(g,type,30,40,2,true,{level:160,tier:'veteran',trait});e.facing='NW';e.hitSquash=.1;e.burn=1;e.hp=e.maxHp*.3;g.enemies=[e];const before=JSON.stringify(N.captureWorld(g)),rng=seed;for(const quality of ['high','low'])for(const reduced of [false,true]){g.quality=quality;g.reducedMotion=reduced;e.draw(c);assert.equal(depth,0);}assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.equal(seed,rng);}
 });
-test('5.2.6 boss stages follow existing windup and release timers for all eleven powers',()=>{
+test('0.7.6 boss stages follow existing windup and release timers for all eleven powers',()=>{
  const g=strongFight(),e=g.boss,q=e.guardian;const actions=['salvo','meteors','slash','aegis','soulring','riftstep','lances','starfall','crossfire','shockwave','voidseal'];for(const action of actions){q.action=action;q.lastAction=action;q.windupTotal=1;q.releaseTime=0;q.windup=.7;assert.equal(N.HostileVisuals.state(e).stage,'preparation');q.windup=.12;assert.equal(N.HostileVisuals.state(e).stage,'imminent');q.windup=0;q.action=null;q.releaseTime=.5;assert.equal(N.HostileVisuals.state(e).stage,'activation');q.releaseTime=.2;assert.equal(N.HostileVisuals.state(e).stage,'recovery');N.HostileVisuals.ritual(context,e);}q.releaseTime=0;q.ward=q.wardMax*.5;assert.equal(N.HostileVisuals.state(e).stage,'defending');
 });
-test('5.2.6 an idle active ward uses a steady guard pose instead of repeated chanting',()=>{
+test('0.7.6 an idle active ward uses a steady guard pose instead of repeated chanting',()=>{
  const g=strongFight(),e=g.boss,q=e.guardian;q.action=null;q.releaseTime=0;q.windup=0;q.salvo=0;q.dodgeTime=q.dodgeWindup=0;q.ward=q.wardMax/2;e.phase=0;const t=N.EnemyMotion.ritual(e).t;e.phase=19;assert.equal(N.EnemyMotion.ritual(e).t,t);assert.equal(N.EnemyMotion.ritual(e).action,'aegis');
 });
-test('5.2.6 ordinary hostile automatic fire keeps real origins and does not cast the body repeatedly',()=>{
+test('0.7.6 ordinary hostile automatic fire keeps real origins and does not cast the body repeatedly',()=>{
  const g=create();g.reset();g.time=4;for(const type of ['cultist','wraith']){const e=new N.Enemy(g,type,250,0,1);e.attackTimer=0;e.castTimer=0;const origin=N.Orbitals.origin(e,'hostile');e.update(.01);const shot=g.combat.hostile.active.at(-1);assert.equal(shot.x,origin.x);assert.equal(shot.y,origin.y);assert.equal(e.castTimer,0);assert.equal(N.EnemyMotion.ritual(e),null);}
 });
-test('5.2.6 private directional critical feedback never enters actor snapshots or gameplay RNG',()=>{
+test('0.7.6 private directional critical feedback never enters actor snapshots or gameplay RNG',()=>{
  const g=create();g.reset();const e=new N.Enemy(g,'hound',100,0,2);g.enemies=[e];g.time=2;const before=JSON.stringify(N.captureWorld(g)),rng=seed;N.HostileVisuals.noteHit(e,true,10,-20);N.HostileVisuals.feedback(context,e);g.time=1;N.HostileVisuals.feedback(context,e);assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.equal(seed,rng);assert.ok(!Object.hasOwn(e,'visualHit'));
 });
-test('5.2.6 actual summon hierarchy yields commander and soldier art without changing any spawn data',()=>{
+test('0.7.6 actual summon hierarchy yields commander and soldier art without changing any spawn data',()=>{
  const g=strongFight(),e=g.boss;e.guardian.tier=4;g.summonMinions(e);const commander=g.enemies.find(x=>x.summonedBy===e.id&&x.type==='overlord');assert.ok(commander);assert.equal(N.HostileVisuals.role(commander),'commander');assert.equal(N.HostileVisuals.role(e),'sovereign');const before=JSON.stringify(N.captureWorld(g));assert.ok(N.HostileVisuals.summonProgress(e)>=0);N.HostileVisuals.summoning(context,e);assert.equal(JSON.stringify(N.captureWorld(g)),before);assert.ok(g.enemies.filter(x=>x.summonedBy).length<=18);
 });
-test('5.2.6 defeat fragments consume no pools and introduce no reward or lifetime delay',()=>{
+test('0.7.6 defeat fragments consume no pools and introduce no reward or lifetime delay',()=>{
  const g=create();g.reset();const before=JSON.stringify(N.captureWorld(g)),pools=['effects','particles','remnants'].map(k=>g.combat[k].active.length);for(const type of ['warden','overlord','wraith'])for(const quality of ['high','low']){g.quality=quality;N.HostileVisuals.defeat(context,{type,x:0,y:0,scale:2.2},.4,g);}assert.deepEqual(['effects','particles','remnants'].map(k=>g.combat[k].active.length),pools);assert.equal(JSON.stringify(N.captureWorld(g)),before);
 });
 console.log(`\n${passed} test groups passed; ${failed} failed.`);if(failed)process.exitCode=1;

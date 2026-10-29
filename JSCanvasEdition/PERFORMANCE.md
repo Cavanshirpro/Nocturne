@@ -1,10 +1,12 @@
-# Rendering measurements — v5.2.6
+# Rendering measurements — v0.7.6
+
+> Historical evidence from 26 October 2026. Prose uses canonical version numbers; recorded logs, image labels and byte-identity claims refer to the original packages before the 30 October documentation/versioning update. See [version mapping](../VERSIONING.md).
 
 Measured on **26 October 2026**, headless Chromium 153, `--disable-gpu`, 1280×800, device scale 1. Each scene uses 20 warmups and 80 samples, timing `g.draw()` plus a 1×1 Canvas readback to flush rendering. Simulation is frozen while world-time art advances. These are **software draw costs**, excluding AI/collision updates, physical input, audio, presentation and thermal limits. They are not device FPS guarantees.
 
-## Final implementation versus completed v5.2.5
+## Final implementation versus completed v0.7.5
 
-| Scene | Quality | v5.2.5 median / P95 | v5.2.6 median / P95 |
+| Scene | Quality | v0.7.5 median / P95 | v0.7.6 median / P95 |
 | --- | --- | --- | --- |
 | swarm | high | 33.2 / 41.3 ms | 57.9 / 68.3 ms |
 | projectiles | high | 25.2 / 32.9 ms | 25.1 / 27.8 ms |
@@ -37,14 +39,14 @@ The `army` hierarchy uses the existing summon functions and limits. Every real h
 
 ## Asset area and encoded size
 
-| Metric | v5.2.5 | v5.2.6 |
+| Metric | v0.7.5 | v0.7.6 |
 | --- | --- | --- |
 | Active decoded image RGBA area | 97.79 MiB | 100.35 MiB |
 | Embedded PNG payload | 25,833,619 bytes | 18,810,779 bytes |
 | PNG records / active decodes | 64 / 55 | 64 / 55 |
 | Largest texture side | 2,304 px | 2,304 px |
 
-Active area sums `width × height × 4`, skipping the nine unused legacy walk strips. It is **not total browser RAM** and excludes decoded copies, encoded source strings, driver overhead, surfaces and caches. Enemy model replacement increases decoded area by about 2.55 MiB while compressing more efficiently. Transparent cell packing remains lossless, with logical offsets; player atlas pixels and cloth metadata remain identical to v5.2.5. PNG size and decoded area are different metrics.
+Active area sums `width × height × 4`, skipping the nine unused legacy walk strips. It is **not total browser RAM** and excludes decoded copies, encoded source strings, driver overhead, surfaces and caches. Enemy model replacement increases decoded area by about 2.55 MiB while compressing more efficiently. Transparent cell packing remains lossless, with logical offsets; player atlas pixels and cloth metadata remain identical to v0.7.5. PNG size and decoded area are different metrics.
 
 ## Hard bounds
 
@@ -63,7 +65,7 @@ Reduced motion disables procedural hostile deformation/lean/lift and defeat frag
 Authoring-only requirements: Playwright and local Chromium.
 
 ```bash
-NOCTURNE_CHROMIUM=/path/to/chromium node scripts/browser_bench.cjs /path/to/v5.2.5/JSCanvasEdition
+NOCTURNE_CHROMIUM=/path/to/chromium node scripts/browser_bench.cjs /path/to/v0.7.5/JSCanvasEdition
 ```
 
 The script serves both editions, runs old then new and writes `nocturne-benchmark.json`. Set `NOCTURNE_BENCH_REVERSE=1` to reverse that order, or `NOCTURNE_BENCH_RESULT` for the output path. Browser version, host load, GPU mode, scene order, warm caches, readback and resolution affect results. Hardware GPU, physical phone and Firefox/LibreWolf measurements have not been performed.

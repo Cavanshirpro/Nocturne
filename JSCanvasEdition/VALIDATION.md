@@ -1,6 +1,8 @@
-# Validation — v5.2.6
+# Validation — v0.7.6
 
-Executed on **26 October 2026**. Baseline: the completed, unpacked v5.2.5 full-source package.
+> Historical evidence from 26 October 2026. Prose uses canonical version numbers; recorded logs, image labels and byte-identity claims refer to the original packages before the 30 October documentation/versioning update. See [version mapping](../VERSIONING.md).
+
+Executed on **26 October 2026**. Baseline: the completed, unpacked v0.7.5 full-source package.
 
 ## Executed checks
 
@@ -19,7 +21,7 @@ Baseline comparisons interleave rendering with simulation, then compare serializ
 
 ## Source preservation
 
-The following files are byte-identical to v5.2.5: `systems/progression.js`, `difficulty.js`, `abilities.js`, `warfare.js`, `guardian.js`, `vitality.js`, `director.js`, `balance.js`, `snapshots.js`, `storage.js`, `audio.js`, `motion.js`, `appearance.js`, `environment.js`, `fields.js`, `presentation.js`; also `witch_models.py`, `generate_assets.py`, `ui.js`, `style.css`, `BALANCE.md`, `balance-probe.mjs` and `LICENSE`.
+The following files are byte-identical to v0.7.5: `systems/progression.js`, `difficulty.js`, `abilities.js`, `warfare.js`, `guardian.js`, `vitality.js`, `director.js`, `balance.js`, `snapshots.js`, `storage.js`, `audio.js`, `motion.js`, `appearance.js`, `environment.js`, `fields.js`, `presentation.js`; also `witch_models.py`, `generate_assets.py`, `ui.js`, `style.css`, `BALANCE.md`, `balance-probe.mjs` and `LICENSE`.
 
 Combat before `drawGround` and Game before `drawGround` match (version excluded). Player code and Loot match. Enemy simulation matches after removing the sole cosmetic `HostileVisuals.noteHit` hook, which writes a private WeakMap. Authoritative orbital `origin/emit/flash` match exactly. All nonenemy PNG records and player/cloth metadata remain identical. No save schema or gameplay RNG call is added. Frame-edge visibility margins change only in the draw loop.
 
@@ -28,7 +30,7 @@ Combat before `drawGround` and Game before `drawGround` match (version excluded)
 ```bash
 node tests.mjs
 python3 -m unittest test_assets.py
-node scripts/compare_gameplay.mjs /path/to/v5.2.5/JSCanvasEdition
+node scripts/compare_gameplay.mjs /path/to/v0.7.5/JSCanvasEdition
 ```
 
 The asset suite regenerates the full embedded atlas and checks deterministic output, reconstructed packed pixels, bounds and both player forms. It requires Pillow and can take several minutes.

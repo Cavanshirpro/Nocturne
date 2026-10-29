@@ -1,26 +1,38 @@
-# v5.2.6 — Enemy & Sovereign · 26 October 2026
+# JSCanvasEdition release notes
 
-Built on the completed 5.2.5 package. Rebuilt all nine enemy families with depth-sorted offline solids, eight-direction anatomy-specific animation, distinct physical/spectral hit responses and family-specific collapse. Wardens gain enclosed heavy armor; Overlords gain regal layered armor, mantle and thick articulated wings. Eleven existing ritual poses follow authoritative preparation/release/recovery clocks. Low-health armor/wing changes derive from existing rage state.
+Versions use **MAJOR.MINOR.PATCH** with MAJOR **0** during initial development. These notes use the canonical numbering; historical source snapshots, comparison images and validation logs may contain previous labels. See the [complete mapping and release policy](../VERSIONING.md).
+
+## v0.7.6 — Enemy & Sovereign · 30 October 2026
+
+Enemy artwork was prepared on 26 October; the canonical release and versioning update were published on 30 October.
+
+### Versioning and repository update
+
+- Normalized release numbers to `0.x.y`; current runtime, entry point, gallery and README labels agree with the root `VERSION` file.
+- Added version synchronization, CI checks and tagged-release source packaging with SHA-256 checksums.
+- Moved actual screenshots and animated examples to the top of both READMEs; corrected the root license statement and added contribution/reporting templates.
+- Preserved storage keys, save schemas and gameplay. Historical canonical tags retain their original source commits; old tags remain legacy aliases.
+- Asset determinism checks now generate twice in a temporary folder, preserving checked-in artwork and measuring repeatability within the installed Pillow toolchain. Browser verification closes the suite before offline startup and cleans up Chromium on failure.
+
+### Enemy & Sovereign artwork
+
+Built on the completed 0.7.5 package. Rebuilt all nine enemy families with depth-sorted offline solids, eight-direction anatomy-specific animation, distinct physical/spectral hit responses and family-specific collapse. Wardens gain enclosed heavy armor; Overlords gain regal layered armor, mantle and thick articulated wings. Eleven existing ritual poses follow authoritative preparation/release/recovery clocks. Low-health armor/wing changes derive from existing rage state.
 
 Added bounded level/trait structures, elite/veteran materials, blue-pennant summoned commanders, the principal Sovereign crown, and actual-child summoning cues. Boss satellites stay quiet when dormant; active mechanisms and Wraith emitters retain exact real firing origins. Automatic ranged fire keeps the body walking. Crowd detail and a 96-surface cache bound extra work without removing enemies, field effects or hostile warnings.
 
-Player art, cloth, environment, UI and field systems remain from 5.2.5. No gameplay/save migration, AI, collision, damage, spawn-count, attack-timing or reward change. Actual galleries, source generators, test results and measured performance are included. See [HOSTILES.md](HOSTILES.md), [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md). This source archive creates no GitHub release or tag.
+Player art, cloth, environment, UI and field systems remain from 0.7.5. No gameplay/save migration, AI, collision, damage, spawn-count, attack-timing or reward change. Actual galleries, source generators, test results and measured performance are included. See [HOSTILES.md](HOSTILES.md), [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md). The canonical GitHub release includes the current versioning and documentation update.
 
 ---
 
-# v5.2.5 — Visual Evolution & Polish · 26 October 2026
+## v0.7.5 — Visual Evolution & Polish · 26 October 2026
 
-Visual-only evolution from 5.2.4: deeper Witch/Demon coats and shoulders, articulated wing panels, isolated visible cloth masks and settling, distinct school hulls/grades, fixed muzzle/rear-recoil alignment, quieter passive rings, nearest-field selection, staged exact hostile outlines, biome materials/architecture, raised boss armor, projectile silhouettes and live Grimoire references.
+Visual-only evolution from 0.7.4: deeper Witch/Demon coats and shoulders, articulated wing panels, isolated visible cloth masks and settling, distinct school hulls/grades, fixed muzzle/rear-recoil alignment, quieter passive rings, nearest-field selection, staged exact hostile outlines, biome materials/architecture, raised boss armor, projectile silhouettes and live Grimoire references.
 
 Enemy/ritual textures use lossless transparent trimming and offsets. Active raw image area drops from ~182 MiB to ~98 MiB, excluding browser overhead and caches; file size is a separate metric. No gameplay/save migration is introduced. Damage, targeting, emitter positions, cooldowns, AI, spawning, progression and collisions are retained. [VALIDATION.md](VALIDATION.md), [PERFORMANCE.md](PERFORMANCE.md) and [EVOLUTION.md](EVOLUTION.md) contain reproducible details and limitations.
 
 ---
 
-# JSCanvasEdition release notes
-
-These notes apply only to `JSCanvasEdition` in [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturne).
-
-## v5.2.4 — Read the Battle
+## v0.7.4 — Read the Battle
 
 Full source package prepared: **2026-10-26**. No GitHub release/tag is created by this archive.
 
@@ -30,7 +42,7 @@ Full source package prepared: **2026-10-26**. No GitHub release/tag is created b
 - Added unique school-specific satellite mechanisms, hover/recoil profiles and responsive defence/mobility/focus ring arcs. Shot and draw origins remain shared, deterministic and quality-independent.
 - No damage, timing, targeting or save-schema change. Emitter positions intentionally gain shared, deterministic hover; only friendly visual representation is simplified in dense overlaps.
 
-## v5.2.3 — Orbit & Flow
+## v0.7.3 — Orbit & Flow
 
 Full source package prepared: **2026-10-26**. This archive does not create a GitHub tag or release.
 
@@ -41,7 +53,7 @@ Full source package prepared: **2026-10-26**. This archive does not create a Git
 - Added five bounded visual grades, evolution fins, mastery insets, quality/crowd limits and a 160-entry hull cache. Passive circles replace permanent stat badges on the body.
 - The save schema is unchanged. Emitters derive positions from saved actor/world state; muzzle feedback is transient.
 
-## v5.2.2 — Sculpted Realms
+## v0.7.2 — Sculpted Realms
 
 Full source package prepared: **2026-10-25**. No GitHub tag or release is created by this archive.
 
@@ -49,10 +61,10 @@ Full source package prepared: **2026-10-25**. No GitHub tag or release is create
 - Replaced the thin overlay pass with filled equipment fixtures, restrained inset mastery/level marks and thicker, shaded Demon wings. Permanent stat categories retain individual visual responses.
 - Rebuilt the minimap as a north-up compass with a fixed local scale, heading needle, priority threats, heal/jewel pickups, local sanctum radius, edge-clamped distant targets, distance/status footer and responsive HUD docking.
 - Capture-level context-menu suppression fixes right-button release over level-up cards; text editing menus remain available.
-- Updated the in-game version to 5.2.2, added asset URL versioning and refreshed generated galleries.
+- Updated the in-game version to 0.7.2, added asset URL versioning and refreshed generated galleries.
 - Damage, hitboxes, AI, cooldowns, progression and save schema remain unchanged. Input ownership and presentation are the scope of this release.
 
-## v5.2.1 — Sculpted Silhouettes
+## v0.7.1 — Sculpted Silhouettes
 
 Full source package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
 
@@ -62,13 +74,13 @@ Full source package prepared: **2026-10-25**. This archive does not publish a Gi
 - Walking and cast clips receive display-only crossfades at normal/high quality; low-quality rendering uses one atlas draw and reduced motion disables blending.
 - Combat, enemy AI, cooldowns, collision, controls, RNG, balance and save format are unchanged.
 
-## v5.2.0 — Living Regalia
+## v0.7.0 — Living Regalia
 
 Release package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
 
 ### A visual minor release
 
-v5.2.0 introduces a costume-composition system, rebuilt character artwork, a dedicated Demon model, expanded boss animation and a current-costume portrait. Its scope is presentation: the v5.1.3 balance, AI, attacks, damage, spawn rules, timers, controls, collision and save schema remain intact.
+v0.7.0 introduces a costume-composition system, rebuilt character artwork, a dedicated Demon model, expanded boss animation and a current-costume portrait. Its scope is presentation: the v0.6.3 balance, AI, attacks, damage, spawn rules, timers, controls, collision and save schema remain intact.
 
 ### Witch, equipment and Demon Ascendant
 
@@ -99,7 +111,7 @@ v5.2.0 introduces a costume-composition system, rebuilt character artwork, a ded
 
 - **230 logic/integration test groups passed**, including all twelve equipment pieces together, all eleven pose regions, finite geometry, balanced Canvas state, reduced-motion freezing, read-only drawing, fast casting and exact save restoration. Existing gameplay regression coverage remains.
 - **21 asset tests passed**, covering actual frame pixels, all directions, normal/Demon silhouettes, new power cells, border clipping, distinct animation poses and deterministic regeneration.
-- Scope verification against v5.1.3 found **11 gameplay-system files byte-identical**. Entity logic outside drawing, all combat simulation methods, 69 existing simulation/accessor methods, and every guardian rule outside drawing match their previous source. The game loop changed only its version label.
+- Scope verification against v0.6.3 found **11 gameplay-system files byte-identical**. Entity logic outside drawing, all combat simulation methods, 69 existing simulation/accessor methods, and every guardian rule outside drawing match their previous source. The game loop changed only its version label.
 - Native Canvas decoded all 58 PNGs, rendered all eleven warning scenes, a reinforced army, a narrow reduced-motion view and the real grimoire portrait; the portrait preserved player coordinates. Gallery frames also use the actual renderer.
 - Real-browser DOM/CSS, physical touch/audio and device performance checks were not run. Manual browser fixtures for the portrait and new atlases are included.
 
@@ -107,13 +119,13 @@ v5.2.0 introduces a costume-composition system, rebuilt character artwork, a ded
 
 Replace the complete `JSCanvasEdition` folder and use the same browser/profile and game address. Open `index.html` to play or `visual-gallery.html` to inspect the art. Only JSCanvasEdition files are included, with README, release notes, license and preserved credits.
 
-## v5.1.3 — Sovereign Dominion
+## v0.6.3 — Sovereign Dominion
 
 Release package prepared: **2026-10-25**. This archive does not publish a GitHub release or tag.
 
 ### Offense, range and arena counterplay
 
-- Retains v5.1.2 whole-build vitality tuning. New combat tiers (0–4) also drive attack recovery, shot count, ward strength, reinforcement roles and the guardian's unlocked attack deck.
+- Retains v0.6.2 whole-build vitality tuning. New combat tiers (0–4) also drive attack recovery, shot count, ward strength, reinforcement roles and the guardian's unlocked attack deck.
 - Sanctum radius grows with tier and player range, up to 1,700 units. Lances account for player range, and fixed-position attacks can pressure a player beyond the arena. The guardian remains leashed.
 - **Outer Seal:** more than 65 units outside the boundary activates a visible 90% guardian damage reduction. Returning removes it; boss health and progress never reset. Walking out and firing from safety no longer bypasses the encounter.
 - Tiered effective-health damage floors keep high-tier attacks relevant against extreme armor, while existing per-hit ceilings prevent one-shot escalation. Rapid impacts cannot pin a boss or drag a held warning.
@@ -140,7 +152,7 @@ Release package prepared: **2026-10-25**. This archive does not publish a GitHub
 
 ### Compatibility and validation
 
-- Existing supported saves remain usable. A fighting v5.1.2 guardian gains tactics and an expanded arena once without changing current/maximum vitality, while preserving ward percentage and attack clocks. New saves preserve all new clocks, army roles, seal warnings, ring gaps and suppression.
+- Existing supported saves remain usable. A fighting v0.6.2 guardian gains tactics and an expanded arena once without changing current/maximum vitality, while preserving ward percentage and attack clocks. New saves preserve all new clocks, army roles, seal warnings, ring gaps and suppression.
 - Aegis, manual banked essence, minimap, vitality cues and same-wave half-gold death recovery are retained. Retry clears temporary casting suppression.
 - **218 logic/integration groups passed**, including all eleven powers, ranged counterplay, ward recovery, dodge prediction, nonrecursive armies, boss identity, exact reloads, migration, suppression and death recovery.
 - **19 asset tests passed**, including 50 valid embedded PNGs, all ordinary/ritual frame boundaries and deterministic regeneration.
@@ -151,7 +163,7 @@ Release package prepared: **2026-10-25**. This archive does not publish a GitHub
 
 Back up the save, replace the complete `JSCanvasEdition` folder, and open `index.html` with the same browser/profile and game address. This archive contains only that edition, README, release notes, license, source and preserved credits.
 
-## v5.1.2 — Balance of Power
+## v0.6.2 — Balance of Power
 
 Release package prepared: **2026-10-23**. This package does not imply that a GitHub release or tag has been published.
 
@@ -172,7 +184,7 @@ Release package prepared: **2026-10-23**. This package does not imply that a Git
 - **Rift Step:** a clearly marked, locked destination inside the sanctum; the boss teleports there after its warning.
 - **Triune Lances:** three warned rays with space to move between them, also countered by Aegis.
 - The existing salvo, meteors, reaping arc and ward remain. The opening rotation shows all seven powers. Later choices react to distant/nearby players; enraged recovery and pressure add pace.
-- A fighting v5.1.1 guardian migrates once, preserving identity, health/ward percentages and attack clocks. New saves preserve all seven powers, including teleport destinations. Reloading an updated guardian never repeats its stat adjustment.
+- A fighting v0.6.1 guardian migrates once, preserving identity, health/ward percentages and attack clocks. New saves preserve all seven powers, including teleport destinations. Reloading an updated guardian never repeats its stat adjustment.
 
 ### Enemy motion
 
@@ -183,7 +195,7 @@ Release package prepared: **2026-10-23**. This package does not imply that a Git
 
 ### Compatibility and validation
 
-- v5.1.1 Aegis, same-wave half-gold death recovery, manual banked Demon Essence, health feedback, sanctums and minimap behavior are retained. Existing supported saves migrate without removing upgrades.
+- v0.6.1 Aegis, same-wave half-gold death recovery, manual banked Demon Essence, health feedback, sanctums and minimap behavior are retained. Existing supported saves migrate without removing upgrades.
 - **193 logic/integration test groups passed**, covering whole-build balance, bounded adaptation, invasion persistence, all seven guardian powers, damage ceilings, migration, exact saves, shields and retries.
 - **16 asset tests passed**, including all 48 embedded PNGs, directional poses, cell boundaries and deterministic regeneration.
 - Native Canvas decoded all 48 assets and rendered **six scene images**, including new powers, shield/telegraphs, reduced motion and a narrow viewport; all nine families and six animation states also rendered. This does not certify browser DOM/CSS layout or physical input/audio. Real-browser checks were not run.
@@ -193,7 +205,7 @@ Release package prepared: **2026-10-23**. This package does not imply that a Git
 
 Export a backup, replace the complete `JSCanvasEdition` folder, and use the same browser/profile and game address. Open `index.html`. The archive contains only `JSCanvasEdition/`, including README, release notes, license, source and existing credits.
 
-## v5.1.1 — Sovereign Reckoning
+## v0.6.1 — Sovereign Reckoning
 
 Release package prepared: **2026-10-23**.
 
@@ -227,17 +239,17 @@ Release package prepared: **2026-10-23**.
 
 ### Compatibility and validation
 
-- Existing v5.1.0 saves load normally. An already-fighting old guardian upgrades once while preserving its identity and health percentage. Existing player shields default to ready when the new Aegis fields are absent.
+- Existing v0.6.0 saves load normally. An already-fighting old guardian upgrades once while preserving its identity and health percentage. Existing player shields default to ready when the new Aegis fields are absent.
 - New world snapshots preserve guardian aim, warned ability, burst state, health, ward capacity and recovery, plus player Aegis state. Corrupt new state is rejected.
 - **167 logic/integration test groups passed**, including fivefold level scaling, special warnings, shield absorption/recovery, legacy migration, fatal contact/projectiles/hazards, same-wave retry, queued gifts and single-charge gold loss.
 - All **48 embedded PNG assets decoded** on native Canvas, and **five gameplay scenes rendered**, including Sovereign telegraphs, player Aegis, and retry. This checks Canvas rendering; it does not certify browser DOM/CSS layout or physical touch/audio output.
-- The included browser verification page has additional v5.1.1 keyboard, button, shield, guardian and retry checks. Real-browser checks were not run for this package.
+- The included browser verification page has additional v0.6.1 keyboard, button, shield, guardian and retry checks. Real-browser checks were not run for this package.
 
 ### Update
 
 Export a save backup, replace the complete `JSCanvasEdition` contents, then use the same browser/profile and game address. Open `index.html`. Only `JSCanvasEdition/` files are included; README, these notes, license and existing credits are retained.
 
-## v5.1.0 — Final Sanctum
+## v0.6.0 — Final Sanctum
 
 Release package prepared: **2026-10-23**. These notes do not imply that a GitHub release or tag has already been published.
 
@@ -269,8 +281,8 @@ Release package prepared: **2026-10-23**. These notes do not imply that a GitHub
 
 1. Export a JSON backup from **SAVES** before updating.
 2. Replace the complete `JSCanvasEdition` folder contents while retaining the same game origin/browser profile.
-3. Existing v5.0 banked essence and active forms are retained. Legacy forms receive the original base bonuses; future activations use the new charge rules.
-4. Existing v5.0 worlds without a sanctum field remain loadable. If the survival timer has already expired, a new final sanctum appears on the next simulation update.
+3. Existing v0.5.0 banked essence and active forms are retained. Legacy forms receive the original base bonuses; future activations use the new charge rules.
+4. Existing v0.5.0 worlds without a sanctum field remain loadable. If the survival timer has already expired, a new final sanctum appears on the next simulation update.
 5. Updated saves retain the exact sanctum/guardian state and remaining Demon time. Existing v3/v4 migrations remain supported.
 
 ### Validation for this package
@@ -278,13 +290,13 @@ Release package prepared: **2026-10-23**. These notes do not imply that a GitHub
 - **137 logic/integration test groups passed** with `node tests.mjs`.
 - **16 asset tests passed** with `python -m unittest test_assets.py`, including deterministic regeneration.
 - All **48 embedded PNGs decoded** on a native Canvas implementation. Four gameplay scenes rendered successfully; low-health screen-edge pixels were checked before and after healing. This does not replace browser layout testing.
-- Real-browser validation of v5.1.0 was blocked by the execution environment's browser/network access restrictions. Existing earlier-version browser results are not presented as new v5.1.0 passes.
+- Real-browser validation of v0.6.0 was blocked by the execution environment's browser/network access restrictions. Existing earlier-version browser results are not presented as new v0.6.0 passes.
 - The browser verification page is included so the release can be checked in a normal browser. Automated sound checks do not certify physical audio output.
 
 ### Packaging
 
 The release archive contains only **`JSCanvasEdition/`**, including its README, these release notes, existing license, source, embedded assets, development scripts, tests, and animation previews. Repository-root files and other editions are outside this package.
 
-## v5.0.0 — Demon Ascendant baseline
+## v0.5.0 — Demon Ascendant baseline
 
-The repository baseline used for this update already contains twelve automatic spells, charged directed specials, Demon Witch/fear mechanics, nine animated enemy families, mixed enemy-level encounters, and Overlord invasions. v5.1.0 builds on that code; it does not claim to create or republish an earlier GitHub release.
+The repository baseline used for this update already contains twelve automatic spells, charged directed specials, Demon Witch/fear mechanics, nine animated enemy families, mixed enemy-level encounters, and Overlord invasions. v0.6.0 builds on that code; it does not claim to create or republish an earlier GitHub release.

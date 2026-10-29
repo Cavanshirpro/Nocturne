@@ -28,5 +28,5 @@ if((p.castTimer>0||p.animator.state==='hurt')&&p.game.quality!=='low'){c.strokeS
 c.textAlign='center';c.font='bold 9px Arial';c.lineWidth=3;c.strokeStyle='#0c1622';c.fillStyle=N.COVENS[p.coven].color;const text='L'+N.fmt(p.level);c.strokeText(text,p.x,p.y+25);c.fillText(text,p.x,p.y+25);c.restore();};
 A.enemyBack=function(c,e){N.HostileVisuals.rear(c,e);N.Orbitals.draw(c,e,false);};
 A.enemyFront=function(c,e){N.Orbitals.draw(c,e,true);const q=e.guardian;if(q?.ward>0)this.wardMesh(c,e.x,e.y-88,83,119,q.ward/q.wardMax,'#d9bfff');N.HostileVisuals.feedback(c,e);N.HostileVisuals.summoning(c,e);};
-A.volumeVersion='5.2.6';
+A.volumeVersion='0.7.6';
 })();

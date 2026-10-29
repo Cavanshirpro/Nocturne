@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible problem with Nocturne.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Edition and version
+      placeholder: JSCanvasEdition v0.7.6
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      placeholder: Firefox on Windows 11; local file or localhost
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the wave or build if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: visuals
+    attributes:
+      label: Screenshots, GIFs or console errors
+      description: Drag relevant images here. Do not attach private save backups.
