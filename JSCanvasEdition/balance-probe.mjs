@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Reproducible single-target throughput calibration. Node.js 18+, no packages.
 // This is not an encounter win-rate or browser-performance benchmark.
 import fs from 'node:fs';

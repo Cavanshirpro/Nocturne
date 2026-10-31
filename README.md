@@ -2,7 +2,7 @@
 
 **A dark-fantasy arena survival game.** Build a spell arsenal, gather Demon Essence and survive the Hollow until its Final Sovereign falls.
 
-**Current version: <!-- version -->v0.7.6<!-- /version --> · Initial development · JSCanvasEdition**
+**Current version: <!-- version -->v0.7.7<!-- /version --> · Initial development · JSCanvasEdition**
 
 [Download the latest release](https://github.com/Cavanshirpro/Nocturne/releases/latest) · [Play locally](#play-locally) · [Controls & game guide](JSCanvasEdition/README.md) · [Release history](JSCanvasEdition/RELEASES.md)
 
@@ -60,7 +60,7 @@ Nocturne is organized into editions: independent implementations of the same gam
 
 | Edition | Technology | Status |
 | --- | --- | --- |
-| [JSCanvasEdition](JSCanvasEdition/README.md) | HTML5 Canvas, JavaScript, CSS | Playable · <!-- version -->v0.7.6<!-- /version --> |
+| [JSCanvasEdition](JSCanvasEdition/README.md) | HTML5 Canvas, JavaScript, CSS | Playable · <!-- version -->v0.7.7<!-- /version --> |
 | PyGameEdition | Python, Pygame | Planned; no implementation yet |
 
 ## Development and releases
@@ -71,9 +71,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and checks. For bugs or proposa
 
 ## License and credits
 
-Nocturne is licensed under the **GNU Affero General Public License, version 3**. See [LICENSE](LICENSE) and the [edition's license](JSCanvasEdition/LICENSE).
+Nocturne is licensed under the **GNU Affero General Public License, version 3 or (at your option) any later version** (`AGPL-3.0-or-later`). The complete, unmodified license is in [LICENSE](LICENSE); the project copyright, license grant and warranty disclaimer are in [NOTICE](NOTICE). The browser edition includes its own [LICENSE](JSCanvasEdition/LICENSE) and [NOTICE](JSCanvasEdition/NOTICE).
+
+If you distribute modifications, preserve the required notices, identify your changes and provide the corresponding source under the license. A modified version supporting remote network interaction must prominently offer its users the corresponding source of that version at no charge under section 13; update its source link to include your changes.
 
 - **Creator and developer:** Cavanshir Qurbanzade (YoungLion)
 - **Prompter (JSCanvasEdition):** [@oustxr](https://github.com/oustxr)
 
-Copyright (C) 2026 Cavanshir Qurbanzade.
+Copyright (C) 2026 Javanshir Gurbanzade. Distributed without warranty; see [NOTICE](NOTICE).

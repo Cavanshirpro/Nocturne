@@ -2,6 +2,14 @@
 
 Versions use **MAJOR.MINOR.PATCH** with MAJOR **0** during initial development. These notes use the canonical numbering; historical source snapshots, comparison images and validation logs may contain previous labels. See the [complete mapping and release policy](../VERSIONING.md).
 
+## v0.7.7 — License notices · 31 October 2026
+
+- Restored both `LICENSE` files to the complete, unmodified GNU AGPLv3 text, including the original appendix examples.
+- Moved the project's existing copyright notice and AGPLv3-or-later grant into separate `NOTICE` files. Retained existing creator and prompter credits.
+- Added source-file license identifiers and copyright notices, and preserved these notices in generated `assets.js` output.
+- Added an in-game copyright/warranty notice link and a source link pinned to this version. Modified hosted versions must offer their own corresponding source as required by the license.
+- Added official-license integrity checks to CI and release packaging; source ZIPs include both project notices. Gameplay, artwork pixels and save formats are unchanged.
+
 ## v0.7.6 — Enemy & Sovereign · 30 October 2026
 
 Enemy artwork was prepared on 26 October; the canonical release and versioning update were published on 30 October.

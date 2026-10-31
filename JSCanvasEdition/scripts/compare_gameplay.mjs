@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Optional exact regression against an unpacked previous JSCanvasEdition.
 // node scripts/compare_gameplay.mjs /path/to/Nocturne-v0.7.5/JSCanvasEdition
 import {spawnSync} from 'node:child_process';import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';import assert from 'node:assert/strict';

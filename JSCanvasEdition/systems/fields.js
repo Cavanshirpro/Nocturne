@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Field language: ownership + shape + timing. Rendering only; no area mutation.
  * Hostile hit outlines use the same circle/annulus geometry as collision.
  * Friendly clutter is sampled/grouped with bounded detail; hazards are never skipped. */

@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Deterministic logic/integration tests. No browser or npm packages required.
 // Run with Node.js 18+: node tests.mjs
 import assert from 'node:assert/strict';

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Javanshir Gurbanzade
+# This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
 """v0.7.2 sculpted rig: depth-sorted, lit solid meshes baked to offline sprites.
 
 No live 3D engine is required. Geometry has actual width AND depth; eight

@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Generate actual-renderer comparisons. Optional argument: previous edition folder.
 // npm install --no-save @napi-rs/canvas (authoring only); Python/Pillow for GIF.
 const fs=require('fs'),path=require('path'),vm=require('vm'),os=require('os'),{spawnSync}=require('child_process'),{createCanvas,loadImage}=require('@napi-rs/canvas');

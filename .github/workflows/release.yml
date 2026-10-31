@@ -27,6 +27,7 @@ jobs:
         shell: bash
         run: |
           python scripts/sync_version.py --check
+          python scripts/check_license.py
           test "$GITHUB_REF_NAME" = "v$(tr -d '\r\n' < VERSION)"
       - run: node JSCanvasEdition/tests.mjs
       - run: python -m unittest test_assets.py
@@ -36,7 +37,7 @@ jobs:
         run: |
           mkdir -p dist
           archive="Nocturne-JSCanvasEdition-${GITHUB_REF_NAME}.zip"
-          git archive --format=zip --output="dist/$archive" HEAD JSCanvasEdition VERSION VERSIONING.md README.md CONTRIBUTING.md LICENSE scripts
+          git archive --format=zip --output="dist/$archive" HEAD JSCanvasEdition VERSION VERSIONING.md README.md CONTRIBUTING.md LICENSE NOTICE scripts
           (cd dist && sha256sum "$archive" > SHA256SUMS.txt)
           python - <<'PY'
           import os, re

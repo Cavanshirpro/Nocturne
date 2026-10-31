@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Build-aware encounter budgets. Smooth, bounded pressure leaves upgrade gains intact. */
 (() => {
   'use strict';

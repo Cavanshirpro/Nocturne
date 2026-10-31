@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Optional authoring tool: Node + @napi-rs/canvas; Python/Pillow for the GIF.
 // Uses the real game, real fire methods and the shared renderer, not mock emitters.
 const fs=require('fs'),path=require('path'),vm=require('vm'),os=require('os'),{spawnSync}=require('child_process');

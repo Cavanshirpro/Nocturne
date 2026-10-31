@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 (() => {
   'use strict';
   const N=window.Nocturne;
@@ -117,7 +122,7 @@
         <div class="shop-actions">${checkpoint?`<button class="primary" id="continue">CONTINUE · ${this.escape(slot.name)}</button>`:''}<button class="${checkpoint?'secondary':'primary'}" id="begin">${checkpoint?'NEW RITUAL · NEW SAVE':'ENTER THE HOLLOW'} ↗</button></div>
         <div class="controls"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> DASH</span><span><kbd>SCROLL / ±</kbd> ZOOM</span><span><kbd>RMB / Q</kbd> SPECIAL</span><span><kbd>Z</kbd> CYCLE</span><span><kbd>F</kbd> DEMON FORM</span><span><kbd>E</kbd> AEGIS</span><span><kbd>I</kbd> GRIMOIRE</span></div>
         <p class="hint">${g.save.migrated?'Your previous ritual and chronicle have been moved to Save 1.<br>':''}${g.save.available?'Autosaves every 10 seconds, on pause, and in the merchant.':'Browser storage is unavailable. Export a backup from Saves before closing.'}<br>New rituals use a fresh slot. Your existing saves stay intact.</p>
-        <div class="title-bottom"><button class="text-button" id="chronicle">CHRONICLE · ${profile.achievements.length} / ${ACHIEVEMENTS.length}</button><span>BEST WAVE ${profile.bestWave} · BEST SOULS ${profile.bestKills}</span><a class="text-button" href="https://github.com/Cavanshirpro/Nocturne/tree/main/JSCanvasEdition" target="_blank" rel="noopener noreferrer">SOURCE · AGPLv3</a><button class="text-button" id="audio">SOUND: ${g.save.data.settings.sound?'ON':'OFF'}</button></div>`);
+        <div class="title-bottom"><button class="text-button" id="chronicle">CHRONICLE · ${profile.achievements.length} / ${ACHIEVEMENTS.length}</button><span>BEST WAVE ${profile.bestWave} · BEST SOULS ${profile.bestKills}</span><a class="text-button" href="https://github.com/Cavanshirpro/Nocturne/tree/v${N.VERSION}/JSCanvasEdition" target="_blank" rel="noopener noreferrer">SOURCE · AGPLv3+</a><a class="text-button" href="NOTICE.html" target="_blank" rel="noopener noreferrer">LICENSE · NO WARRANTY</a><button class="text-button" id="audio">SOUND: ${g.save.data.settings.sound?'ON':'OFF'}</button></div>`);
       this.menu.querySelectorAll('[data-coven]').forEach(b=>b.addEventListener('click',()=>{g.selectedCoven=b.dataset.coven;this.title();this.menu.querySelector(`[data-coven="${g.selectedCoven}"]`)?.focus({preventScroll:true});}));
       this.on('#begin',()=>{g.combat.enableAudio('wave');g.newRitual();});
       this.on('#continue',()=>{g.combat.enableAudio();g.continueRun();});this.on('#saves',()=>this.saves());

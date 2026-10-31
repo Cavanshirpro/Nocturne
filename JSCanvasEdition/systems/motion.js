@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Isolated visible cloth masks, baked with the mesh. No anatomy deformation.
  * 24 lazy frame entries, at most four 96x128 surfaces each (~4.5 MiB pixels).
  * Cosmetic momentum is weakly owned and never stored in gameplay/saves. */

@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Read-only costume composition. No simulation clocks, randomness or save fields. */
 (() => {
   'use strict';const N=window.Nocturne,TAU=Math.PI*2;

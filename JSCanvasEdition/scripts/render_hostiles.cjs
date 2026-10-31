@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Actual renderer gallery. Optional baseline directory argument makes before/after.
 // Authoring dependencies: @napi-rs/canvas + Python/Pillow. Never writes a game save.
 const fs=require('fs'),path=require('path'),vm=require('vm'),os=require('os'),{spawnSync}=require('child_process'),{createCanvas,loadImage}=require('@napi-rs/canvas');

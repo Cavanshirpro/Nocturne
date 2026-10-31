@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Javanshir Gurbanzade
+# This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
 """v0.7.6 solid hostile anatomy. Baked mesh artwork, not live 3D.
 
 The logical atlas, eight facings, six ordinary clips and eleven ritual names

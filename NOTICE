@@ -1,0 +1,47 @@
+Nocturne — Witch of Ash
+A multi-edition, magic-driven arena survival game.
+
+Copyright (C) 2026 Javanshir Gurbanzade
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program, in LICENSE. If not, see
+<https://www.gnu.org/licenses/agpl-3.0.html>.
+
+Scope and credits
+-----------------
+This notice applies to the Nocturne source code, documentation and
+procedurally generated artwork supplied in this repository, except where
+a file carries a separate license notice. Third-party development tools
+and system fonts retain their own licenses; this notice does not relicense
+them. Preserve applicable copyright, license and attribution notices.
+
+Existing creator/developer credit: Cavanshir Qurbanzade (YoungLion).
+JSCanvasEdition prompter: @oustxr <https://github.com/oustxr>.
+Project and contact: <https://github.com/Cavanshirpro/Nocturne>.
+
+Source and modifications
+------------------------
+Source code, asset generators and release archives are available at:
+<https://github.com/Cavanshirpro/Nocturne>.
+
+If you modify the program and distribute it, preserve the required notices,
+mark your changes and their dates, and provide Corresponding Source as
+required by the license. If your modified version supports remote network
+interaction, prominently offer its users the Corresponding Source of that
+version at no charge as required by section 13. Update the source link to
+your actual modified source; a link to unmodified upstream code alone is
+not a substitute for the source of your changes.
+
+This project notice identifies the applicable license and credits. It adds
+no restrictions or exceptions to the unmodified license text in LICENSE.

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Javanshir Gurbanzade
+# This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
 """Pillow-level checks for actual frame pixels. Run: python test_assets.py."""
 import base64
 import hashlib

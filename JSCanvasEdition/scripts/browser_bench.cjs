@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Optional draw-only benchmark. Needs Playwright + a local Chromium install.
 // NOCTURNE_CHROMIUM=/path/chromium node scripts/browser_bench.cjs /path/previous/JSCanvasEdition
 const fs=require('fs'),path=require('path'),http=require('http'),{chromium}=require('playwright');

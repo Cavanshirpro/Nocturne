@@ -1,6 +1,6 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**<!-- version -->v0.7.6<!-- /version --> · Enemy & Sovereign · Initial development**
+**<!-- version -->v0.7.7<!-- /version --> · Enemy & Sovereign · Initial development**
 
 The HTML5 Canvas and JavaScript edition of [Nocturne — Witch of Ash](../README.md). Survive the Hollow, build a spell arsenal, gather loot and defeat each wave's Final Sovereign.
 
@@ -40,7 +40,7 @@ Open **[visual-gallery.html](visual-gallery.html)** locally for the complete ani
 
 ## Current release
 
-**<!-- version -->v0.7.6<!-- /version --> — Enemy & Sovereign** rebuilds nine enemy families, distinguishes elites and commanders, and synchronizes eleven boss rituals. It retains the previous player, field, environment and gameplay systems. The versioning update normalizes labels and release packaging without changing save schemas or gameplay.
+**<!-- version -->v0.7.7<!-- /version --> — License notices** restores the unmodified GNU AGPLv3 text, separates the project copyright and AGPLv3-or-later grant, and adds accessible license/warranty notices with a source link for this release. The Enemy & Sovereign artwork, gameplay and save formats are retained.
 
 See [HOSTILES.md](HOSTILES.md) for the enemy renderer, [RELEASES.md](RELEASES.md) for the full history, and [VALIDATION.md](VALIDATION.md) / [PERFORMANCE.md](PERFORMANCE.md) for archived validation and measurement details. Earlier visual systems are documented in [EVOLUTION.md](EVOLUTION.md), [FIELDS.md](FIELDS.md), [ORBITALS.md](ORBITALS.md) and [VISUALS.md](VISUALS.md).
 
@@ -216,9 +216,11 @@ Report issues at [Cavanshirpro/Nocturne](https://github.com/Cavanshirpro/Nocturn
 
 ## License and credits
 
-This edition includes the **GNU Affero General Public License, version 3**; see [LICENSE](LICENSE). Preserve the applicable copyright, license, and attribution notices when redistributing.
+This edition is licensed under the **GNU Affero General Public License, version 3 or (at your option) any later version** (`AGPL-3.0-or-later`). [LICENSE](LICENSE) contains the unmodified license text; [NOTICE](NOTICE) contains the project copyright, license grant and warranty disclaimer. Preserve the required copyright, license and attribution notices when redistributing, mark your modifications and provide corresponding source as required by the license.
+
+The title screen links to this version's source and copyright/warranty notice. If you host a modified version with remote network interaction, prominently offer its users the corresponding source of your version at no charge under section 13. Update the source link to your own modified source, rather than leaving it pointed only at upstream.
 
 - **Creator and developer:** Cavanshir Qurbanzade (YoungLion)
 - **Prompter (JSCanvasEdition):** [@oustxr](https://github.com/oustxr)
 
-Copyright (C) 2026 Cavanshir Qurbanzade.
+Copyright (C) 2026 Javanshir Gurbanzade. Distributed without warranty; see [NOTICE](NOTICE).

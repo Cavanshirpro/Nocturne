@@ -17,6 +17,7 @@ Run from the repository root:
 
 ```bash
 python scripts/sync_version.py --check
+python scripts/check_license.py
 node JSCanvasEdition/tests.mjs
 python -m pip install Pillow
 ```
@@ -36,4 +37,4 @@ The asset suite checks the committed images and regenerates artwork twice in a t
 
 Use [GitHub Issues](https://github.com/Cavanshirpro/Nocturne/issues) for reproducible bugs and feature requests. Include the version from the game, browser, operating system and any relevant images. Do not attach private save backups.
 
-Contributions are covered by the repository's [GNU AGPLv3 license](LICENSE). Preserve existing credits and identify the source and license of any contributed third-party assets.
+Contributions are covered by the repository's [GNU AGPLv3-or-later license](LICENSE); the project grant is in [NOTICE](NOTICE). Preserve existing credits and identify the source and license of any contributed third-party assets. Keep the official license text unchanged; add project-specific notices separately. Retain source identifiers and update the source link when distributing or hosting modifications so that it offers the corresponding source required by the license.

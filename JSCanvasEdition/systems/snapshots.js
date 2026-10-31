@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Whitelisted simulation snapshots. Transient cosmetic pools are intentionally rebuilt. */
 (() => {
   'use strict';

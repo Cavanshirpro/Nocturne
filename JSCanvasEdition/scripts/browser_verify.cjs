@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 // Optional end-to-end browser checks; needs Playwright and local Chromium.
 // NOCTURNE_CHROMIUM=/path/chromium node scripts/browser_verify.cjs
 const fs=require('fs'),path=require('path'),http=require('http'),{chromium}=require('playwright'),root=path.resolve(__dirname,'..');const server=http.createServer((req,res)=>{const f=path.join(root,req.url.split('?')[0].split('#')[0]);try{res.setHeader('Content-Type',({'.html':'text/html','.js':'application/javascript','.css':'text/css'})[path.extname(f)]||'text/plain');res.end(fs.readFileSync(f));}catch{res.writeHead(404);res.end();}});

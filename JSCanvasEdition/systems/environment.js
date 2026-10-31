@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Quiet biome materials and architecture. Visual hash only, stable after rebase.
  * 3 patterns, <=48 props/frame (24 low), <=96 cached landmark records. */
 (() => {

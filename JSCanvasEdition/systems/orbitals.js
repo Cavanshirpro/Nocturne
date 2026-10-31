@@ -1,3 +1,8 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
 /* Shared 2.5D emitter/ring system. Derived from actor state and world time.
  * Simulation and renderer use exactly the same origins, independent of quality.
  * Transient muzzle feedback is weakly owned and never enters a save. */
