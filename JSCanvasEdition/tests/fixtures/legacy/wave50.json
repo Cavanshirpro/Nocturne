@@ -1,0 +1,265 @@
+{
+  "schema": 3,
+  "activeSlotId": 1,
+  "nextSlotId": 2,
+  "settings": {
+    "sound": true,
+    "volume": 0.6,
+    "ambience": false,
+    "audioRevision": 2,
+    "reduced": null,
+    "quality": "high",
+    "zoom": 1
+  },
+  "slots": [
+    {
+      "id": 1,
+      "name": "Synthetic wave50",
+      "profile": {
+        "runs": 0,
+        "bestWave": 50,
+        "bestKills": 0,
+        "bestTime": 0,
+        "bosses": 49,
+        "achievements": []
+      },
+      "checkpoint": {
+        "schema": 2,
+        "phase": "wave",
+        "difficulty": {
+          "schema": 1,
+          "plan": {
+            "level": 60,
+            "pressure": 0,
+            "effectiveLevel": 60,
+            "effectiveWave": 50,
+            "spawnMultiplier": 1,
+            "aliveBudget": 200,
+            "fodder": 0.8,
+            "regular": 0.14999999999999997,
+            "veteran": 0.05,
+            "rating": 228,
+            "logDps": 5.631197428130497,
+            "wave": 50,
+            "duration": 60,
+            "invasionChance": 0.7849999999999999,
+            "roll": 0.667331694625318,
+            "invades": true
+          },
+          "lastInvasionWave": 0,
+          "clock": 0
+        },
+        "coven": "ash",
+        "wave": 50,
+        "time": 0,
+        "player": {
+          "x": 0,
+          "y": 0,
+          "hp": 110,
+          "maxHp": 110,
+          "speed": 195,
+          "damage": 18,
+          "attackInterval": 0.56,
+          "projectileSpeed": 510,
+          "projectileCount": 1,
+          "critChance": 0.1,
+          "critMultiplier": 1.85,
+          "pickupRadius": 82,
+          "armor": 0,
+          "regen": 0,
+          "gold": 101,
+          "kills": 0,
+          "xp": 0,
+          "xpNeeded": 466,
+          "level": 60,
+          "pendingLevels": 0,
+          "dashCooldown": 3.2,
+          "pierce": 0,
+          "weapons": {
+            "bolt": 8,
+            "orbit": 8,
+            "lightning": 8,
+            "nova": 8,
+            "meteor": 8,
+            "lance": 8,
+            "thorn": 0,
+            "rift": 0,
+            "rapid": 0,
+            "cannon": 0,
+            "burst": 0,
+            "glacier": 0
+          },
+          "relics": {
+            "cinder": true,
+            "conductor": true,
+            "permafrost": true,
+            "mirror": true,
+            "sunstone": true,
+            "soulchain": true,
+            "thornheart": false,
+            "voidglass": false,
+            "quicksilver": false,
+            "ironstar": false,
+            "bloodruby": false,
+            "iceheart": false
+          },
+          "upgrades": [],
+          "rules": 5,
+          "progress": {
+            "equipped": [
+              "bolt",
+              "orbit",
+              "lightning",
+              "nova",
+              "meteor",
+              "lance"
+            ],
+            "talents": {
+              "scavenger": 0,
+              "kindling": 0,
+              "veil": 0,
+              "frostbite": 0,
+              "bloodledger": 0,
+              "focus": 0
+            },
+            "mastery": {
+              "bolt": 3,
+              "orbit": 3,
+              "lightning": 3,
+              "nova": 3,
+              "meteor": 3,
+              "lance": 3,
+              "thorn": 0,
+              "rift": 0,
+              "rapid": 0,
+              "cannon": 0,
+              "burst": 0,
+              "glacier": 0
+            },
+            "arsenal": {
+              "slash": 1,
+              "frostfall": 1,
+              "soulstorm": 1
+            },
+            "special": "slash",
+            "essence": 0,
+            "demonTime": 0,
+            "demonDuration": 12,
+            "demonPower": 1.8,
+            "demonSpeed": 1.45,
+            "specialRemaining": 0,
+            "silenceTime": 0,
+            "silenceGrace": 0,
+            "aegis": 0,
+            "aegisMax": 0,
+            "aegisTime": 0,
+            "aegisRemaining": 0,
+            "preparedOath": null,
+            "activeOath": null,
+            "shield": 0,
+            "xpCarry": 0,
+            "goldCarry": 0
+          }
+        },
+        "world": {
+          "schema": 1,
+          "sanctum": null,
+          "worldOrigin": {
+            "x": 0,
+            "y": 0
+          },
+          "waveTime": 0,
+          "spawnClock": 0.15,
+          "threatClock": 8,
+          "autosaveClock": 0,
+          "nextId": 0,
+          "overlordSpawned": false,
+          "bossSpawned": false,
+          "bossDefeated": false,
+          "waveKills": 0,
+          "waveDamage": 0,
+          "player": {
+            "invulnerable": 1,
+            "walk": 0,
+            "dashRemaining": 0,
+            "dashTimer": 0,
+            "dashX": 0,
+            "dashY": 1,
+            "lastX": 0,
+            "lastY": 1
+          },
+          "facing": "S",
+          "enemies": [],
+          "loot": [],
+          "projectiles": [],
+          "hostile": [],
+          "hazards": [],
+          "areas": [],
+          "cooldown": 0.1,
+          "spellTimers": {
+            "lightning": 0.5,
+            "nova": 1,
+            "meteor": 1.2,
+            "lance": 0.8,
+            "thorn": 1.5,
+            "rift": 2,
+            "rapid": 0.15,
+            "cannon": 1.3,
+            "burst": 0.9,
+            "glacier": 1.1
+          },
+          "wispHits": []
+        },
+        "stats": {
+          "damage": 0,
+          "damageTaken": 0,
+          "goldEarned": 0,
+          "elites": 10,
+          "bosses": 49,
+          "dashes": 2,
+          "weapons": {
+            "bolt": 0,
+            "orbit": 0,
+            "lightning": 0,
+            "nova": 0,
+            "meteor": 0,
+            "lance": 0,
+            "thorn": 0,
+            "rift": 0,
+            "rapid": 0,
+            "cannon": 0,
+            "burst": 0,
+            "glacier": 0
+          }
+        },
+        "rolls": 0,
+        "slots": [
+          {
+            "id": null,
+            "locked": false,
+            "price": 0,
+            "sold": false
+          },
+          {
+            "id": null,
+            "locked": false,
+            "price": 0,
+            "sold": false
+          },
+          {
+            "id": null,
+            "locked": false,
+            "price": 0,
+            "sold": false
+          },
+          {
+            "id": null,
+            "locked": false,
+            "price": 0,
+            "sold": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Enemy & Sovereign — v0.7.6
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 [HOSTILES.md](HOSTILES.md) describes the current nine-family enemy models, anatomy, traits, hierarchy, phases and runtime bounds. The player/cloth/field/environment systems from v0.7.5 remain current. Open the [renderer gallery](visual-gallery.html) for executed art comparisons; see [VALIDATION.md](VALIDATION.md) and [PERFORMANCE.md](PERFORMANCE.md) for results.
 
 ---
@@ -32,7 +34,7 @@ The current player artwork comes from `witch_models.py`: a small offline mesh re
 
 `systems/encounters.js` draws the compass minimap. Its local range does not expand when the objective moves farther away; clamped markers retain an interior margin. Ordinary enemies share 4-pixel cells and at most 180 ordinary markers are drawn. Bosses and elite enemies draw afterward. The map reads HUD bounds for docking and never writes gameplay state.
 
-Rebuild embedded assets with `python generate_assets.py` (Pillow). Rebuild the 48-frame player/direction/enemy/boss galleries and static minimap example with `node scripts/render_visuals.cjs` (optional `@napi-rs/canvas`). No rebuild is required for play.
+Rebuild embedded assets with `python tools/generate_assets.py` (Pillow). Rebuild the 48-frame player/direction/enemy/boss galleries and static minimap example with `node tools/render_visuals.cjs` (optional `@napi-rs/canvas`). No rebuild is required for play.
 
 The following sections document the earlier visual passes and the underlying gameplay-to-equipment mapping; their historical flat-panel descriptions are superseded by the implementation above.
 
@@ -46,7 +48,7 @@ The v0.7.1 model pass corrects profile-specific collapse of planar clothing and 
 
 Thirteen permanent stat channels are represented by three grouped equipment systems, with constrained sub-marks instead of dozens of overlapping symbols. Learned spells keep all twelve dedicated attachment slots and ranks; mastery, evolutions, relics, talents, rituals, oath, essence and Demon upgrades remain readable. All drawing reads existing gameplay fields without storing cosmetic progression.
 
-**Build instruction:** run `python generate_assets.py` after applying the patch so embedded sprites match the new model source. If you have the optional `@napi-rs/canvas` dependency, regenerate the separate screenshots/gallery with `node scripts/render_visuals.cjs`. The original preview gallery is not automatically replaced by asset generation alone. Low quality and reduced motion skip sprite blending.
+**Build instruction:** run `python tools/generate_assets.py` after applying the patch so embedded sprites match the new model source. If you have the optional `@napi-rs/canvas` dependency, regenerate the separate screenshots/gallery with `node tools/render_visuals.cjs`. The original preview gallery is not automatically replaced by asset generation alone. Low quality and reduced motion skip sprite blending.
 
 
 
@@ -142,8 +144,8 @@ Attack poses take priority over continuous hurt frames. Very fast player auto-ca
 
 - No random numbers, saved appearance fields or new simulation clocks are needed. The model reads existing state. Pause and reduced motion freeze added geometry; low quality keeps the same equipment identities.
 - Boss power atlases use two rows per facing at **3168 × 2048**, keeping each image below 4096 pixels on both axes. Ordinary enemy atlases retain their footprint. Extra equipment is bounded procedural geometry rather than a separate texture for each build combination.
-- `node tests.mjs` checks gameplay regressions, read-only drawing, all equipment together, atlas selection, finite geometry, balanced Canvas state, reduced motion and save compatibility.
-- `python -m unittest test_assets.py` checks actual image pixels, cell boundaries, independent directional poses, Demon atlases and deterministic regeneration.
+- `node tests/run.mjs` checks gameplay regressions, read-only drawing, all equipment together, atlas selection, finite geometry, balanced Canvas state, reduced motion and save compatibility.
+- `python -m unittest discover -s tests -p test_assets.py` checks actual image pixels, cell boundaries, independent directional poses, Demon atlases and deterministic regeneration.
 - `scripts/render_visuals.cjs` optionally regenerates the gallery from the real renderer using `@napi-rs/canvas` plus Python/Pillow. These are art-tool dependencies only; play and gallery viewing need neither.
 - Native Canvas checks are not a substitute for browser DOM/CSS, physical input, actual device performance or audio checks. The included manual browser fixtures cover the new portrait and art; they were not executed for this package.
 

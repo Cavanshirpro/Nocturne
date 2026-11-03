@@ -1,0 +1,199 @@
+{
+  "method": "Actual XP formula and guaranteed base completion bonus only. Excludes random kills, gifts, purchases, flawless rewards and player skill; wave targets remain provisional.",
+  "tiers": [
+    {
+      "tier": "-E",
+      "earliestWave": 1,
+      "minimumLevel": 1,
+      "cumulativeXPAtLevel": 0,
+      "completionGoldWithoutFlawless": 0,
+      "developedRanks": 0,
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+E",
+      "earliestWave": 4,
+      "minimumLevel": 4,
+      "cumulativeXPAtLevel": 42,
+      "completionGoldWithoutFlawless": 42,
+      "developedRanks": 7,
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "-D",
+      "earliestWave": 8,
+      "minimumLevel": 8,
+      "cumulativeXPAtLevel": 188,
+      "completionGoldWithoutFlawless": 140,
+      "developedRanks": 11,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "+D",
+      "earliestWave": 14,
+      "minimumLevel": 12,
+      "cumulativeXPAtLevel": 446,
+      "completionGoldWithoutFlawless": 377,
+      "developedRanks": 15,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "-C",
+      "earliestWave": 22,
+      "minimumLevel": 18,
+      "cumulativeXPAtLevel": 1053,
+      "completionGoldWithoutFlawless": 861,
+      "developedRanks": 19,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "+C",
+      "earliestWave": 32,
+      "minimumLevel": 26,
+      "cumulativeXPAtLevel": 2283,
+      "completionGoldWithoutFlawless": 1736,
+      "developedRanks": 23,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "-B",
+      "earliestWave": 45,
+      "minimumLevel": 35,
+      "cumulativeXPAtLevel": 4263,
+      "completionGoldWithoutFlawless": 3322,
+      "developedRanks": 27,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "+B",
+      "earliestWave": 60,
+      "minimumLevel": 45,
+      "cumulativeXPAtLevel": 7224,
+      "completionGoldWithoutFlawless": 5782,
+      "developedRanks": 31,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "-A",
+      "earliestWave": 78,
+      "minimumLevel": 60,
+      "cumulativeXPAtLevel": 13209,
+      "completionGoldWithoutFlawless": 9625,
+      "developedRanks": 35,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "+A",
+      "earliestWave": 99,
+      "minimumLevel": 75,
+      "cumulativeXPAtLevel": 21095,
+      "completionGoldWithoutFlawless": 15337,
+      "developedRanks": 39,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "-S",
+      "earliestWave": 124,
+      "minimumLevel": 95,
+      "cumulativeXPAtLevel": 34648,
+      "completionGoldWithoutFlawless": 23862,
+      "developedRanks": 43,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "+S",
+      "earliestWave": 151,
+      "minimumLevel": 115,
+      "cumulativeXPAtLevel": 51758,
+      "completionGoldWithoutFlawless": 35175,
+      "developedRanks": 47,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "Local Power",
+      "earliestWave": 187,
+      "minimumLevel": 140,
+      "cumulativeXPAtLevel": 78253,
+      "completionGoldWithoutFlawless": 53661,
+      "developedRanks": 51,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "Areal Power",
+      "earliestWave": 225,
+      "minimumLevel": 170,
+      "cumulativeXPAtLevel": 117719,
+      "completionGoldWithoutFlawless": 77392,
+      "developedRanks": 55,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "Big Power",
+      "earliestWave": 275,
+      "minimumLevel": 210,
+      "cumulativeXPAtLevel": 183674,
+      "completionGoldWithoutFlawless": 115217,
+      "developedRanks": 59,
+      "liveTrialImplemented": false
+    },
+    {
+      "tier": "National Power",
+      "earliestWave": 335,
+      "minimumLevel": 260,
+      "cumulativeXPAtLevel": 288094,
+      "completionGoldWithoutFlawless": 170507,
+      "developedRanks": 63,
+      "liveTrialImplemented": false
+    }
+  ],
+  "legacy": [
+    {
+      "fixture": "new",
+      "level": 1,
+      "currentWave": 1,
+      "completedWaves": 0,
+      "recognizedTier": "-E",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "early",
+      "level": 6,
+      "currentWave": 5,
+      "completedWaves": 4,
+      "recognizedTier": "+E",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "wave20",
+      "level": 24,
+      "currentWave": 20,
+      "completedWaves": 19,
+      "recognizedTier": "+D",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "wave50",
+      "level": 60,
+      "currentWave": 50,
+      "completedWaves": 49,
+      "recognizedTier": "+C",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "wave150",
+      "level": 200,
+      "currentWave": 150,
+      "completedWaves": 149,
+      "recognizedTier": "+C",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "extreme",
+      "level": 100000,
+      "currentWave": 1,
+      "completedWaves": 0,
+      "recognizedTier": "-E",
+      "verifiedTrials": []
+    }
+  ]
+}

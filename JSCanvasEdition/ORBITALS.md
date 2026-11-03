@@ -1,5 +1,7 @@
 # Orbitals — v0.7.5
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 This edition remains Canvas 2D with baked directional sprites. Distinct satellite hulls, circle ellipses, layered wings and isolated baked cloth masks create depth; there is no live 3D model, WebGL requirement or cloth-physics solver.
 
 ## Mapping
@@ -51,6 +53,6 @@ Walk/dash frame blending is limited to the final 30% of a frame interval so the 
 
 ## Rebuild / verify
 
-`node tests.mjs` runs deterministic game/integration checks. `python -m unittest test_assets.py` validates real atlas pixels and deterministic generation. `browser-tests.html` runs actual DOM/Canvas/audio checks when served locally.
+`node tests/run.mjs` runs deterministic game/integration checks. `python -m unittest discover -s tests -p test_assets.py` validates real atlas pixels and deterministic generation. `browser-tests.html` runs actual DOM/Canvas/audio checks when served locally.
 
-`python generate_assets.py` requires Pillow. The optional `node scripts/render_visuals.cjs` and `node scripts/render_orbitals.cjs` require @napi-rs/canvas and Pillow. Generated assets and previews are already included for play.
+`python tools/generate_assets.py` requires Pillow. The optional `node tools/render_visuals.cjs` and `node tools/render_orbitals.cjs` require @napi-rs/canvas and Pillow. Generated assets and previews are already included for play.

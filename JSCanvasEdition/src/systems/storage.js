@@ -1,0 +1,133 @@
+/*
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Javanshir Gurbanzade
+This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
+*/
+/* Versioned save slots. Settings are shared; chronicles and runs belong to a slot. */
+(() => {
+  'use strict';
+  const N=window.Nocturne;
+  class SaveStore {
+    static MAX_SLOTS=24;
+    constructor(){
+      const qa=window.location?.hash==='#verification';
+      this.key=qa?'nocturne.coven.qa.v4':'nocturne.coven.v4';
+      this.previousKey=qa?'nocturne.coven.qa.v3':'nocturne.coven.v3';
+      this.legacyKey=qa?'nocturne.coven.qa.v2':'nocturne.coven.v2';
+      this.available=true;this.migrated=false;this.warnings=[];this.writeBlocked=false;this.data=this.read();
+      // Compatibility accessors keep gameplay independent of the slot container.
+      Object.defineProperties(this.data,{
+        profile:{get:()=>this.active.profile},
+        checkpoint:{get:()=>this.active.checkpoint,set:value=>{this.active.checkpoint=value;this.active.updatedAt=Date.now();}}
+      });
+      if(this.migrated)this.write(); // Never delete the original v2 key, even after success.
+    }
+    profile(){return {runs:0,bestWave:0,bestKills:0,bestTime:0,bosses:0,achievements:[]};}
+    slot(id){const now=Date.now();return {id,name:`Save ${id}`,createdAt:now,updatedAt:now,profile:this.profile(),checkpoint:null};}
+    defaults(){return {schema:4,recoverySlots:[],activeSlotId:1,nextSlotId:2,settings:{sound:true,volume:.6,ambience:false,audioRevision:2,reduced:null,quality:'high',zoom:1},slots:[this.slot(1)]};}
+    get active(){return this.data.slots.find(s=>s.id===this.data.activeSlotId)||this.data.slots[0];}
+    cleanProfile(p){
+      const result=this.profile();
+      if(p)for(const k of ['runs','bestWave','bestKills','bestTime','bosses'])if(Number.isFinite(p[k])&&p[k]>=0)result[k]=Math.min(1e9,p[k]);
+      result.achievements=Array.isArray(p?.achievements)?[...new Set(p.achievements.filter(id=>typeof id==='string'&&id.length<80))].slice(0,32):[];
+      return result;
+    }
+    cleanSettings(s={}){return {sound:s.sound!==false,volume:Number.isFinite(s.volume)?N.clamp(s.volume,0,1):.6,ambience:s.audioRevision===2&&s.ambience===true,audioRevision:2,reduced:typeof s.reduced==='boolean'?s.reduced:null,quality:s.quality==='low'?'low':'high',zoom:Number.isFinite(s.zoom)?N.clamp(s.zoom,.65,1.55):1};}
+    convertCheckpoint(candidate,profile,sourceSchema){
+      if(!candidate)return null;
+      let source=candidate;
+      if(!this.validCheckpoint(source)){
+        source=JSON.parse(JSON.stringify(candidate));delete source.world;
+        if(!this.validCheckpoint(source))return null;
+        this.warnings.push('An invalid world snapshot was preserved in the source backup; character progress was recovered as a wave restart.');
+      }
+      const result=N.Migration.checkpoint(source,profile,sourceSchema);
+      if(!this.validCheckpoint(result))return null;
+      for(const h of result.player.ascension.history)if(h.source==='legacy'){const id=N.ASCENSION_BY_ID[h.tier].achievement.id;if(!profile.achievements.includes(id))profile.achievements.push(id);}
+      return result;
+    }
+    read(){
+      const fresh=this.defaults();let raw=null;
+      try{
+        const current=window.localStorage.getItem(this.key),previous=current?null:window.localStorage.getItem(this.previousKey),legacy=current||previous?null:window.localStorage.getItem(this.legacyKey);
+        raw=current||previous||legacy;if(!raw)return fresh;
+        const d=JSON.parse(raw);if(![2,3,4].includes(d?.schema))throw new Error('Unrecognized save container');
+        const candidates=d.schema===2?[{id:1,name:'Save 1',profile:d.profile,checkpoint:d.checkpoint}]:d.slots;
+        if(!Array.isArray(candidates)||!candidates.length)throw new Error('No valid save slots');
+        const ids=new Set();fresh.slots=[];fresh.recoverySlots=Array.isArray(d.recoverySlots)?d.recoverySlots:[];if(candidates.length>SaveStore.MAX_SLOTS){fresh.recoverySlots.push(...candidates.slice(SaveStore.MAX_SLOTS));this.warnings.push('Extra chapters beyond the 24-slot limit remain in backup recovery data.');}
+        for(const candidate of candidates.slice(0,SaveStore.MAX_SLOTS)){
+          if(!Number.isSafeInteger(candidate?.id)||candidate.id<1||candidate.id>1e9||ids.has(candidate.id)){fresh.recoverySlots.push(candidate);this.warnings.push('An invalid chapter identifier is retained in exported backup recovery data.');continue;}
+          ids.add(candidate.id);const slot=this.slot(candidate.id);
+          slot.name=typeof candidate.name==='string'?candidate.name.trim().slice(0,32)||slot.name:slot.name;
+          slot.profile=this.cleanProfile(candidate.profile);
+          for(const k of ['createdAt','updatedAt'])if(Number.isFinite(candidate[k])&&candidate[k]>=0)slot[k]=candidate[k];
+          if(candidate.checkpoint){
+            slot.checkpoint=this.convertCheckpoint(candidate.checkpoint,slot.profile,d.schema);
+            if(slot.checkpoint&&candidate.checkpoint.world&&!slot.checkpoint.world)slot.recovery={reason:'Original invalid world snapshot retained',checkpoint:candidate.checkpoint};
+            if(!slot.checkpoint){slot.recovery={reason:'Invalid checkpoint retained for backup recovery',checkpoint:candidate.checkpoint};this.warnings.push(slot.name+': checkpoint could not be restored. Export a backup; its original data is retained.');}
+          }
+          if(candidate.recovery)slot.recovery=candidate.recovery;
+          if(slot.recovery&&!this.warnings.some(w=>w.startsWith(slot.name+':')))this.warnings.push(slot.name+': recovery data is retained in exported backups.');
+          fresh.slots.push(slot);
+        }
+        if(!fresh.slots.length)throw new Error('No valid save slots');
+        fresh.activeSlotId=fresh.slots.some(x=>x.id===d.activeSlotId)?d.activeSlotId:fresh.slots[0].id;
+        fresh.nextSlotId=Math.max(...fresh.slots.map(x=>x.id))+1;
+        if(Number.isSafeInteger(d.nextSlotId)&&d.nextSlotId>fresh.nextSlotId&&d.nextSlotId<1e9)fresh.nextSlotId=d.nextSlotId;
+        fresh.settings=this.cleanSettings(d.settings);this.migrated=d.schema!==4;return fresh;
+      }catch(error){this.available=false;this.writeBlocked=true;fresh.recoveryRaw=raw;this.warnings.push('Save could not be decoded: '+error.message+'. Original storage is untouched; export a backup before recovery.');return fresh;}
+    }
+    createSlot(){
+      if(this.data.slots.length>=SaveStore.MAX_SLOTS)return null;
+      const slot=this.slot(this.data.nextSlotId++);this.data.slots.push(slot);this.data.activeSlotId=slot.id;this.write();return slot;
+    }
+    select(id){if(!this.data.slots.some(s=>s.id===id))return false;this.data.activeSlotId=id;this.write();return true;}
+    rename(id,name){const s=this.data.slots.find(s=>s.id===id);if(!s||typeof name!=='string'||!name.trim())return false;s.name=name.trim().slice(0,32);s.updatedAt=Date.now();return this.write();}
+    remove(id){
+      const index=this.data.slots.findIndex(s=>s.id===id);if(index<0||this.data.slots.length===1)return false;
+      this.data.slots.splice(index,1);if(this.data.activeSlotId===id)this.data.activeSlotId=this.data.slots[0].id;return this.write();
+    }
+    exportData(){return JSON.stringify(this.data,null,2);}
+    importData(text){
+      if(typeof text!=='string'||text.length>12e6)throw new Error('Backup is too large.');
+      const d=JSON.parse(text);const candidates=d?.schema===2?[{name:'Imported ritual',profile:d.profile,checkpoint:d.checkpoint}]:[3,4].includes(d?.schema)&&Array.isArray(d.slots)?d.slots:null;
+      if(!candidates?.length||candidates.length>SaveStore.MAX_SLOTS||this.data.slots.length+candidates.length>SaveStore.MAX_SLOTS)throw new Error('Backup does not fit the available save slots (24 maximum).');
+      // Validate every checkpoint before making any changes. Import always adds slots.
+      if(candidates.some(s=>!s||s.checkpoint!==null&&s.checkpoint!==undefined&&!this.validCheckpoint(s.checkpoint)))throw new Error('Backup contains an invalid ritual.');
+      const added=candidates.map(c=>{const s=this.slot(this.data.nextSlotId++);s.profile=this.cleanProfile(c.profile);s.checkpoint=c.checkpoint?this.convertCheckpoint(c.checkpoint,s.profile,d.schema):null;if(c.recovery)s.recovery=JSON.parse(JSON.stringify(c.recovery));s.name=typeof c.name==='string'?`${s.name} · ${c.name}`.slice(0,32):s.name;return s;});
+      if(Array.isArray(d.recoverySlots))this.data.recoverySlots.push(...JSON.parse(JSON.stringify(d.recoverySlots)));this.data.slots.push(...added);const selected=candidates.findIndex(c=>c.id===d.activeSlotId);this.data.activeSlotId=added[Math.max(0,selected)].id;this.write();return added.length;
+    }
+    validCheckpoint(c){
+      if(!c||![2,3].includes(c.schema)||!['wave','shop','intermission'].includes(c.phase)||!['ash','moon','storm'].includes(c.coven))return false;
+      if(!Number.isSafeInteger(c.wave)||c.wave<1||!Number.isFinite(c.time)||c.time<0)return false;
+      if(c.difficulty!==undefined&&(!N.Difficulty.valid(c.difficulty)||c.difficulty.plan.wave!==c.wave))return false;
+      const p=c.player;
+      if(!p||!N.PLAYER_FIELDS.every(k=>Number.isFinite(p[k])))return false;
+      if(p.hp<=0||p.maxHp<1||p.hp>p.maxHp||p.speed<1||p.damage<1||p.attackInterval<=0)return false;
+      if(p.armor<0||p.critChance<0||p.regen<0||p.dashCooldown<=0||p.projectileSpeed<1||p.critMultiplier<1||p.pickupRadius<1)return false;
+      if(!['projectileCount','level','gold','kills','xp','xpNeeded','pendingLevels','pierce'].every(k=>Number.isSafeInteger(p[k])&&p[k]>=0))return false;
+      if(p.projectileCount<1||p.level<1||p.xpNeeded<1||p.xp>=p.xpNeeded||p.pendingLevels>p.level-1)return false;
+      if(!p.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isInteger(p.weapons[k])&&p.weapons[k]>=0&&Number.isSafeInteger(p.weapons[k]))||p.weapons.bolt<1)return false;
+      if(!N.SPELL_IDS.filter(id=>!['bolt','orbit','lightning','nova'].includes(id)).every(id=>p.weapons[id]===undefined||Number.isSafeInteger(p.weapons[id])&&p.weapons[id]>=0))return false;
+      if(p.progress&&!N.validProgression(p.progress,p))return false;
+      if(p.ascension!==undefined&&!N.Ascension.valid(p.ascension))return false;
+      if(c.schema===3&&(!p.ascension||!N.WaveCycle.valid(c.cycle,c.wave)))return false;
+      if(c.phase==='intermission'&&(c.cycle?.phase!=='INTERMISSION'||!N.WaveCycle.valid(c.cycle,c.wave)))return false;
+      if(c.menu!==undefined&&c.menu!=='shop')return false;
+      if(p.ascension?.pendingTrial&&(c.phase!=='intermission'||c.cycle?.phase!=='INTERMISSION'))return false;
+      if(c.levelChoices!==undefined&&(!Array.isArray(c.levelChoices)||c.levelChoices.length!==3||new Set(c.levelChoices).size!==3||!c.levelChoices.every(id=>N.UPGRADES.some(u=>u.id===id))))return false;
+      if(!p.relics||!['cinder','conductor','permafrost','mirror'].every(k=>typeof p.relics[k]==='boolean'))return false;
+      if(!['sunstone','soulchain','thornheart','voidglass'].every(id=>p.relics[id]===undefined||typeof p.relics[id]==='boolean'))return false;
+      if(!Array.isArray(p.upgrades)||!p.upgrades.every(k=>typeof k==='string'))return false;
+      if(!Array.isArray(c.slots)||c.slots.length!==4||!c.slots.every(s=>s&&typeof s.locked==='boolean'&&(s.id===null||typeof s.id==='string')&&Number.isInteger(s.price)&&s.price>=0))return false;
+      if(!Number.isInteger(c.rolls)||c.rolls<0)return false;
+      if(!c.stats||!['damage','damageTaken','goldEarned','elites','bosses','dashes'].every(k=>Number.isFinite(c.stats[k])&&c.stats[k]>=0))return false;
+      if(!c.stats.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isFinite(c.stats.weapons[k])&&c.stats.weapons[k]>=0))return false;
+      if(!N.SPELL_IDS.every(id=>c.stats.weapons[id]===undefined||Number.isFinite(c.stats.weapons[id])&&c.stats.weapons[id]>=0))return false;
+      if(c.world&&!N.validWorld?.(c.world))return false;
+      return true;
+    }
+    write(){if(this.writeBlocked)return false;try{const encoded=JSON.stringify(this.data);window.localStorage.setItem(this.key,encoded);if(window.localStorage.getItem(this.key)!==encoded)throw new Error('Save write could not be verified');this.available=true;return true;}catch{this.available=false;return false;}}
+  }
+  N.SaveStore=SaveStore;
+})();

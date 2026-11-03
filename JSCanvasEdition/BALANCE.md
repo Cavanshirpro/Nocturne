@@ -1,5 +1,7 @@
 # v0.6.3 balance calibration
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 Retained by the v0.7.0 visual release; gameplay tuning is unchanged.
 
 The objective is a readable challenge for both a lightly equipped character and a heavily upgraded merchant build at the **same character level**. Permanent upgrades are retained. Ordinary swarm pressure has limits; final-guardian vitality follows damage output beyond those limits.

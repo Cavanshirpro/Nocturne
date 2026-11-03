@@ -2,6 +2,16 @@
 
 Versions use **MAJOR.MINOR.PATCH** with MAJOR **0** during initial development. These notes use the canonical numbering; historical source snapshots, comparison images and validation logs may contain previous labels. See the [complete mapping and release policy](../VERSIONING.md).
 
+## v0.8.0 — Ascension Foundations · 3 November 2026
+
+- Added all 16 Ascension descriptors, four eras, detailed independent requirements, legacy recognition through +C when proven, and a functional First Ember trial for +E. Advanced unique trials, spell aspects, summoning and Dominion abilities remain explicitly unavailable.
+- Required guardian victory now starts explorable preparation (60/75/90/105 simulation seconds). The merchant can be revisited without rerolling stock; the next wave starts early or automatically exactly once. Blocking menus freeze the timer. Rewards and pending gift choices are saved together.
+- Introduced a non-destructive v4 save container under a new storage key, retaining v3/v2 sources, per-slot recognition, merchant stock, active boss state, death recovery and backup import/export. Invalid worlds can recover character progress with a warning; unrecoverable data remains exportable.
+- Extracted all 64 existing PNGs without changing bytes or pixels. Replaced the 25.7 MB embedded bundle with a 4.8 KB static manifest, separate metadata and a validated loader. No runtime framework, CDN, JSON fetch or WebGL dependency was added.
+- Moved implementation into `src/core`, `src/data`, `src/entities`, `src/combat`, `src/systems`, `src/rendering`, `src/ui` and `src/styles`; generators/validation live in `tools` and `tests`.
+- Preserved AGPLv3-or-later grants and attribution. This is the canonical version of the brief's former “v5.3.0” milestone under the project's v0.x policy. See the [technical report and measured limitations](docs/IMPLEMENTATION_REPORT.md), with architecture, Ascension, migration, assets and wave-cycle guides.
+- Validation: 264 existing regression groups, 38 new tests, 34 asset tests, seven exact baseline gameplay comparisons, 84 real Chromium Canvas/UI checks and 27 additional acceptance checks passed. Performance measurements include noisy median/tail regressions; the report retains both run orders and identifies untested platforms and provisional late-game balance.
+
 ## v0.7.7 — License notices · 31 October 2026
 
 - Restored both `LICENSE` files to the complete, unmodified GNU AGPLv3 text, including the original appendix examples.

@@ -1,5 +1,7 @@
 # v0.7.5 — Visual Evolution & Polish
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 The baseline is the complete 0.7.4 **Read the Battle** package. This release changes the active Canvas renderers and their offline artwork. It does not change the game rules or save schema.
 
 ## Art direction

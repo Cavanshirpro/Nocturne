@@ -18,7 +18,7 @@ Run from the repository root:
 ```bash
 python scripts/sync_version.py --check
 python scripts/check_license.py
-node JSCanvasEdition/tests.mjs
+node JSCanvasEdition/tests/run.mjs
 python -m pip install Pillow
 ```
 
@@ -26,10 +26,10 @@ Run the asset checks from the edition folder:
 
 ```bash
 cd JSCanvasEdition
-python -m unittest test_assets.py
+python -m unittest discover -s tests -p test_assets.py
 ```
 
-Node.js 18+ and Python with Pillow are required for these development checks. Open `browser-tests.html` through the local server and click **RUN BROWSER CHECKS** for browser verification; that page uses a separate verification save store. `node balance-probe.mjs` is available for balance changes. Optional scripts in `JSCanvasEdition/scripts/` need their stated browser or Canvas dependencies.
+Node.js 18+ and Python with Pillow are required for these development checks. Open `browser-tests.html` through the local server and click **RUN BROWSER CHECKS** for browser verification; that page uses a separate verification save store. `node tools/balance-probe.mjs` is available for balance changes. Optional scripts in `JSCanvasEdition/tools/` need their stated browser or Canvas dependencies.
 
 The asset suite checks the committed images and regenerates artwork twice in a temporary directory to verify determinism within the installed toolchain. It leaves the source artwork untouched. Different Pillow/platform versions may produce different encoded bytes or rasterization; intentional artwork updates should name the toolchain and include reviewed visual comparisons.
 

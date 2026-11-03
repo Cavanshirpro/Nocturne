@@ -2,15 +2,25 @@
 
 **A dark-fantasy arena survival game.** Build a spell arsenal, gather Demon Essence and survive the Hollow until its Final Sovereign falls.
 
-**Current version: <!-- version -->v0.7.7<!-- /version --> · Initial development · JSCanvasEdition**
+**Current version: <!-- version -->v0.8.0<!-- /version --> · Initial development · JSCanvasEdition**
 
 [Download the latest release](https://github.com/Cavanshirpro/Nocturne/releases/latest) · [Play locally](#play-locally) · [Controls & game guide](JSCanvasEdition/README.md) · [Release history](JSCanvasEdition/RELEASES.md)
 
 ![Upgraded Witch facing a Final Sovereign and its warned Triune Lances attack](JSCanvasEdition/previews/gameplay.png)
 
-*A demonstration scene captured from the current game renderer: spell satellites, enemy roles, boss warnings and the HUD.*
+*Existing combat renderer, retained from v0.7.x: spell satellites, enemy roles and boss warnings.*
 
 ## See the game
+
+### Ascension Foundations and an explorable world cycle
+
+![The actual v0.8.0 Ascension ladder with four eras and conservative legacy recognition](JSCanvasEdition/previews/ascension-v080.png)
+
+All 16 tiers are visible. First Ember can earn +E; proven legacy progress can be recognized through +C. Advanced unique trials and their abilities remain clearly unavailable.
+
+![Actual v0.8.0 preparation scene with a next-wave timer and merchant, grimoire and Ascension controls](JSCanvasEdition/previews/preparation-v080.png)
+
+Defeat the Final Sovereign, explore during preparation, revisit the merchant, and start the next wave early or let simulation time count down. [Foundation guides and technical report](JSCanvasEdition/docs/IMPLEMENTATION_REPORT.md)
 
 ### Witch and Demon progression
 
@@ -35,10 +45,10 @@ More animated models, boss rituals and before/after comparisons are included in 
 ## Play locally
 
 1. [Download the latest JSCanvasEdition ZIP](https://github.com/Cavanshirpro/Nocturne/releases/latest) and extract it, or clone this repository.
-2. Open **`JSCanvasEdition/index.html`** in a modern browser. Keep the edition's files and `systems/` directory together.
+2. Open **`JSCanvasEdition/index.html`** in a modern browser. Keep the complete edition, including `assets/` and `src/`, together.
 3. Move with **WASD / arrow keys**, dash with **Space / Shift**, and build your spell arsenal through level-up choices. See the [full controls](JSCanvasEdition/README.md#controls).
 
-No account, game engine, npm install or build step is required. Artwork is embedded, sound is synthesized locally, and the game works offline.
+No account, game engine, npm install or build step is required. PNG artwork is included locally, sound is synthesized locally, and the game works offline.
 
 If the browser restricts local files, run this optional server from the repository root:
 
@@ -54,13 +64,15 @@ Then visit **http://localhost:8000/**. Saves belong to the browser profile and a
 - **Wave survival and Final Sovereigns:** survive the swarm, find the sanctum, defeat its guardian, then visit the merchant.
 - **Demon Witch and Aegis:** spend banked essence on a temporary transformation; time a defensive barrier during dangerous attacks.
 - **Progression and local saves:** repeatable upgrades, talents, relics, 24 save slots and JSON backup import/export.
+- **Ascension foundations:** a 16-stage registry, First Ember trial, honest future-content status and non-destructive historical save recognition.
+- **Explorable preparation:** a paused-by-menus countdown, repeatable merchant visits and one guarded next-wave transition.
 - **Desktop and touch controls**, adjustable zoom, low-quality rendering and reduced motion.
 
 Nocturne is organized into editions: independent implementations of the same game concept. Features and release cycles may differ.
 
 | Edition | Technology | Status |
 | --- | --- | --- |
-| [JSCanvasEdition](JSCanvasEdition/README.md) | HTML5 Canvas, JavaScript, CSS | Playable · <!-- version -->v0.7.7<!-- /version --> |
+| [JSCanvasEdition](JSCanvasEdition/README.md) | HTML5 Canvas, JavaScript, CSS | Playable · <!-- version -->v0.8.0<!-- /version --> |
 | PyGameEdition | Python, Pygame | Planned; no implementation yet |
 
 ## Development and releases

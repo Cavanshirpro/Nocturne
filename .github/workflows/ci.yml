@@ -23,6 +23,5 @@ jobs:
       - run: python -m pip install Pillow
       - run: python scripts/sync_version.py --check
       - run: python scripts/check_license.py
-      - run: node JSCanvasEdition/tests.mjs
-      - run: python -m unittest test_assets.py
-        working-directory: JSCanvasEdition
+      - run: node JSCanvasEdition/tests/run.mjs
+      - run: python -m unittest discover -s JSCanvasEdition/tests -p test_assets.py

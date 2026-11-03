@@ -1,5 +1,7 @@
 # Rendering measurements — v0.7.6
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 > Historical evidence from 26 October 2026. Prose uses canonical version numbers; recorded logs, image labels and byte-identity claims refer to the original packages before the 30 October documentation/versioning update. See [version mapping](../VERSIONING.md).
 
 Measured on **26 October 2026**, headless Chromium 153, `--disable-gpu`, 1280×800, device scale 1. Each scene uses 20 warmups and 80 samples, timing `g.draw()` plus a 1×1 Canvas readback to flush rendering. Simulation is frozen while world-time art advances. These are **software draw costs**, excluding AI/collision updates, physical input, audio, presentation and thermal limits. They are not device FPS guarantees.
@@ -65,7 +67,7 @@ Reduced motion disables procedural hostile deformation/lean/lift and defeat frag
 Authoring-only requirements: Playwright and local Chromium.
 
 ```bash
-NOCTURNE_CHROMIUM=/path/to/chromium node scripts/browser_bench.cjs /path/to/v0.7.5/JSCanvasEdition
+NOCTURNE_CHROMIUM=/path/to/chromium node tools/browser_bench.cjs /path/to/v0.7.5/JSCanvasEdition
 ```
 
 The script serves both editions, runs old then new and writes `nocturne-benchmark.json`. Set `NOCTURNE_BENCH_REVERSE=1` to reverse that order, or `NOCTURNE_BENCH_RESULT` for the output path. Browser version, host load, GPU mode, scene order, warm caches, readback and resolution affect results. Hardware GPU, physical phone and Firefox/LibreWolf measurements have not been performed.

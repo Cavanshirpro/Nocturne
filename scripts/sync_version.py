@@ -20,8 +20,8 @@ def main():
         parser.error("VERSION must contain MAJOR.MINOR.PATCH without a v prefix")
 
     rules = {
-        "JSCanvasEdition/game.js": [(r"(?<=N.VERSION = ')[^']+", version)],
-        "JSCanvasEdition/systems/volumetric_regalia.js": [
+        "JSCanvasEdition/src/core/game-state.js": [(r"(?<=N.VERSION = ')[^']+", version)],
+        "JSCanvasEdition/src/rendering/volumetric_regalia.js": [
             (r"(?<=A.volumeVersion=')[^']+", version),
         ],
         "JSCanvasEdition/index.html": [

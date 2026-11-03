@@ -1,5 +1,7 @@
 # Enemy & Sovereign — v0.7.6
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 This release starts from the completed v0.7.5 package. Player art, isolated cloth, field meanings, environment, HUD and progression rules are retained. The active enemy path is `Enemy.draw → drawEnemy / EnemyMotion → packed atlases`, with shared `Appearance / Orbitals` and the new `HostileVisuals` overlays. The older generic Presentation boss costume is no longer drawn over these bodies.
 
 ## Anatomy and movement
@@ -61,8 +63,8 @@ Open [visual-gallery.html](visual-gallery.html) for actual v0.7.5/v0.7.6 familie
 
 ```bash
 python3 generate_assets.py
-node scripts/render_hostiles.cjs /path/to/v0.7.5/JSCanvasEdition
-node scripts/render_visuals.cjs
+node tools/render_hostiles.cjs /path/to/v0.7.5/JSCanvasEdition
+node tools/render_visuals.cjs
 ```
 
 Authoring requires Pillow and, for the optional native gallery, `@napi-rs/canvas`. Playing the included package requires neither. Creator: Cavanshir Qurbanzade (YoungLion); JSCanvasEdition prompter: @oustxr. Existing AGPL-3.0 licensing applies.

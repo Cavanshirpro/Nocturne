@@ -1,16 +1,26 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**<!-- version -->v0.7.7<!-- /version --> · Enemy & Sovereign · Initial development**
+**<!-- version -->v0.8.0<!-- /version --> · Enemy & Sovereign · Initial development**
 
 The HTML5 Canvas and JavaScript edition of [Nocturne — Witch of Ash](../README.md). Survive the Hollow, build a spell arsenal, gather loot and defeat each wave's Final Sovereign.
 
 [Download ZIP](https://github.com/Cavanshirpro/Nocturne/releases/latest) · [Play](#play) · [Controls](#controls) · [Release notes](RELEASES.md) · [Versioning](../VERSIONING.md)
 
-![Upgraded Witch, Final Sovereign, attack warnings and the current HUD](previews/gameplay.png)
+![Upgraded Witch, Final Sovereign and retained combat warnings](previews/gameplay.png)
 
-*Demonstration scene captured from this version's actual renderer.*
+*Existing combat demonstration from v0.7.x; its artwork and combat rules are retained.*
 
 ## Visual examples
+
+### Ascension and preparation — v0.8.0
+
+![Actual v0.8.0 four-era tier ladder, with a synthetic advanced legacy character recognized through +C](previews/ascension-v080.png)
+
+All 16 tier descriptors are implemented. First Ember newly awards +E; qualified historical characters can receive early recognition through +C. Higher unique trials, aspects, summoning and Dominion capabilities are explicitly unavailable.
+
+![Actual v0.8.0 explorable preparation, with a simulation countdown and merchant access](previews/preparation-v080.png)
+
+The world remains explorable after the required guardian falls. Menus pause preparation; merchant visits retain stock and purchases; early and automatic starts share one guarded transition.
 
 ### Witch and Demon progression
 
@@ -40,11 +50,11 @@ Open **[visual-gallery.html](visual-gallery.html)** locally for the complete ani
 
 ## Current release
 
-**<!-- version -->v0.7.7<!-- /version --> — License notices** restores the unmodified GNU AGPLv3 text, separates the project copyright and AGPLv3-or-later grant, and adds accessible license/warranty notices with a source link for this release. The Enemy & Sovereign artwork, gameplay and save formats are retained.
+**<!-- version -->v0.8.0<!-- /version --> — Ascension Foundations** adds a distinct persistent tier system, a functional First Ember trial, conservative per-slot historical recognition and an explorable preparation cycle. PNG files and static metadata replace the giant embedded bundle; implementation now lives under `src/`, development tools under `tools/`, and tests under `tests/`. Existing combat, unlimited ranks, boss rules, character artwork, half-gold death recovery and AGPLv3-or-later licensing are retained.
 
-See [HOSTILES.md](HOSTILES.md) for the enemy renderer, [RELEASES.md](RELEASES.md) for the full history, and [VALIDATION.md](VALIDATION.md) / [PERFORMANCE.md](PERFORMANCE.md) for archived validation and measurement details. Earlier visual systems are documented in [EVOLUTION.md](EVOLUTION.md), [FIELDS.md](FIELDS.md), [ORBITALS.md](ORBITALS.md) and [VISUALS.md](VISUALS.md).
+Start with [architecture](docs/ARCHITECTURE.md), [Ascension](docs/ASCENSION.md), [migration](docs/MIGRATION.md), [assets](docs/ASSETS.md), [wave cycle](docs/WAVE_CYCLE.md) and the [executed technical report](docs/IMPLEMENTATION_REPORT.md). [RELEASES.md](RELEASES.md) contains the history. Earlier renderer design/measurement documents remain historical references.
 
-The game runs locally in a modern browser. No game engine, account, build step, npm package or internet connection is required for play. Images are embedded in `assets.js`; sound effects use Web Audio.
+The game runs locally in a modern browser. No game engine, account, build step, npm package or internet connection is required for play. All PNGs are included; sound uses Web Audio. Keep `assets/` and `src/` alongside `index.html`.
 
 ## Play
 
@@ -55,7 +65,7 @@ git clone https://github.com/Cavanshirpro/Nocturne.git
 cd Nocturne/JSCanvasEdition
 ```
 
-Open **`index.html`**. Keep all files and the `systems` directory together.
+Open **`index.html`**. Keep the complete `assets/` and `src/` directories together with the entry point and notices.
 
 If your browser restricts local files, optionally serve this folder:
 
@@ -80,6 +90,7 @@ Then open **http://localhost:8000/**. Python is needed only for this optional se
 | Mouse wheel / `+` / `−` | Adjust camera zoom |
 | `0` | Reset zoom |
 | `I` | Open the grimoire |
+| `T` / ◇ HUD button | Inspect Ascension and historical recognition |
 | `Esc` / `P` | Pause or resume |
 | `1` / `2` / `3` | Choose a level-up gift |
 | Touch controls | Move, dash, charge specials, raise Aegis, and activate Demon Witch |
@@ -92,7 +103,7 @@ Sound starts after an interaction. Volume, tonal ambience, low-quality rendering
 2. Choose one of three gifts when leveling up; the world pauses while choosing.
 3. At the end of the timer, follow the **crimson diamond** on the minimap or the world-direction arrow to the **Final Sanctum**. Ordinary swarm spawning stops during this final hunt; surviving enemies and hazards remain dangerous.
 4. Enter the marked arena to summon its guardian. Every final encounter summons a **Final Sovereign**, a crowned form of Overlord. It stays within its arena and must be defeated before the merchant opens. A surviving invasion boss ascends into the Sovereign and fully heals once; it keeps its identity and never duplicates.
-5. Buy upgrades, reroll or refill stock, lock offers, prepare an oath, then start the next wave.
+5. Explore during preparation: 60 seconds after waves 1–10, 75 after 11–40, 90 after 41–100 and 105 thereafter. Buy upgrades, lock offers, inspect Ascension and prepare an oath. Blocking menus pause the countdown. Start early or let the next wave begin automatically.
 
 Overlords can invade from wave 3, or wave 2 for builds with pressure at least 1.7. The saved per-wave chance is `clamp(0.08 + 0.015 × max(0, wave − 3) + 0.19 × pressure, 0.08, 0.90)`. High-pressure builds can invade on consecutive waves; lower-pressure builds retain a three-wave gap. Only one primary invasion can occur per wave. Reopening or retrying does not reroll it. Invasions also receive a whole-build vitality budget. Ending the survival timer alone never completes a wave.
 
@@ -168,47 +179,46 @@ Jewels grant their full essence value during a transformation and bank it for a 
 
 ## Saves and upgrades
 
-There are **24 independent local save slots**, with renaming and JSON backup export/import. Legacy single-save data migrates into **Save 1**. Imports add chapters without overwriting existing ones.
+There are **24 independent local save slots**, with renaming and additive JSON backup import/export. This release uses the separate `nocturne.coven.v4` key and container schema 4. It copies supported v3/v2 storage without deleting the original keys, validates each chapter independently and recognizes historical progress conservatively. New checkpoint schema 3 adds explicit preparation state and exact pending gift choices; existing world snapshot rules remain supported.
 
-Export a backup from **SAVES** before upgrading. Replace the edition's files together, then use the same browser, profile, and game address. Clearing site data, private browsing, a different localhost port, or a different browser can make local saves unavailable. Direct-file save behavior depends on the browser.
-
-The current release retains support for v0.6.3/v0.6.2/v0.6.1/v0.6.0/v0.5.0 saves. Player progression, essence, merchant stock, health, sanctums, attacks and cooldowns remain. A fighting v0.6.2 guardian receives tactics once **without changing its current or maximum vitality**; its ward percentage and attack clocks remain, and the arena expands. Earlier guardians follow their existing vitality migration. Snapshots preserve army ownership/depth, the primary guardian's identity, sidestep clocks, suppression, ring gaps and seal warnings. Appearance is derived from existing state; no cosmetic save migration is needed. Saves made after migration load exactly without repeating it. Older supported saves (legacy v3/v4 labels) still follow the existing migration path. Release renumbering does not change save schemas, local storage keys or stored character progress.
+Export a backup from **SAVES** before upgrading. Replace the complete edition, then use the same browser, profile and game address. A different folder, localhost port, website or browser may have a different origin; move with backup export/import. Storage failures are reported, original data is retained and recovery data remains exportable. See [MIGRATION.md](docs/MIGRATION.md) for evidence rules, schema details and limitations.
 
 ## Source layout
 
-| File | Responsibility |
+| Path | Responsibility |
 | --- | --- |
-| `index.html`, `style.css` | Menus, HUD, controls, and layout |
-| `game.js` | Main loop, input, camera, waves, checkpoints |
-| `entities.js` | Player, enemies, loot, health changes |
-| `combat.js` | Spells, collisions, particles, damage numbers |
-| `ui.js` | Level-up choices, shop, saves, grimoire |
-| `systems/abilities.js` | Charged specials and banked Demon form |
-| `systems/encounters.js` | Final sanctum, guardian leash, minimap |
-| `systems/guardian.js` | Sovereign scaling, warned powers, temporary boss ward |
-| `systems/appearance.js` | Read-only costume composition, progression regalia and spell equipment |
-| `witch_models.py` | Articulated witch and dedicated Demon model |
-| `visual-gallery.html`, `previews/`, `VISUALS.md` | Animated art atlas and complete visual mapping |
-| `systems/warfare.js` | Combat tiers, arena sizing, armies, silence and predictive sidesteps |
-| `systems/difficulty.js` | Whole-build assessment, saved wave plans, encounter budgets |
-| `systems/vitality.js` | Player health feedback and red screen edges |
-| Other `systems/*.js` | Progression, balance, encounter distribution, animation, audio, snapshots, storage |
-| `assets.js` | Embedded PNG assets and atlas metadata |
-| `generate_assets.py`, `enemy_models.py` | Reproducible procedural artwork source |
-| `tests.mjs`, `test_assets.py`, `browser-tests.html` | Logic, asset, and browser verification |
-| `balance-probe.mjs`, `BALANCE.md` | Reproducible throughput fixture and calibration notes |
+| `src/core/`, `src/bootstrap.js` | Namespace, input, spatial index, loader, single fixed-step game loop and startup |
+| `src/data/` | Configuration and all 16 centralized tier descriptors |
+| `src/entities/`, `src/combat/` | Existing actor, spell and collision behavior |
+| `src/systems/` | Progression, difficulty, guardian/warfare, Ascension, trials, wave cycle, migration and storage |
+| `src/rendering/` | Original art, animation, cloth, orbitals, fields and world presentation |
+| `src/ui/`, `src/styles/` | Existing menus/HUD plus Ascension and preparation views |
+| `assets/` | Lightweight manifest, separate metadata and 64 PNG files |
+| `tools/` | Reproducible Python generators, native galleries, browser tests, benchmarks and probes |
+| `tests/` | Existing regression groups, new focused tests and synthetic legacy fixtures |
+| `docs/`, `previews/`, `visual-gallery.html` | Current guides, technical report and actual renderer examples |
 
 ## Development checks
 
+From this edition:
+
 ```bash
-node tests.mjs
-python -m unittest test_assets.py
-node balance-probe.mjs
+node tests/run.mjs
+python -m unittest discover -s tests -p test_assets.py
+node tools/balance-probe.mjs
+node tools/progression_probe.mjs
 ```
 
-Logic tests need Node.js 18+. Asset checks and generation need Python with Pillow. For real browser checks, serve the folder and open **`browser-tests.html`**, then choose **RUN BROWSER CHECKS**. Browser fixtures use a separate verification save store. This is a manual developer page, not the normal game entry point.
+Node.js 18+ runs the logic checks without npm dependencies. Python with Pillow runs asset checks/generation. The Pillow suite regenerates into a temporary directory. Optional browser/native tools require their stated development-only packages:
 
-Do not equate automated sound waveform checks with testing physical speaker output or real-device performance.
+```bash
+# Serve the edition, then open browser-tests.html and RUN BROWSER CHECKS.
+python -m http.server 8000
+# Or use Playwright and your local Chromium:
+node tools/verify_foundations.cjs
+```
+
+See [ASSETS.md](docs/ASSETS.md) for generation and [IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md) for actual results and platform limitations. Automated sound checks do not certify physical speakers or real-device performance.
 
 ## Issues
 

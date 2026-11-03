@@ -1,5 +1,7 @@
 # Validation — v0.7.6
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 > Historical evidence from 26 October 2026. Prose uses canonical version numbers; recorded logs, image labels and byte-identity claims refer to the original packages before the 30 October documentation/versioning update. See [version mapping](../VERSIONING.md).
 
 Executed on **26 October 2026**. Baseline: the completed, unpacked v0.7.5 full-source package.
@@ -28,9 +30,9 @@ Combat before `drawGround` and Game before `drawGround` match (version excluded)
 ## Reproduce
 
 ```bash
-node tests.mjs
+node tests/run.mjs
 python3 -m unittest test_assets.py
-node scripts/compare_gameplay.mjs /path/to/v0.7.5/JSCanvasEdition
+node tools/compare_gameplay.mjs /path/to/v0.7.5/JSCanvasEdition
 ```
 
 The asset suite regenerates the full embedded atlas and checks deterministic output, reconstructed packed pixels, bounds and both player forms. It requires Pillow and can take several minutes.
@@ -38,7 +40,7 @@ The asset suite regenerates the full embedded atlas and checks deterministic out
 For real browser checks, serve this folder and open `browser-tests.html`, or use optional Playwright and Chromium:
 
 ```bash
-NOCTURNE_CHROMIUM=/path/to/chromium node scripts/browser_verify.cjs
+NOCTURNE_CHROMIUM=/path/to/chromium node tools/browser_verify.cjs
 ```
 
 The optional runner also checks layouts and file launch. Tests use the isolated `#verification` save namespace. [validation-results.json](validation-results.json) contains this run's actual browser/layout output. Gallery images come from the native Canvas renderer; browser screenshots were used only internally and are not included.

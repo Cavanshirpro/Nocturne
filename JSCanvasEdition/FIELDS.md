@@ -1,5 +1,7 @@
 # Fields — v0.7.5 Visual Evolution & Polish
 
+> Historical v0.7.x design/evidence. Current file layout, PNG generation and verification are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md).
+
 ## What the green areas mean
 
 **Thorn is an allied damage-and-slow field. It does not heal the player.** Stacking during rapid automatic casting can create many of these areas in a boss fight. Veil is also allied but only slows enemies; Rift pulls and damages them. Hostile attacks live in a separate hazard pool.
@@ -53,4 +55,4 @@ No live 3D model, particle simulation for the mechanisms or new network assets a
 
 Hostile warning, imminent, active and expiring appearances retain the existing exact activation/expiry times. Exact hostile rims are redrawn over combat effects without filling the safe opening.
 
-`node scripts/render_fields.cjs` creates the 72-frame ally/hazard/mechanism gallery using the actual renderers (optional @napi-rs/canvas + Pillow). The existing player/direction/orbital galleries can be rebuilt with their included scripts. All generated files required for play are already included.
+`node tools/render_fields.cjs` creates the 72-frame ally/hazard/mechanism gallery using the actual renderers (optional @napi-rs/canvas + Pillow). The existing player/direction/orbital galleries can be rebuilt with their included scripts. All generated files required for play are already included.
