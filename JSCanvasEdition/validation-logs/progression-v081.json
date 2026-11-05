@@ -1,0 +1,944 @@
+{
+  "method": "Actual XP formula and guaranteed base completion bonus only. Excludes random kills, gifts, purchases, flawless rewards and player skill; late-game targets remain provisional.",
+  "tiers": [
+    {
+      "tier": "-E",
+      "earliestWave": 1,
+      "minimumLevel": 1,
+      "cumulativeXPAtLevel": 0,
+      "completionGoldWithoutFlawless": 0,
+      "trainingRank": 0,
+      "requirements": [],
+      "damageMultiplier": 1,
+      "damageTakenMultiplier": 1,
+      "ability": "Initiate",
+      "abilityDescription": "Base spellcraft.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+E",
+      "earliestWave": 2,
+      "minimumLevel": 8,
+      "cumulativeXPAtLevel": 188,
+      "completionGoldWithoutFlawless": 11,
+      "trainingRank": 3,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 1
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 8
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 2
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 3 or higher",
+          "required": 2
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 1
+        }
+      ],
+      "damageMultiplier": 1.18,
+      "damageTakenMultiplier": 0.975,
+      "ability": "Kindled Focus",
+      "abilityDescription": "18% more spell damage; rank bonuses apply without changing your stored stats.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "-D",
+      "earliestWave": 3,
+      "minimumLevel": 18,
+      "cumulativeXPAtLevel": 1053,
+      "completionGoldWithoutFlawless": 25,
+      "trainingRank": 5,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 2
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 18
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 3
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 5 or higher",
+          "required": 2
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 2
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 1
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 1
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 6
+        }
+      ],
+      "damageMultiplier": 1.38,
+      "damageTakenMultiplier": 0.95,
+      "ability": "Emberwake",
+      "abilityDescription": "Veilstep releases a damaging 90-unit pulse during combat.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+D",
+      "earliestWave": 4,
+      "minimumLevel": 28,
+      "cumulativeXPAtLevel": 2667,
+      "completionGoldWithoutFlawless": 42,
+      "trainingRank": 8,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 3
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 28
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 3
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 8 or higher",
+          "required": 3
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 3
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 3
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 2
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 9
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 1
+        }
+      ],
+      "damageMultiplier": 1.62,
+      "damageTakenMultiplier": 0.925,
+      "ability": "Runic Channel",
+      "abilityDescription": "Directed rituals recover faster, alongside stronger spellcraft.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "-C",
+      "earliestWave": 6,
+      "minimumLevel": 42,
+      "cumulativeXPAtLevel": 6251,
+      "completionGoldWithoutFlawless": 85,
+      "trainingRank": 12,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 5
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 42
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 4
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 12 or higher",
+          "required": 3
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 5
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 6
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 2
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 12
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 2
+        }
+      ],
+      "damageMultiplier": 1.9,
+      "damageTakenMultiplier": 0.9,
+      "ability": "Briar Convergence",
+      "abilityDescription": "Deal 20% more damage to slowed, frozen or exposed foes.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+C",
+      "earliestWave": 9,
+      "minimumLevel": 60,
+      "cumulativeXPAtLevel": 13209,
+      "completionGoldWithoutFlawless": 172,
+      "trainingRank": 18,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 8
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 60
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 4
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 18 or higher",
+          "required": 4
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 8
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 10
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 3
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 15
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 2
+        }
+      ],
+      "damageMultiplier": 2.25,
+      "damageTakenMultiplier": 0.875,
+      "ability": "Evolved Resonance",
+      "abilityDescription": "Evolved or mastered spell schools deal 25% more damage.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "-B",
+      "earliestWave": 13,
+      "minimumLevel": 82,
+      "cumulativeXPAtLevel": 25440,
+      "completionGoldWithoutFlawless": 330,
+      "trainingRank": 25,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 12
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 82
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 5
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 25 or higher",
+          "required": 4
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 12
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 16
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 3
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 18
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 3
+        }
+      ],
+      "damageMultiplier": 2.65,
+      "damageTakenMultiplier": 0.85,
+      "ability": "Veil Fracture",
+      "abilityDescription": "Emberwake exposes foes for 2 seconds.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+B",
+      "earliestWave": 19,
+      "minimumLevel": 110,
+      "cumulativeXPAtLevel": 47143,
+      "completionGoldWithoutFlawless": 657,
+      "trainingRank": 34,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 18
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 110
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 5
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 34 or higher",
+          "required": 5
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 18
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 24
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 4
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 21
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 3
+        }
+      ],
+      "damageMultiplier": 3.12,
+      "damageTakenMultiplier": 0.825,
+      "ability": "Flow State",
+      "abilityDescription": "A successful dash removes 2 seconds from the directed ritual cooldown.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "-A",
+      "earliestWave": 27,
+      "minimumLevel": 145,
+      "cumulativeXPAtLevel": 84245,
+      "completionGoldWithoutFlawless": 1261,
+      "trainingRank": 46,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 26
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 145
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 6
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 46 or higher",
+          "required": 5
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 26
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 34
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 4
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 24
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 4
+        }
+      ],
+      "damageMultiplier": 3.7,
+      "damageTakenMultiplier": 0.8,
+      "ability": "Winterwake",
+      "abilityDescription": "Emberwake slows foes for 2 seconds and briefly freezes ordinary enemies.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+A",
+      "earliestWave": 37,
+      "minimumLevel": 185,
+      "cumulativeXPAtLevel": 140648,
+      "completionGoldWithoutFlawless": 2286,
+      "trainingRank": 62,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 36
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 185
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 6
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 62 or higher",
+          "required": 6
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 36
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 46
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 5
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 27
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 4
+        }
+      ],
+      "damageMultiplier": 4.4,
+      "damageTakenMultiplier": 0.775,
+      "ability": "Coven Bond",
+      "abilityDescription": "Demon power rises by 15%; Aegis absorbs 20% more damage.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "-S",
+      "earliestWave": 51,
+      "minimumLevel": 235,
+      "cumulativeXPAtLevel": 232792,
+      "completionGoldWithoutFlawless": 4225,
+      "trainingRank": 82,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 50
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 235
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 7
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 82 or higher",
+          "required": 6
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 50
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 60
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 5
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 30
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 5
+        }
+      ],
+      "damageMultiplier": 5.25,
+      "damageTakenMultiplier": 0.75,
+      "ability": "Sovereign Edge",
+      "abilityDescription": "Deal 20% more damage to bosses and elite enemies.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "+S",
+      "earliestWave": 69,
+      "minimumLevel": 295,
+      "cumulativeXPAtLevel": 376041,
+      "completionGoldWithoutFlawless": 7582,
+      "trainingRank": 108,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 68
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 295
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 7
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 108 or higher",
+          "required": 7
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 68
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 78
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 6
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 33
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 5
+        }
+      ],
+      "damageMultiplier": 6.3,
+      "damageTakenMultiplier": 0.725,
+      "ability": "Ashbound Renewal",
+      "abilityDescription": "Defeating an elite or principal boss heals 3% vitality and removes 2 seconds from Aegis recovery.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "Local Power",
+      "earliestWave": 91,
+      "minimumLevel": 365,
+      "cumulativeXPAtLevel": 589496,
+      "completionGoldWithoutFlawless": 13005,
+      "trainingRank": 140,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 90
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 365
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 8
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 140 or higher",
+          "required": 7
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 90
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 100
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 6
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 36
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 6
+        }
+      ],
+      "damageMultiplier": 7.6,
+      "damageTakenMultiplier": 0.7,
+      "ability": "Commanding Presence",
+      "abilityDescription": "Directed rituals slow nearby ordinary foes within 220 units.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "Areal Power",
+      "earliestWave": 119,
+      "minimumLevel": 445,
+      "cumulativeXPAtLevel": 896247,
+      "completionGoldWithoutFlawless": 22007,
+      "trainingRank": 180,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 118
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 445
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 8
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 180 or higher",
+          "required": 8
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 118
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 126
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 7
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 39
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 6
+        }
+      ],
+      "damageMultiplier": 9.2,
+      "damageTakenMultiplier": 0.675,
+      "ability": "Areal Reach",
+      "abilityDescription": "Emberwake reaches 180 units; directed rituals deal 25% more damage.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "Big Power",
+      "earliestWave": 153,
+      "minimumLevel": 535,
+      "cumulativeXPAtLevel": 1323533,
+      "completionGoldWithoutFlawless": 36100,
+      "trainingRank": 228,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 152
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 535
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 9
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 228 or higher",
+          "required": 8
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 152
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 156
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 8
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 42
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 7
+        }
+      ],
+      "damageMultiplier": 11.2,
+      "damageTakenMultiplier": 0.6499999999999999,
+      "ability": "Unbroken Aegis",
+      "abilityDescription": "Raising Aegis clears casting silence and grants 2 seconds of seal grace.",
+      "liveTrialImplemented": true
+    },
+    {
+      "tier": "National Power",
+      "earliestWave": 196,
+      "minimumLevel": 640,
+      "cumulativeXPAtLevel": 1934837,
+      "completionGoldWithoutFlawless": 58890,
+      "trainingRank": 285,
+      "requirements": [
+        {
+          "id": "completedWaves",
+          "label": "Completed waves",
+          "required": 195
+        },
+        {
+          "id": "level",
+          "label": "Character level",
+          "required": 640
+        },
+        {
+          "id": "schools",
+          "label": "Learned spell schools",
+          "required": 9
+        },
+        {
+          "id": "trainedSchools",
+          "label": "Schools trained to rank 285 or higher",
+          "required": 9
+        },
+        {
+          "id": "guardians",
+          "label": "Verified guardian victories",
+          "required": 195
+        },
+        {
+          "id": "masteryPoints",
+          "label": "Total spell mastery ranks",
+          "required": 190
+        },
+        {
+          "id": "masteredSchools",
+          "label": "Distinct mastered schools",
+          "required": 9
+        },
+        {
+          "id": "elites",
+          "label": "Elite victories",
+          "required": 45
+        },
+        {
+          "id": "evolved",
+          "label": "Distinct evolved schools",
+          "required": 8
+        }
+      ],
+      "damageMultiplier": 13.7,
+      "damageTakenMultiplier": 0.625,
+      "ability": "National Mandate",
+      "abilityDescription": "Directed rituals also release a 260-unit damaging, exposing pulse.",
+      "liveTrialImplemented": true
+    }
+  ],
+  "legacy": [
+    {
+      "fixture": "new",
+      "level": 1,
+      "currentWave": 1,
+      "completedWaves": 0,
+      "recognizedTier": "-E",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "early",
+      "level": 6,
+      "currentWave": 5,
+      "completedWaves": 4,
+      "recognizedTier": "+E",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "wave20",
+      "level": 24,
+      "currentWave": 20,
+      "completedWaves": 19,
+      "recognizedTier": "+D",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "wave50",
+      "level": 60,
+      "currentWave": 50,
+      "completedWaves": 49,
+      "recognizedTier": "+C",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "wave150",
+      "level": 200,
+      "currentWave": 150,
+      "completedWaves": 149,
+      "recognizedTier": "+C",
+      "verifiedTrials": []
+    },
+    {
+      "fixture": "extreme",
+      "level": 100000,
+      "currentWave": 1,
+      "completedWaves": 0,
+      "recognizedTier": "-E",
+      "verifiedTrials": []
+    }
+  ]
+}

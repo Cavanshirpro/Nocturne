@@ -1,24 +1,26 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**<!-- version -->v0.8.0<!-- /version --> · Enemy & Sovereign · Initial development**
+**<!-- version -->v0.8.1<!-- /version --> · Ascension Power & WebP · Initial development**
 
 The HTML5 Canvas and JavaScript edition of [Nocturne — Witch of Ash](../README.md). Survive the Hollow, build a spell arsenal, gather loot and defeat each wave's Final Sovereign.
 
 [Download ZIP](https://github.com/Cavanshirpro/Nocturne/releases/latest) · [Play](#play) · [Controls](#controls) · [Release notes](RELEASES.md) · [Versioning](../VERSIONING.md)
 
-![Upgraded Witch, Final Sovereign and retained combat warnings](previews/gameplay.png)
+![Upgraded Witch, Final Sovereign and retained combat warnings](previews/gameplay.webp)
 
 *Existing combat demonstration from v0.7.x; its artwork and combat rules are retained.*
 
 ## Visual examples
 
-### Ascension and preparation — v0.8.0
+### Ascension power and preparation — v0.8.1
 
-![Actual v0.8.0 four-era tier ladder, with a synthetic advanced legacy character recognized through +C](previews/ascension-v080.png)
+![Actual v0.8.1 four-era tier ladder, with a synthetic advanced legacy character recognized through +C](previews/ascension-v081.webp)
 
-All 16 tier descriptors are implemented. First Ember newly awards +E; qualified historical characters can receive early recognition through +C. Higher unique trials, aspects, summoning and Dominion capabilities are explicitly unavailable.
+All 16 ranks have cumulative combat power. Promote through deep school training, total mastery, evolutions and 15 playable ordeals. Earn dash pulses, control, ritual and Aegis abilities. Historical recognition through +C is preserved.
 
-![Actual v0.8.0 explorable preparation, with a simulation countdown and merchant access](previews/preparation-v080.png)
+![Actual rank detail showing cumulative damage, defence, recovery and earned combat abilities](previews/rank-power-v081.webp)
+
+![Actual v0.8.1 explorable preparation, with a simulation countdown and merchant access](previews/preparation-v081.webp)
 
 The world remains explorable after the required guardian falls. Menus pause preparation; merchant visits retain stock and purchases; early and automatic starts share one guarded transition.
 
@@ -26,17 +28,17 @@ The world remains explorable after the required guardian falls. Menus pause prep
 
 ![Witch and Demon progression with learned spell equipment](previews/player-regalia.gif)
 
-*Actual rendered player progression and Demon form.* [Still image](previews/player-regalia.png)
+*Actual rendered player progression and Demon form.* [Still image](previews/player-regalia.webp)
 
 ### Enemy roles
 
-![Regular, elite veteran, summoned commander and Final Sovereign](previews/hostile-roles-v526.png)
+![Regular, elite veteran, summoned commander and Final Sovereign](previews/hostile-roles-v526.webp)
 
 Nine families have solid, eight-direction artwork and individual motion. Traits, veteran regalia and command roles remain readable as your build grows.
 
 ### Boss attack stages
 
-![Preparation, imminent release, activation and recovery for Warden and Overlord attacks](previews/boss-stages-v526.png)
+![Preparation, imminent release, activation and recovery for Warden and Overlord attacks](previews/boss-stages-v526.webp)
 
 Eleven boss powers synchronize body gestures and warning stages with their real attack clocks. The crowned guardian is distinct from its summoned commanders.
 
@@ -44,17 +46,17 @@ Eleven boss powers synchronize body gestures and warning stages with their real 
 
 ![Animated spell emitters and field warning examples](previews/mechanisms-v525.gif)
 
-Twelve school-specific satellite mechanisms, bounded visual grades, allied field motifs and exact hostile warning boundaries. [Still image](previews/mechanisms-v525.png)
+Twelve school-specific satellite mechanisms, bounded visual grades, allied field motifs and exact hostile warning boundaries. [Still image](previews/mechanisms-v525.webp)
 
 Open **[visual-gallery.html](visual-gallery.html)** locally for the complete animated gallery, enemy states, boss rituals and historical comparisons. It includes pause and reduced-motion support. Some comparison images retain old development labels; [VERSIONING.md](../VERSIONING.md#historical-numbering-migration) maps them to the current scheme.
 
 ## Current release
 
-**<!-- version -->v0.8.0<!-- /version --> — Ascension Foundations** adds a distinct persistent tier system, a functional First Ember trial, conservative per-slot historical recognition and an explorable preparation cycle. PNG files and static metadata replace the giant embedded bundle; implementation now lives under `src/`, development tools under `tools/`, and tests under `tests/`. Existing combat, unlimited ranks, boss rules, character artwork, half-gold death recovery and AGPLv3-or-later licensing are retained.
+**<!-- version -->v0.8.1<!-- /version --> — Ascension Power & WebP** strengthens school-depth, mastery and evolution gates, adds real cumulative rank powers and makes all 15 promotion ordeals playable. Runtime images and static previews use verified lossless WebP. Earned tiers, unlimited base progression, existing active guardian snapshots, half-gold death recovery and AGPLv3-or-later licensing are preserved.
 
 Start with [architecture](docs/ARCHITECTURE.md), [Ascension](docs/ASCENSION.md), [migration](docs/MIGRATION.md), [assets](docs/ASSETS.md), [wave cycle](docs/WAVE_CYCLE.md) and the [executed technical report](docs/IMPLEMENTATION_REPORT.md). [RELEASES.md](RELEASES.md) contains the history. Earlier renderer design/measurement documents remain historical references.
 
-The game runs locally in a modern browser. No game engine, account, build step, npm package or internet connection is required for play. All PNGs are included; sound uses Web Audio. Keep `assets/` and `src/` alongside `index.html`.
+The game runs locally in a modern browser. No game engine, account, build step, npm package or internet connection is required for play. All WebP images are included; sound uses Web Audio. Keep `assets/` and `src/` alongside `index.html`.
 
 ## Play
 
@@ -193,7 +195,7 @@ Export a backup from **SAVES** before upgrading. Replace the complete edition, t
 | `src/systems/` | Progression, difficulty, guardian/warfare, Ascension, trials, wave cycle, migration and storage |
 | `src/rendering/` | Original art, animation, cloth, orbitals, fields and world presentation |
 | `src/ui/`, `src/styles/` | Existing menus/HUD plus Ascension and preparation views |
-| `assets/` | Lightweight manifest, separate metadata and 64 PNG files |
+| `assets/` | Lightweight manifest, separate metadata and 64 lossless WebP files |
 | `tools/` | Reproducible Python generators, native galleries, browser tests, benchmarks and probes |
 | `tests/` | Existing regression groups, new focused tests and synthetic legacy fixtures |
 | `docs/`, `previews/`, `visual-gallery.html` | Current guides, technical report and actual renderer examples |

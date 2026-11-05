@@ -58,4 +58,4 @@ async function main(){
  const result=spawnSync('python',['-c',python,temp,out],{encoding:'utf8'});if(result.status!==0)throw Error(result.stderr);
  fs.rmSync(temp,{recursive:true,force:true});console.log('Rendered 48 full-model gallery frames from '+Object.keys(images).length+' decoded assets.');
 }
-main().catch(error=>{console.error(error);process.exitCode=1;});
+main().then(()=>require('./preview-assets.cjs')()).catch(error=>{console.error(error);process.exitCode=1;});

@@ -2,6 +2,16 @@
 
 Versions use **MAJOR.MINOR.PATCH** with MAJOR **0** during initial development. These notes use the canonical numbering; historical source snapshots, comparison images and validation logs may contain previous labels. See the [complete mapping and release policy](../VERSIONING.md).
 
+## v0.8.1 — Ascension Power & WebP · 5 November 2026
+
+- Rebalanced Ascension around deep school training, total mastery ranks, distinct mastery/evolution and independent guardian/elite evidence. Wave floors are lower; character level or shallow rank-IV breadth no longer substitutes for development.
+- Added cumulative, derived rank combat bonuses and actual dash, control, ritual, Demon and Aegis abilities. All 15 promotion ordeals are playable with escalating nonlethal warning patterns; rank details show exact bonuses and preceding-rank differences.
+- Preserved already-earned tiers and the frozen v0.8.0 rules for retrospective v2/v3 recognition. Base character stats are never repeatedly multiplied on load.
+- Converted all 64 runtime images to lossless WebP with exact RGBA preservation: 18,810,779 PNG bytes become 11,973,448 WebP bytes (36.35% smaller). Loader, generators, native tools, local-file startup and asset checks use the new manifest.
+- Converted 27 static preview images to verified lossless WebP and refreshed real rank-power screenshots. Image-only decoding was slower in the measured Chromium samples (339.8 ms PNG versus 428.3 ms WebP median); the verified benefit is smaller encoded files, with no FPS or decoded-memory claim.
+- Validation: 264 existing regression groups, 52 tests, 34 asset checks, seven exact baseline comparisons, 86 real Chromium Canvas/UI checks and 27 additional acceptance checks passed.
+- See the [current balance and validation report](docs/IMPLEMENTATION_REPORT.md) for evidence, limits and reproduction commands.
+
 ## v0.8.0 — Ascension Foundations · 3 November 2026
 
 - Added all 16 Ascension descriptors, four eras, detailed independent requirements, legacy recognition through +C when proven, and a functional First Ember trial for +E. Advanced unique trials, spell aspects, summoning and Dominion abilities remain explicitly unavailable.

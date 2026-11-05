@@ -12,10 +12,10 @@ Copyright (C) 2026 Javanshir Gurbanzade. See LICENSE and NOTICE. */
       const panel=document.getElementById('preparation-panel');if(!panel)return;
       const preparing=N.WaveCycle.preparing(g),trial=g.player.ascension.pendingTrial;
       panel.hidden=!preparing||g.state!=='playing';if(panel.hidden)return;
-      const e=N.Ascension.evaluate(g.player,g),seconds=Math.ceil(trial?20-trial.elapsed:g.cycle.remaining),tier=N.Ascension.tier(g.player);
-      const text=`${trial?'FIRST EMBER':seconds<=5?'WAVE '+(g.wave+1)+' INCOMING':'WAVE '+g.wave+' CLEARED'} · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+      const ordeal=N.AscensionTrials.current(g),e=N.Ascension.evaluate(g.player,g),seconds=Math.ceil(trial?ordeal.duration-trial.elapsed:g.cycle.remaining),tier=N.Ascension.tier(g.player);
+      const text=`${trial?ordeal.name.toUpperCase():seconds<=5?'WAVE '+(g.wave+1)+' INCOMING':'WAVE '+g.wave+' CLEARED'} · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
       const heading=document.getElementById('preparation-title');if(heading.textContent!==text)heading.textContent=text;
-      const details=document.getElementById('preparation-detail'),value=trial?'Move '+Math.floor(trial.distance)+' / 250 · Dash '+Math.max(0,g.stats.dashes-trial.startDashes)+' / 1':`◈ ${N.fmt(g.player.gold)} · TIER ${tier.name} · ${e.requirements.filter(r=>r.completed).length}/${e.requirements.length} next requirements · ${g.player.progress.preparedOath?N.OATHS[g.player.progress.preparedOath].name:'No oath prepared'}`;
+      const details=document.getElementById('preparation-detail'),value=trial?'Move '+Math.floor(trial.distance)+' / '+ordeal.distance+' · Dash '+Math.max(0,g.stats.dashes-trial.startDashes)+' / '+ordeal.dashes:`◈ ${N.fmt(g.player.gold)} · TIER ${tier.name} · ${e.requirements.filter(r=>r.completed).length}/${e.requirements.length} next requirements · ${g.player.progress.preparedOath?N.OATHS[g.player.progress.preparedOath].name:'No oath prepared'}`;
       if(details.textContent!==value)details.textContent=value;
       panel.dataset.warning=!trial&&seconds<=5?'imminent':!trial&&seconds<=15?'soon':'calm';
       for(const id of ['start-next-wave','open-merchant'])document.getElementById(id).disabled=!!trial;

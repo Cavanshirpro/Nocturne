@@ -5,11 +5,11 @@ import assert from 'node:assert/strict';
 import {createHarness,clearedGuardian} from './helpers.mjs';
 
 function ready(){const h=createHarness(),g=h.create();g.reset();g.wave=3;g.player.level=10;g.player.weapons.bolt=g.player.weapons.orbit=4;clearedGuardian(g);return {...h,g};}
-test('all 16 stages have stable independent descriptors and safely unavailable future powers',()=>{
+test('all 16 stages have stable independent descriptors and implemented rank powers',()=>{
   const {N}=createHarness();assert.deepEqual(Array.from(N.ASCENSION_TIERS,t=>t.name),['-E','+E','-D','+D','-C','+C','-B','+B','-A','+A','-S','+S','Local Power','Areal Power','Big Power','National Power']);
   assert.equal(new Set(N.ASCENSION_TIERS.map(t=>t.id)).size,16);
-  assert.deepEqual(Array.from(N.ASCENSION_TIERS,t=>t.earliestWave),[1,4,8,14,22,32,45,60,78,99,124,151,187,225,275,335]);
-  for(const t of N.ASCENSION_TIERS){assert.ok(t.accessibilityLabel&&t.crest&&t.theme&&t.achievement);assert.equal(t.progressionImplemented,t.order<=1);for(const u of t.unlocks)if(u.kind!=='cosmetic')assert.equal(u.implemented,false);}
+  assert.deepEqual(Array.from(N.ASCENSION_TIERS,t=>t.earliestWave),[1,2,3,4,6,9,13,19,27,37,51,69,91,119,153,196]);
+  for(const t of N.ASCENSION_TIERS){assert.ok(t.accessibilityLabel&&t.crest&&t.theme&&t.achievement);assert.equal(t.progressionImplemented,true);assert.ok(t.power.damage>=1);for(const u of t.unlocks)assert.equal(u.implemented,true);}
 });
 test('requirements are pure, detailed, and cannot be replaced by extreme level or BUILD POWER',()=>{
   const {N,g}=ready();g.player.ascension=N.Ascension.create();g.player.level=100000;g.player.damage=1e100;

@@ -43,7 +43,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
       this.dashTimer=.2;this.dashRemaining=this.dashCooldown;this.invulnerable=Math.max(this.invulnerable,.28);
       if(this.progress.talents.veil)this.game.combat.veilBloom(this);
       this.ghostClock=0;this.animator.play('dash',{restart:true});
-      this.game.stats.dashes++;this.game.combat.burst(this.x,this.y-10,10,COVENS[this.coven].color);this.game.combat.sound('dash');return true;
+      this.game.stats.dashes++;N.AscensionPower.dash(this.game);this.game.combat.burst(this.x,this.y-10,10,COVENS[this.coven].color);this.game.combat.sound('dash');return true;
     }
     get walkFrame(){return this.moving&&!this.game.reducedMotion?Math.floor(this.walk/(Math.PI*2)*8)%8:-1;}
     cast(target=null){
@@ -52,7 +52,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     }
     update(dt){
       this.castTimer=Math.max(0,this.castTimer-dt);
-      const {x,y}=this.game.input.vector(),speed=this.speed*(this.progress.demonTime>0?(this.progress.demonSpeed??1.45):1)*(this.progress.activeOath==='pilgrim'?1.08:1);this.moving=Math.hypot(x,y)>.05;
+      const {x,y}=this.game.input.vector(),speed=this.speed*N.AscensionPower.profile(this).speed*(this.progress.demonTime>0?(this.progress.demonSpeed??1.45):1)*(this.progress.activeOath==='pilgrim'?1.08:1);this.moving=Math.hypot(x,y)>.05;
       if(this.moving){
         this.facing=DIRECTIONS[(Math.round(Math.atan2(y,x)/(Math.PI/4))+8)%8];
         const len=Math.hypot(x,y)||1;this.lastX=x/len;this.lastY=y/len;
@@ -71,7 +71,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
       this.animator.update(dt,this.moving,this.dashTimer>0,this.game.reducedMotion);
       // Match the locomotion clip to actual distance, rather than frame rate.
       if(this.animator.state==='walk')this.animator.time=this.walk/(Math.PI*2)*window.NOCTURNE_ATLAS.clips.walk.duration;
-      this.dashRemaining=Math.max(0,this.dashRemaining-dt);this.invulnerable=Math.max(0,this.invulnerable-dt);
+      this.dashRemaining=Math.max(0,this.dashRemaining-dt*N.AscensionPower.profile(this).dashRecovery);this.invulnerable=Math.max(0,this.invulnerable-dt);
       const restored=this.heal(this.regen*dt,false);this.regenPending+=restored;this.regenClock+=dt;
       if(this.regenClock>=.75){if(this.regenPending>0)N.healthEvent(this,this.regenPending);this.regenPending=0;this.regenClock=0;}
       N.updateVitality(this,dt);
@@ -83,7 +83,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     }
     hurt(amount){
       if(this.invulnerable>0||this.game.state!=='playing')return;
-      let damage=amount/(1+this.armor);
+      let damage=amount*N.AscensionPower.profile(this).taken/(1+this.armor);
       let warded=0;const q=this.progress;
       if(q.aegisTime>0&&q.aegis>0){warded=Math.min(q.aegis,damage);q.aegis-=warded;damage-=warded;if(q.aegis===0)q.aegisTime=0;}
       const absorbed=Math.min(this.progress.shield,damage);this.progress.shield-=absorbed;damage-=absorbed;
@@ -218,7 +218,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
       if(crit)g.combat.effect('impact',this.x,this.y-14,0,0,26,'#f1d5a1',.2);
       if(crit){g.shake=Math.max(g.shake,3);if(g.impactCooldown<=0){g.hitStop=.025;g.impactCooldown=.16;}}
       if(this.hp>0){if(source==='bolt'&&crit&&g.player.progress.talents.kindling)N.applyBurn(this,2,g.player.damage*(.04+.025*g.player.progress.talents.kindling),'bolt');return;}
-      this.alive=false;g.player.kills++;g.waveKills++;
+      this.alive=false;N.AscensionPower.defeated(g,this);g.player.kills++;g.waveKills++;
       const talents=g.player.progress.talents;
       if(talents.scavenger&&g.player.kills%10===0)g.earnGold(talents.scavenger);
       if(talents.bloodledger&&g.player.kills%20===0)g.player.heal(2*talents.bloodledger);

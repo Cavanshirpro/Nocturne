@@ -13,7 +13,7 @@ This file is part of Nocturne. See LICENSE and NOTICE.
       if(!entries.length)throw new Error('Asset manifest is empty.');
       const required=['ground','ground_ember','ground_moon','orb',...['S','SW','W','NW','N','NE','E','SE'].flatMap(d=>['witch_'+d,'witch_atlas_'+d,'demon_atlas_'+d]),...Object.keys(N.ENEMY_TYPES).flatMap(id=>[id,'enemy_atlas_'+id]),'enemy_ritual_warden','enemy_ritual_overlord',...['tree','arch','tomb','obelisk','wall','brazier','charred'].map(id=>'prop_'+id)];
       for(const key of required)if(!Object.hasOwn(manifest,key))throw new Error('Required asset missing from manifest: '+key);
-      for(const [key,src] of entries)if(!/^[a-zA-Z0-9_]+$/.test(key)||typeof src!=='string'||!/^assets\/images\/[a-zA-Z0-9_./-]+\.png$/.test(src)||src.split('/').includes('..'))throw new Error('Invalid asset path: '+key);
+      for(const [key,src] of entries)if(!/^[a-zA-Z0-9_]+$/.test(key)||typeof src!=='string'||!/^assets\/images\/[a-zA-Z0-9_./-]+\.webp$/.test(src)||src.split('/').includes('..'))throw new Error('Invalid asset path: '+key);
       return entries.filter(([key])=>!key.startsWith('enemy_walk_'));
     },
     async load(manifest,{onProgress=()=>{},ImageClass=window.Image}={}){

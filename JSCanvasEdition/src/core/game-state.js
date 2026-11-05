@@ -6,7 +6,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
 (() => {
   'use strict';
   const N = window.Nocturne = {};
-  N.VERSION = '0.8.0';
+  N.VERSION = '0.8.1';
   const compactNumbers=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});N.fmt=v=>Math.abs(v)>=10000?compactNumbers.format(v):Number.isInteger(v)?String(v):Number(v.toFixed(1)).toString();
   N.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   N.rand = (a, b) => a + Math.random() * (b - a);

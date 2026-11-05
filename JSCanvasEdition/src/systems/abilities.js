@@ -42,12 +42,12 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
         g.combat.launchVolley({angle,count:12+rank*2+Math.floor(charge*8),span:Math.PI*2,damage:(1.3+.2*rank)*weight,speed:p.projectileSpeed*.85,range:510+rank*12,pierce:2+rank,source:'soulstorm',color:'#e6afd3',closed:true});
         g.combat.effect('ring',p.x,p.y,0,0,150,'#e6afd3',.5);
       }
-      g.stats.specials=(g.stats.specials||0)+1;g.combat.sound(id);return true;
+      N.AscensionPower.ritual(g);g.stats.specials=(g.stats.specials||0)+1;g.combat.sound(id);return true;
     }
     shield(){
       const g=this.game,p=g.player,q=p.progress;
       if(g.state!=='playing'||q.aegisRemaining>0||q.aegisTime>0)return false;
-      q.aegis=q.aegisMax=p.maxHp*.75+p.level*2;q.aegisTime=2.5;q.aegisRemaining=8;
+      q.aegis=q.aegisMax=(p.maxHp*.75+p.level*2)*(N.AscensionPower.order(p)>=9?1.2:1);N.AscensionPower.shield(p);q.aegisTime=2.5;q.aegisRemaining=8;
       p.cast();g.stats.shields=(g.stats.shields||0)+1;g.combat.effect('ring',p.x,p.y-20,0,0,58,'#a5e1ff',.35);g.combat.sound('lock');return true;
     }
     jewel(value=34){
@@ -56,7 +56,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     }
     preview(){
       const charges=Math.floor(this.game.player.progress.essence/100),bonus=charges>0?Math.log2(charges):0;
-      return {charges,cost:charges*100,duration:12+8*Math.max(0,charges-1),power:1.8+.3*bonus,speed:1.45+.1*bonus};
+      return {charges,cost:charges*100,duration:12+8*Math.max(0,charges-1),power:(1.8+.3*bonus)*(N.AscensionPower.order(this.game.player)>=9?1.15:1),speed:1.45+.1*bonus};
     }
     transform(){
       const g=this.game,p=g.player,q=p.progress,boost=this.preview();
@@ -67,11 +67,11 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
       g.combat.effect('ring',p.x,p.y,0,0,360,'#e9a0c9',.8);g.combat.sound('transform');return true;
     }
     update(dt){
-      const q=this.game.player.progress;q.specialRemaining=Math.max(0,q.specialRemaining-dt);
+      const q=this.game.player.progress;q.specialRemaining=Math.max(0,q.specialRemaining-dt*N.AscensionPower.profile(this.game.player).recovery);
       q.silenceTime=Math.max(0,(q.silenceTime||0)-dt);q.silenceGrace=Math.max(0,(q.silenceGrace||0)-dt);
       if(this.charging)this.charge=Math.min(1.2,this.charge+dt);
       q.demonTime=Math.max(0,q.demonTime-dt);
-      q.aegisRemaining=Math.max(0,q.aegisRemaining-dt);q.aegisTime=Math.max(0,q.aegisTime-dt);if(q.aegisTime===0)q.aegis=0;
+      q.aegisRemaining=Math.max(0,q.aegisRemaining-dt*(1+N.AscensionPower.order(this.game.player)*.02));q.aegisTime=Math.max(0,q.aegisTime-dt);if(q.aegisTime===0)q.aegis=0;
     }
     draw(c){const g=this.game,p=g.player,q=p.progress;if(g.state!=='playing'&&g.state!=='paused')return;
       if(q.silenceTime>0){c.save();c.textAlign='center';c.font='bold 12px Arial';c.fillStyle='#ead7ff';c.strokeStyle='#131b22';c.lineWidth=3;const text='SEALED '+q.silenceTime.toFixed(1)+'s · DASH / AEGIS';c.strokeText(text,p.x,p.y-120);c.fillText(text,p.x,p.y-120);c.restore();}

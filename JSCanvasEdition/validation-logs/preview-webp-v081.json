@@ -1,0 +1,164 @@
+[
+  {
+    "path": "previews/allied-v524.webp",
+    "pngBytes": 41381,
+    "webpBytes": 19672,
+    "rgbaSHA256": "073cb098a1f1fb2eb3d61966e316bd5ab633b54e9ee78eba10fab8e868df5ca5"
+  },
+  {
+    "path": "previews/allied-v525.webp",
+    "pngBytes": 43947,
+    "webpBytes": 20696,
+    "rgbaSHA256": "ae89effa599a8221e7ce6b011c6372bbab51b28353a3ea75eefa5636176eb68d"
+  },
+  {
+    "path": "previews/ascension-v080.webp",
+    "pngBytes": 369110,
+    "webpBytes": 134940,
+    "rgbaSHA256": "2b6150918b354a2967544d9de49187ce968092c530eee856c16f5fd13aad2901"
+  },
+  {
+    "path": "previews/biomes-v525.webp",
+    "pngBytes": 1691993,
+    "webpBytes": 947938,
+    "rgbaSHA256": "61503e8a7d0f062aa7f003d5a4b346b30923cc3fda25ae504cd072318f16ab87"
+  },
+  {
+    "path": "previews/boss-families-v525.webp",
+    "pngBytes": 483022,
+    "webpBytes": 336024,
+    "rgbaSHA256": "c582937ee6280d0cc1c5c7033cbee1374c2c63471baa9fa1ac8cd703c1411208"
+  },
+  {
+    "path": "previews/boss-regalia.webp",
+    "pngBytes": 387676,
+    "webpBytes": 262944,
+    "rgbaSHA256": "3f2e45cc30c0e3f714d196fce4c14b34f760354af4224abfab8825afa74c7982"
+  },
+  {
+    "path": "previews/boss-stages-v526.webp",
+    "pngBytes": 193448,
+    "webpBytes": 133348,
+    "rgbaSHA256": "a827b344e65181f95675382766388f0554f5036271e837f2815147091c3044c3"
+  },
+  {
+    "path": "previews/directions-regalia.webp",
+    "pngBytes": 306609,
+    "webpBytes": 199934,
+    "rgbaSHA256": "347ae1e14015a1ad44c4cad6ecdc7fff548d33169969c2f4dbd97aa8760bad65"
+  },
+  {
+    "path": "previews/enemy-motion-v526.webp",
+    "pngBytes": 399974,
+    "webpBytes": 240930,
+    "rgbaSHA256": "c3360ecbcc4bcefd55293bf32438f3efb6742a0e501b5c4547ab71d3f1649d48"
+  },
+  {
+    "path": "previews/enemy-regalia.webp",
+    "pngBytes": 364701,
+    "webpBytes": 192698,
+    "rgbaSHA256": "69f673dbc0a27a6d83996766b900da1d4c35e36d77856c327639071d61775c04"
+  },
+  {
+    "path": "previews/enemy-traits-v526.webp",
+    "pngBytes": 835782,
+    "webpBytes": 228026,
+    "rgbaSHA256": "c89384f9b226c8e7910cba4e2051428202c1597a1f735ee79f45520027bae224"
+  },
+  {
+    "path": "previews/gameplay.webp",
+    "pngBytes": 676703,
+    "webpBytes": 398210,
+    "rgbaSHA256": "69fc9f6734b20c88d8838fb26875c86693c3dbf2d06833dfc2599b0b0029abc2"
+  },
+  {
+    "path": "previews/grades-v525.webp",
+    "pngBytes": 246700,
+    "webpBytes": 112528,
+    "rgbaSHA256": "f27291a1d50fcf8da040d78a1c9c89d12eaa5999baaa0af5d6803f96832c06d5"
+  },
+  {
+    "path": "previews/hazards-v524.webp",
+    "pngBytes": 58802,
+    "webpBytes": 28822,
+    "rgbaSHA256": "5bcde9a34b75132184cf72fe4279352f89a11888c3f5334d87b24434fabeb79b"
+  },
+  {
+    "path": "previews/hazards-v525.webp",
+    "pngBytes": 58802,
+    "webpBytes": 28822,
+    "rgbaSHA256": "5bcde9a34b75132184cf72fe4279352f89a11888c3f5334d87b24434fabeb79b"
+  },
+  {
+    "path": "previews/hostile-roles-v526.webp",
+    "pngBytes": 124817,
+    "webpBytes": 80104,
+    "rgbaSHA256": "316ac94b40f6c5f034a9e87dea829ffb41eddc11c7b720a18d141c8f948e5785"
+  },
+  {
+    "path": "previews/hostiles-v525-v526.webp",
+    "pngBytes": 306572,
+    "webpBytes": 181542,
+    "rgbaSHA256": "74436f79511457129bb37499fe75576dfaab3ae40201c5cedceea8a73a30142f"
+  },
+  {
+    "path": "previews/mechanisms-v524.webp",
+    "pngBytes": 93714,
+    "webpBytes": 39494,
+    "rgbaSHA256": "e0f2d8c8e3e94780a8c2ee2043e508b4325e4380dc2d719360cf3d62550baadc"
+  },
+  {
+    "path": "previews/mechanisms-v525.webp",
+    "pngBytes": 96450,
+    "webpBytes": 51644,
+    "rgbaSHA256": "82ee4985c0fa3c901530864bde55c889cf6d300c70c73bae2eea906684463008"
+  },
+  {
+    "path": "previews/minimap-v522.webp",
+    "pngBytes": 46997,
+    "webpBytes": 19378,
+    "rgbaSHA256": "7c35e3f1bb62345252ace046a68cb30db74f44f7d323d149e50262d79b38e07c"
+  },
+  {
+    "path": "previews/model-v521-v522.webp",
+    "pngBytes": 142839,
+    "webpBytes": 97808,
+    "rgbaSHA256": "51223eeb6132f30bee9b4625f8154ccb430d620782f49b4a8f3dae6218866dd6"
+  },
+  {
+    "path": "previews/model-v524-v525.webp",
+    "pngBytes": 222102,
+    "webpBytes": 141584,
+    "rgbaSHA256": "9c2da4b6e9a606215a26ea82ec6469962e7c313ce8125ffcd4a0a092f02999fc"
+  },
+  {
+    "path": "previews/orbital-grades.webp",
+    "pngBytes": 38516,
+    "webpBytes": 19324,
+    "rgbaSHA256": "5d7b62fe01453c596783cde0b5ffe0b9b6ee8ab2a5be53aa852d31c3267d028a"
+  },
+  {
+    "path": "previews/orbital-system.webp",
+    "pngBytes": 80599,
+    "webpBytes": 54910,
+    "rgbaSHA256": "f4473c1157bf1f8be34b60b0ce497df52ad064bb4cd2702bfd882075b826dfec"
+  },
+  {
+    "path": "previews/player-regalia.webp",
+    "pngBytes": 129081,
+    "webpBytes": 99756,
+    "rgbaSHA256": "41aa56bf6360818fe82b27b0e4bf186099d56e2b6a3c0634acb5c873dad8a2ba"
+  },
+  {
+    "path": "previews/preparation-v080.webp",
+    "pngBytes": 1229084,
+    "webpBytes": 752530,
+    "rgbaSHA256": "6d3f1c8f43561da96c2b10530889f318eac3a910654ab20e812b399f74b9c875"
+  },
+  {
+    "path": "previews/sovereigns-v526.webp",
+    "pngBytes": 288851,
+    "webpBytes": 204228,
+    "rgbaSHA256": "c9865ec6015df4bc32c08a6541b19b984addc2c6d4432da05d09061c41e030d7"
+  }
+]

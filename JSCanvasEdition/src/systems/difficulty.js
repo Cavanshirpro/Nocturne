@@ -23,7 +23,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     const ritual=special==='frostfall'?(2.2+.3*rank)/12:special==='soulstorm'?(1.3+.2*rank)*(boss?1.5:4)/14:(3.6+.4*rank)/8;
     spells.push(damage+log(ritual)+Math.log1p(.06*(rank-1)));
     return sum(spells)+crit+.14*Math.log1p(p.pierce)+.10*log(Math.max(1,p.projectileSpeed/510))+
-      .08*log(1+(q.talents?.kindling||0)+(q.talents?.frostbite||0)+(q.talents?.focus||0))+(q.activeOath==='ember'?log(1.1):0);
+      .08*log(1+(q.talents?.kindling||0)+(q.talents?.frostbite||0)+(q.talents?.focus||0))+(q.activeOath==='ember'?log(1.1):0)+.35*log(N.AscensionPower.profile(p).damage);
   }
   function baseline(coven){
     return {damage:coven==='ash'?18:14,attackInterval:coven==='storm'?.66:.56,projectileCount:1,critChance:.1,critMultiplier:1.85,pierce:0,projectileSpeed:510,
@@ -32,7 +32,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
   N.Difficulty={
     assess(p){
       const ref=baseline(p.coven),off=offense(p),base=offense(ref),baseHp=p.coven==='ash'?110:p.coven==='moon'?90:85;
-      const defense=log(p.maxHp/baseHp)+Math.log1p(p.armor)+.25*Math.log1p(p.regen*8/baseHp)+.05*Math.log1p(p.progress?.talents?.bloodledger||0);
+      const defense=-.35*log(N.AscensionPower.profile(p).taken)+log(p.maxHp/baseHp)+Math.log1p(p.armor)+.25*Math.log1p(p.regen*8/baseHp)+.05*Math.log1p(p.progress?.talents?.bloodledger||0);
       const mobility=.7*log(Math.max(1,p.speed/195))+.3*log(Math.max(1,3.2/p.dashCooldown));
       const power=Math.max(0,.60*(off-base)+.28*defense+.12*mobility);
       const surplus=Math.max(0,power-Math.log1p(.08*(p.level-1)));

@@ -4,7 +4,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import {cre
 test('loader validates all paths before decoding and never starts a save on failure',async()=>{
   const {N,sandbox,memory}=createHarness();let decoded=0;
   class Image{set src(v){decoded++;this.naturalWidth=this.naturalHeight=1;queueMicrotask(()=>this.onload());}}
-  for(const value of [null,[],{}, {...sandbox.NOCTURNE_ASSET_MANIFEST,ground:'https://example.com/g.png'}, {...sandbox.NOCTURNE_ASSET_MANIFEST,ground:'assets/images/../g.png'}])await assert.rejects(N.AssetLoader.load(value,{ImageClass:Image}));
+  for(const value of [null,[],{}, {...sandbox.NOCTURNE_ASSET_MANIFEST,ground:'https://example.com/g.webp'}, {...sandbox.NOCTURNE_ASSET_MANIFEST,ground:'assets/images/../g.webp'}])await assert.rejects(N.AssetLoader.load(value,{ImageClass:Image}));
   const missing={...sandbox.NOCTURNE_ASSET_MANIFEST};delete missing.ground;await assert.rejects(N.AssetLoader.load(missing,{ImageClass:Image}),/Required asset/);assert.equal(decoded,0);assert.equal(memory.size,0);
 });
 test('measured loading progress reaches exactly 55 images and successful decodes are shared',async()=>{

@@ -16,9 +16,11 @@ const {root,elements,docEvents,element,context,memory,sandbox,N,images,create,gr
 let passed=0,failed=0;
 function test(name,fn){memory.clear();fixture.state.seed=271828;try{fn();passed++;console.log(`PASS ${name}`);}catch(error){failed++;console.error(`FAIL ${name}\n${error.stack}`);}}
 
-test('all 64 procedural PNG assets are real PNG files',()=>{
+function webpDimensions(bytes){const kind=bytes.toString('ascii',12,16),bits=bytes.readUInt32LE(21);return kind==='VP8L'?[(bits&0x3fff)+1,((bits>>>14)&0x3fff)+1]:[bytes.readUIntLE(24,3)+1,bytes.readUIntLE(27,3)+1];}
+
+test('all 64 procedural assets are real lossless WebP files',()=>{
   assert.equal(Object.keys(sandbox.NOCTURNE_ASSET_MANIFEST).length,64);
-  for(const src of Object.values(sandbox.NOCTURNE_ASSET_MANIFEST))assert.equal(fs.readFileSync(path.join(root,src)).subarray(1,4).toString(),'PNG');
+  for(const src of Object.values(sandbox.NOCTURNE_ASSET_MANIFEST)){const bytes=fs.readFileSync(path.join(root,src));assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');assert.ok(bytes.includes(Buffer.from('VP8L')));}
   assert.equal(new Set(Object.entries(sandbox.NOCTURNE_ASSET_MANIFEST).filter(([k])=>k.startsWith('witch_')&&!k.startsWith('witch_atlas_')).map(([,v])=>v)).size,8);
 });
 test('normalized diagonal movement and all eight facings',()=>{
@@ -346,7 +348,7 @@ class FakeAudioContext {
 }
 
 test('packed witch atlases have 24 frames in five clips and enemies have four frames',()=>{
-  const dimensions=key=>{const png=fs.readFileSync(path.join(root,sandbox.NOCTURNE_ASSET_MANIFEST[key]));return [png.readUInt32BE(16),png.readUInt32BE(20)];};
+  const dimensions=key=>{const bytes=fs.readFileSync(path.join(root,sandbox.NOCTURNE_ASSET_MANIFEST[key]));return webpDimensions(bytes);};
   for(const dir of ['N','NE','E','SE','S','SW','W','NW'])assert.deepEqual(dimensions('witch_atlas_'+dir),[2304,128]);
   for(const type of Object.keys(N.ENEMY_TYPES))assert.deepEqual(dimensions('enemy_walk_'+type),[384,128]);
   assert.equal(sandbox.NOCTURNE_ANIMATIONS.witch.frames,8);assert.equal(sandbox.NOCTURNE_ANIMATIONS.enemy.frames,8);
@@ -1234,7 +1236,7 @@ test('0.7.5 visible cloth masks isolate three materials in every form, facing an
  for(const frames of Object.values(masks)){assert.equal(frames.length,24);for(const groups of frames){assert.equal(groups.length,3);for(const runs of groups){assert.equal(runs.length%3,0);assert.ok(runs.length<=3000);for(let i=0;i<runs.length;i+=3){assert.ok(runs[i]>=0&&runs[i]+runs[i+2]<=96);assert.ok(runs[i+1]>=0&&runs[i+1]<128);assert.ok(runs[i+2]>0);}}}}
 });
 test('0.7.5 packed enemy textures retain every logical frame with smaller decoded area',()=>{
- let packed=0,logical=0;for(const [key,m] of Object.entries(sandbox.NOCTURNE_PACKING)){const bytes=fs.readFileSync(path.join(root,sandbox.NOCTURNE_ASSET_MANIFEST[key])),w=bytes.readUInt32BE(16),h=bytes.readUInt32BE(20);assert.equal(w,2048);assert.ok(h<=4096);logical+=m.logicalWidth*m.logicalHeight;packed+=w*h;assert.equal(m.rects.length,key.startsWith('enemy_ritual')?528:264);for(const [x,y,rw,rh,ox,oy]of m.rects){assert.ok(x>0&&y>0&&x+rw<=w&&y+rh<=h);assert.ok(ox>=0&&oy>=0&&ox+rw<=96&&oy+rh<=128);}}
+ let packed=0,logical=0;for(const [key,m] of Object.entries(sandbox.NOCTURNE_PACKING)){const bytes=fs.readFileSync(path.join(root,sandbox.NOCTURNE_ASSET_MANIFEST[key])),kind=bytes.toString('ascii',12,16),bits=bytes.readUInt32LE(21),w=kind==='VP8L'?(bits&0x3fff)+1:bytes.readUIntLE(24,3)+1,h=kind==='VP8L'?((bits>>>14)&0x3fff)+1:bytes.readUIntLE(27,3)+1;assert.equal(w,2048);assert.ok(h<=4096);logical+=m.logicalWidth*m.logicalHeight;packed+=w*h;assert.equal(m.rects.length,key.startsWith('enemy_ritual')?528:264);for(const [x,y,rw,rh,ox,oy]of m.rects){assert.ok(x>0&&y>0&&x+rw<=w&&y+rh<=h);assert.ok(ox>=0&&oy>=0&&ox+rw<=96&&oy+rh<=128);}}
  assert.ok(packed<logical*.78,JSON.stringify({packed,logical}));
 });
 test('0.7.5 nearest allied fields cannot be lost between sampling strides',()=>{

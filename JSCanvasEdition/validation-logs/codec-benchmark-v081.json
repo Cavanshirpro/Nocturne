@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-04T18:42:08.315Z",
+  "browser": "156.0.8078.80",
+  "method": "55 active images only, Image.decode(), five fresh contexts per codec, alternating order. Excludes game JS, simulation, GPU memory and cold OS disk cache guarantees.",
+  "observations": [
+    {
+      "round": 0,
+      "version": "png",
+      "decodeMilliseconds": 532.8000000007451,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 18602108
+    },
+    {
+      "round": 0,
+      "version": "webp",
+      "decodeMilliseconds": 560.8999999994412,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 11829646
+    },
+    {
+      "round": 1,
+      "version": "webp",
+      "decodeMilliseconds": 550.6999999992549,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 11829646
+    },
+    {
+      "round": 1,
+      "version": "png",
+      "decodeMilliseconds": 432.80000000074506,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 18602108
+    },
+    {
+      "round": 2,
+      "version": "png",
+      "decodeMilliseconds": 458.5,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 18602108
+    },
+    {
+      "round": 2,
+      "version": "webp",
+      "decodeMilliseconds": 457,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 11829646
+    },
+    {
+      "round": 3,
+      "version": "webp",
+      "decodeMilliseconds": 627,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 11829646
+    },
+    {
+      "round": 3,
+      "version": "png",
+      "decodeMilliseconds": 360.5,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 18602108
+    },
+    {
+      "round": 4,
+      "version": "png",
+      "decodeMilliseconds": 473.8999999994412,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 18602108
+    },
+    {
+      "round": 4,
+      "version": "webp",
+      "decodeMilliseconds": 547.8999999994412,
+      "images": 55,
+      "rawRGBABytes": 105222144,
+      "encodedBodyBytes": 11829646
+    }
+  ],
+  "summaries": {
+    "png": {
+      "minimum": 360.5,
+      "median": 458.5,
+      "maximum": 532.8000000007451
+    },
+    "webp": {
+      "minimum": 457,
+      "median": 550.6999999992549,
+      "maximum": 627
+    }
+  }
+}

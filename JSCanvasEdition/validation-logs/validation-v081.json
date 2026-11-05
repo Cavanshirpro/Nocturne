@@ -1,0 +1,20 @@
+{
+  "localPillow": {
+    "tests": 34,
+    "passed": 34,
+    "failed": 0,
+    "seconds": 709.785,
+    "method": "Observed completed local unittest run; two full temporary generations and 64 shipped RGBA hashes."
+  },
+  "browser": {
+    "suitePassed": 86,
+    "suiteFailed": 0,
+    "acceptancePassed": 27
+  },
+  "parity": {
+    "scenarios": 7,
+    "fixedUpdates": 5970,
+    "failed": 0
+  },
+  "localLinksAndResources": 289
+}

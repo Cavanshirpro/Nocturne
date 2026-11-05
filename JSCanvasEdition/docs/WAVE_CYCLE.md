@@ -1,4 +1,4 @@
-# Authoritative wave cycle — v0.8.0
+# Authoritative wave cycle — v0.8.1
 
 The existing `Game.state` still describes whether simulation can run: `playing`, paused menus, level-up selection, merchant, Grimoire and Ascension. The independent, persisted `cycle.phase` describes the world:
 
@@ -25,7 +25,7 @@ These values live only in `src/data/configuration.js`. They do not replace the e
 
 ## Explorable preparation
 
-The world stays visible and the player can move, inspect the minimap, use the Grimoire/Ascension panel and revisit the merchant. There is no ordinary spawning or enemy/loot farm. Existing movement, regeneration, Demon/Aegis durations and ability cooldowns continue on simulation time; opening a blocking menu freezes that time. The First Ember trial temporarily suspends the preparation countdown while its own simulation state runs.
+The world stays visible and the player can move, inspect the minimap, use the Grimoire/Ascension panel and revisit the merchant. There is no ordinary spawning or enemy/loot farm. Existing movement, regeneration, Demon/Aegis durations and ability cooldowns continue on simulation time; opening a blocking menu freezes that time. An Ascension ordeal temporarily suspends the preparation countdown while its own simulation state runs.
 
 The compact panel shows completed wave, countdown, gold, tier, next-stage requirement count and prepared oath. It provides merchant, Grimoire, Ascension and **START NEXT WAVE** controls. The last 15 seconds warm the cleared sanctum architecture and panel border; the last five seconds use a steady incoming-wave label and stronger border. There is no flash, screen shake or extra full-screen rendering pass; reduced-motion remains supported.
 
@@ -39,6 +39,6 @@ Wave increment, 12% between-wave healing, prepared oath consumption, difficulty 
 
 ## Pausing, saving and future interactions
 
-Preparation time advances only while `Game.state === 'playing'`. Pause, merchant, Grimoire, Ascension, pending gifts, focus loss and closing the game consume no countdown. Current checkpoints save remaining time, phase, stock state, persistent character/Ascension state and exact world position. Reloading cannot issue completion rewards again. Unfinished trials return to preparation as interrupted; ordinary combat death retains the existing same-wave half-gold recovery.
+Preparation time advances only while `Game.state === 'playing'`. Pause, merchant, Grimoire, Ascension, pending gifts, focus loss and closing the game consume no countdown. Current checkpoints save remaining time, phase, stock state, persistent character/Ascension state and exact world position. Reloading cannot issue completion rewards again. Unfinished ordeals return to preparation as interrupted; ordinary combat death retains the existing same-wave half-gold recovery.
 
 Future refuge/world interactions should attach to these phase entry/update/restore boundaries, not introduce another wave loop or reuse the combat spawning branch. Their own persistent state must receive explicit validation/migration before being included in checkpoints. See [ARCHITECTURE.md](ARCHITECTURE.md).

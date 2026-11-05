@@ -124,6 +124,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
       if(!c.stats||!['damage','damageTaken','goldEarned','elites','bosses','dashes'].every(k=>Number.isFinite(c.stats[k])&&c.stats[k]>=0))return false;
       if(!c.stats.weapons||!['bolt','orbit','lightning','nova'].every(k=>Number.isFinite(c.stats.weapons[k])&&c.stats.weapons[k]>=0))return false;
       if(!N.SPELL_IDS.every(id=>c.stats.weapons[id]===undefined||Number.isFinite(c.stats.weapons[id])&&c.stats.weapons[id]>=0))return false;
+      if(['ascension',...Object.keys(N.SPECIALS)].some(id=>c.stats.weapons[id]!==undefined&&(!Number.isFinite(c.stats.weapons[id])||c.stats.weapons[id]<0)))return false;
       if(c.world&&!N.validWorld?.(c.world))return false;
       return true;
     }

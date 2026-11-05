@@ -40,3 +40,5 @@ Historical canonical tags point to their original commits. Those source snapshot
 A `0.x.y` version is an initial-development release. GitHub's separate prerelease flag is reserved for future explicitly marked test builds; the normal `v0.x.y` releases remain downloadable through the latest-release link. Published canonical tags and packages must not be moved or replaced; ship a new version for subsequent changes.
 
 The Ascension Foundations brief used the former planned name `v5.3.0`. It is published as **v0.8.0**, continuing the development-version policy; future foundation work belongs to v0.8.x. No v5.3.0 alias was created.
+
+The current foundation series remains **v0.8.x** for mechanic corrections, rank-power improvements and asset optimization. **v0.9.0 is reserved for a substantially larger milestone**, rather than routine extensions of these foundations.

@@ -11,10 +11,10 @@ Copyright (C) 2026 Javanshir Gurbanzade. See LICENSE and NOTICE. */
       s.progress={completedWaves,guardians:knownGuardianRules?Math.min(completedWaves,Math.floor(c.stats?.bosses||0)):0};
       const subject={...p,coven:c.coven,ascension:s},e=N.Ascension.evidence(subject,{stats:c.stats});
       for(const tier of N.ASCENSION_TIERS.slice(1,6)){
-        if(!tier.requirements.every(r=>(e[r.id]||0)>=r.required))break;
+        if(!tier.legacyRequirements.every(r=>(e[r.id]||0)>=r.required))break;
         N.Ascension.award(subject,tier.id,'legacy',completedWaves);
       }
-      s.legacyRecognition={schema:1,sourceSchema,evidence:{...e},fingerprint:fingerprint({coven:c.coven,wave:c.wave,phase:c.phase,player:p,stats:c.stats}),presented:false,level:p.level,completedWaves,schools:e.schools,evolved:e.evolved,mastered:e.mastered,guardians:e.guardians,restored:c.phase==='shop'?'merchant':c.phase==='intermission'?'preparation':c.world?'world':'restart'};
+      s.legacyRecognition={schema:1,sourceSchema,evidence:{...e},schoolRanks:Object.fromEntries(N.SPELL_IDS.map(id=>[id,p.weapons[id]||0])),fingerprint:fingerprint({coven:c.coven,wave:c.wave,phase:c.phase,player:p,stats:c.stats}),presented:false,level:p.level,completedWaves,schools:e.schools,evolved:e.evolved,mastered:e.mastered,guardians:e.guardians,restored:c.phase==='shop'?'merchant':c.phase==='intermission'?'preparation':c.world?'world':'restart'};
       return s;
     },
     checkpoint(original,profile,sourceSchema){

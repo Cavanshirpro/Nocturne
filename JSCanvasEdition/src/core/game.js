@@ -58,7 +58,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     }
     rebaseWorld(){
       const p=this.player;if(Math.abs(p.x)<1e6&&Math.abs(p.y)<1e6)return;
-      const ox=p.x,oy=p.y;this.worldOrigin.x+=ox;this.worldOrigin.y+=oy;p.x=p.y=0;this.camera.x=this.camera.y=0;
+      const ox=p.x,oy=p.y;const trial=p.ascension?.pendingTrial;if(trial){trial.lastX-=ox;trial.lastY-=oy;}this.worldOrigin.x+=ox;this.worldOrigin.y+=oy;p.x=p.y=0;this.camera.x=this.camera.y=0;
       const lists=[this.enemies,this.loot,...['projectiles','hostile','hazards','areas','effects','remnants','numbers'].map(key=>this.combat[key].active)];
       for(const list of lists)for(const item of list){
         item.x-=ox;item.y-=oy;if(item.guardian)N.FinalGuardian.rebase(item,ox,oy);if(item.kind!=='slash'&&Number.isFinite(item.x2))item.x2-=ox;if(item.kind!=='slash'&&Number.isFinite(item.y2))item.y2-=oy;

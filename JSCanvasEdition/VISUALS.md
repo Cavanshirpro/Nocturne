@@ -22,7 +22,7 @@ See [FIELDS.md](FIELDS.md) for current field meanings, ownership, danger geometr
 
 The current visual system is documented in [ORBITALS.md](ORBITALS.md). Old costume badge/fitted-fixture sections below are historical and are superseded by passive circles and active emitters. Character meshes are baked only; live rendering uses Canvas sprites, ellipses, cached hulls and a bounded atlas-band effect.
 
-The new `previews/orbital-system.gif` shows passive circles, automatic player fire and a hostile satellite. `previews/orbital-grades.png` compares all five shape/colour grades. `previews/player-regalia.gif` and `previews/directions-regalia.gif` now use walking rather than a permanently repeating cast.
+The new `previews/orbital-system.gif` shows passive circles, automatic player fire and a hostile satellite. `previews/orbital-grades.webp` compares all five shape/colour grades. `previews/player-regalia.gif` and `previews/directions-regalia.gif` now use walking rather than a permanently repeating cast.
 
 ---
 

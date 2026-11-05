@@ -1,4 +1,4 @@
-# Architecture — v0.8.0
+# Architecture — v0.8.1
 
 Nocturne remains a dependency-free Canvas 2D game. Scripts use the existing `window.Nocturne` namespace and ordered classic `defer` scripts. This keeps both HTTP and tested Chromium `file://` launch working without ES-module CORS rules, a bundler, runtime packages or a JSON fetch.
 
@@ -36,20 +36,21 @@ Definitions can refer to other namespace services inside functions; they do not 
 | --- | --- |
 | Simulation/input/camera and world snapshots | `src/core/game.js`, `input.js`, `src/systems/snapshots.js` |
 | Character growth, spells and adaptive combat | Existing progression, abilities, difficulty, guardian and warfare systems |
-| All 16 tiers and future capability descriptors | `src/data/tiers.js` |
+| All 16 tiers, live/historical gates and cumulative power descriptors | `src/data/tiers.js` |
 | Requirement evaluation, monotonic state and explicit awards | `src/systems/ascension.js` |
 | Retrospective evaluation and old checkpoint conversion | `src/systems/migration.js` |
 | Storage validation, separate keys, per-slot recovery and import/export | `src/systems/storage.js` |
 | Authoritative preparation timing and guarded next-wave action | `src/systems/wave-cycle.js` |
 | Actual trial execution, outcome and interruption semantics | `src/systems/ascension-trials.js` |
+| Derived combat bonuses and rank action effects | `src/systems/ascension-powers.js` |
 | Tier UI and compact preparation controls | `src/ui/ascension-ui.js`, `wave-ui.js` |
 | Sprite/cloth/orbitals/environment/field rendering | `src/rendering/` |
-| Offline PNG/manifest/metadata generation | `tools/generate_assets.py`, `asset_pipeline.py` |
+| Offline WebP/manifest/metadata generation | `tools/generate_assets.py`, `asset_pipeline.py` |
 
 ## Integration boundaries for later releases
 
-Future refuge interactions belong to preparation, entered through `WaveCycle.begin/resume` and updated through `tickPreparation`; they must not run ordinary wave spawning. Future persistent world data must have its own versioned capture/validation/migration contract before joining checkpoints. `Migration.checkpoint` and per-slot conversion are the place to introduce that version, preserving source data. New real tier capabilities belong in their gameplay systems and centralized unlock descriptors, not in tier-number branches throughout combat. The Ascension UI can already inspect unavailable stages without advertising usable powers.
+Future refuge interactions belong to preparation, entered through `WaveCycle.begin/resume` and updated through `tickPreparation`; they must not run ordinary wave spawning. Future persistent world data must have its own versioned capture/validation/migration contract before joining checkpoints. `Migration.checkpoint` and per-slot conversion are the place to introduce that version, preserving source data. New real tier capabilities belong in their gameplay systems and centralized unlock descriptors, not in tier-number branches throughout combat. The Ascension UI inspects all stages, exact bonuses and the current requirement gaps.
 
-Character level, BUILD POWER, boss combat tier (0–4), and Ascension order (0–15) are separate values. No Ascension value modifies the existing damage, enemy health, spawn, collision or unlimited-rank formulas. The only earned initial unlock is cosmetic identity and the verified +E milestone.
+Character level, BUILD POWER, boss combat tier (0–4), and Ascension order (0–15) are separate values. No Ascension value modifies the existing damage, enemy health, spawn, collision or unlimited-rank formulas. All fifteen promotion ordeals are implemented. `ascension-powers.js` derives cumulative combat bonuses from the earned tier and hooks existing dash, ritual, shield, transformation and kill events without storing multiplied base stats.
 
 Run `node tests/run.mjs` and `python -m unittest discover -s tests -p test_assets.py` from this edition. Optional browser and baseline comparisons are documented in [ASSETS.md](ASSETS.md) and [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md).

@@ -1,4 +1,4 @@
-# Save migration — v0.8.0
+# Save migration — v0.8.1
 
 Export a JSON backup from **SAVES** before replacing files. Keep the complete edition and the same browser/profile/origin. Source data is never deleted automatically.
 
@@ -11,7 +11,7 @@ Export a JSON backup from **SAVES** before replacing files. Keep the complete ed
 | World snapshot | schema 1 | schema 1; existing enemy/guardian/projectile fields retained |
 | Ascension / wave cycle | absent | separate schema 1 records |
 
-Release numbers do not determine save-schema numbers. Prior v0.7.x and the supported v0.6/v0.5 and historical v3/v4 character migrations still use their existing armor, ability and guardian rules. Tier migration never changes damage, maximum boss vitality, attack clocks, invasion decisions, relics, upgrades, mastery, gold or the original death penalty.
+Release numbers do not determine save-schema numbers. Prior v0.7.x and the supported v0.6/v0.5 and historical v3/v4 character migrations still use their existing armor, ability and guardian rules. Tier migration never rewrites base damage or saved maximum boss vitality, attack clocks, invasion decisions, relics, upgrades, mastery, gold or the original death penalty.
 
 ## Reading and committing
 
@@ -52,3 +52,9 @@ Normal death still charges `floor(gold / 2)` once and saves a fresh retry of the
 Browser storage cannot automatically cross `file://`, a different folder/profile, a different localhost port or a hosted website. Use backup export/import to move between origins. Verified Chromium file launch is supported, but local-storage policies vary by browser; a local HTTP server provides a stable origin. Export recovery backups before clearing any site data or old keys.
 
 Run `node --test tests/migration.test.mjs tests/wave-cycle.test.mjs tests/ascension.test.mjs` from this edition. These cover the migration matrix, live guardian state, a composed legacy/three-guardian/death/retry fixture, idempotence, import/export, write failure and malformed data.
+
+## v0.8.0 → v0.8.1
+
+The v4 container, v3 checkpoint and schema-1 Ascension records remain readable. Earned current/highest tiers, history and old First Ember completions are preserved. The schema-1 trial identifiers now cover the 15 registered ordeals; an interrupted pending ordeal never counts as complete. Previous software versions may not understand new advanced completions, so use exported backups when rolling back.
+
+Old v2/v3 historical recognition uses `legacyRequirements`, the frozen v0.8.0 policy. New live requirements use depth/mastery/evolution gates. No existing tier is re-evaluated downward. Derived combat bonuses now apply to earned tiers, including historical milestones, but do not rewrite stored base stats and cannot compound on reload. Save validation accepts and checks Ascension pulse damage reports; chronicle capacity accommodates the full ladder. The half-gold death penalty and per-chapter isolation remain unchanged.

@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Javanshir Gurbanzade
 # This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
-"""Generate deterministic, supersampled painted sprites and PNG files and static manifest/metadata.
+"""Generate deterministic, supersampled painted sprites and lossless WebP files and static manifest/metadata.
 
 Only build dependency: Pillow >= 10. Run from the edition: python tools/generate_assets.py
-No downloaded art, fonts, or runtime image requests are used.
+No downloaded art, fonts, or external runtime resources are used.
 """
 import io
 import json
@@ -16,23 +16,19 @@ import random
 from PIL import Image, ImageDraw, ImageFilter
 from enemy_models import KINDS, DIRECTIONS, CLIPS, RITUALS, render_enemy
 from witch_models import render_witch
-from asset_pipeline import write_assets
+from asset_pipeline import write_assets, encode_image
 
 ROOT = Path(__file__).resolve().parents[1]
 S = 3
 
 
 def encode(im):
-    buf = io.BytesIO()
-    # Lossless palette conversion where possible. Transparent RGB is normalized
-    # before PNG compression; invisible colour carries no rendering information.
-    if im.mode=='RGBA':
-        alpha=im.getchannel('A');clean=Image.new('RGBA',im.size)
-        clean.paste(im,mask=alpha.point(lambda a:255 if a else 0));im=clean
-        colors=im.getcolors(256)
-        if colors:im=im.convert('P',palette=Image.Palette.ADAPTIVE,colors=256)
-    im.save(buf, format="PNG", optimize=True)
-    return buf.getvalue()
+    # Match the established transparent-RGB normalization of generated artwork.
+    if im.mode == "RGBA":
+        clean = Image.new("RGBA", im.size)
+        clean.paste(im, mask=im.getchannel("A").point(lambda a: 255 if a else 0))
+        im = clean
+    return encode_image(im)
 
 
 def witch(angle, phase=None, action="idle", progress=0):
@@ -285,7 +281,7 @@ def main():
                 preview.paste(pose,(col*200+28,row*175-4),pose);draw.text((col*200+50,row*175+155),name+' '+state,fill='#e9cbde')
         rituals.append(preview)
     rituals[0].save(ROOT/'boss-ritual-preview.gif',save_all=True,append_images=rituals[1:],duration=110,loop=0,optimize=False)
-    print(f"Generated {len(assets)} PNGs; {cursor} witch frames x 8 directions; {sum(map(len,assets.values())):,} PNG bytes")
+    print(f"Generated {len(assets)} WebPs; {cursor} witch frames x 8 directions; {sum(map(len,assets.values())):,} WebP bytes")
 
 
 if __name__ == "__main__":main()

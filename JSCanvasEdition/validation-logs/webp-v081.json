@@ -1,0 +1,392 @@
+{
+  "format": "lossless WebP, quality=100, method=6, exact=True",
+  "images": [
+    {
+      "key": "cultist",
+      "pngBytes": 8251,
+      "webpBytes": 5774,
+      "rgbaSHA256": "aa023fb4aafc88a48c0223a5de51ec0b0f0b4f75c9bc4747a373a00376cf0ff0"
+    },
+    {
+      "key": "demon_atlas_E",
+      "pngBytes": 101994,
+      "webpBytes": 78146,
+      "rgbaSHA256": "7e169773fc1d68bc7b4c84422382a2fbce3e8b8ed22e9f8f76d6fbd9148bb6e0"
+    },
+    {
+      "key": "demon_atlas_N",
+      "pngBytes": 125741,
+      "webpBytes": 86894,
+      "rgbaSHA256": "9d09795d508cf26ca35d5fe2c6c459d67f8c94f1bc3ba26ea79669faf91dd278"
+    },
+    {
+      "key": "demon_atlas_NE",
+      "pngBytes": 124619,
+      "webpBytes": 90876,
+      "rgbaSHA256": "eb1c19f10df3da20118026b9c88397227044d5791bf8fb2b5dfedaeb87a7a39c"
+    },
+    {
+      "key": "demon_atlas_NW",
+      "pngBytes": 132501,
+      "webpBytes": 98758,
+      "rgbaSHA256": "0e496abd2a15b134d1562a245e85a3348239966b49bece8b1bc2d7f40a3b7531"
+    },
+    {
+      "key": "demon_atlas_S",
+      "pngBytes": 139420,
+      "webpBytes": 99738,
+      "rgbaSHA256": "a1b2abd7945759ac2df12ebce4d733eecb9c455f499c20a4a08c270bb0f27a4c"
+    },
+    {
+      "key": "demon_atlas_SE",
+      "pngBytes": 145020,
+      "webpBytes": 108438,
+      "rgbaSHA256": "65cae21e55f8bdacaf29c230cf898482ae13d29ae87b20a149b291ed70cb0b45"
+    },
+    {
+      "key": "demon_atlas_SW",
+      "pngBytes": 141073,
+      "webpBytes": 105130,
+      "rgbaSHA256": "fa54dc8f9478e4935bd93f58f867fc5fee5ba5c2da4e0535ab24bdf9ea3b98a3"
+    },
+    {
+      "key": "demon_atlas_W",
+      "pngBytes": 107726,
+      "webpBytes": 83926,
+      "rgbaSHA256": "32f7cf5685c0db28ced03d7cc28ebd152ee46fec90969e50717e4d50e78cd39a"
+    },
+    {
+      "key": "enemy_atlas_cultist",
+      "pngBytes": 1257461,
+      "webpBytes": 851696,
+      "rgbaSHA256": "652a89884f4e2350f3398b396fcd5e1b338ce8f7421b71684c240df23be4b111"
+    },
+    {
+      "key": "enemy_atlas_gargoyle",
+      "pngBytes": 1534400,
+      "webpBytes": 827460,
+      "rgbaSHA256": "25dbe4899786e32522339f9f9feaf128d09e1774635e308e08895cae4c145f3b"
+    },
+    {
+      "key": "enemy_atlas_hound",
+      "pngBytes": 1053155,
+      "webpBytes": 645154,
+      "rgbaSHA256": "065e9e65f65288964600958391f39dbe88edf02b8c07963dc5a37f706ee0bfe0"
+    },
+    {
+      "key": "enemy_atlas_overlord",
+      "pngBytes": 1948557,
+      "webpBytes": 1267690,
+      "rgbaSHA256": "fd5d8aadf7853e575abac8ba3861c694878e1ff9563cfbe04cc2624882621c98"
+    },
+    {
+      "key": "enemy_atlas_reaper",
+      "pngBytes": 1426257,
+      "webpBytes": 879370,
+      "rgbaSHA256": "35ed3cde410acca4858f3554295dd9b909b3fe9a2a71fa8758af3c2fb10f968a"
+    },
+    {
+      "key": "enemy_atlas_skeleton",
+      "pngBytes": 1232436,
+      "webpBytes": 745750,
+      "rgbaSHA256": "92c99af11fb8d24e5cdb5f3ed7da9bcc2bd7d815bd0cd5e72f5bb1e15abecdb4"
+    },
+    {
+      "key": "enemy_atlas_slime",
+      "pngBytes": 1073438,
+      "webpBytes": 845592,
+      "rgbaSHA256": "427de58600287f662bbe856f1e93a84d18eb96dab180e6949556d5c831796f1d"
+    },
+    {
+      "key": "enemy_atlas_warden",
+      "pngBytes": 1033098,
+      "webpBytes": 639836,
+      "rgbaSHA256": "49d6789b41c0fa0b9de80a329e5b070fe2b725716a09441df4722484e9ce41da"
+    },
+    {
+      "key": "enemy_atlas_wraith",
+      "pngBytes": 1412357,
+      "webpBytes": 1056584,
+      "rgbaSHA256": "4b28bc26d446ba27dd9b2b9ed384fc629fe36498fa145f2e63a78ceb3ea7518c"
+    },
+    {
+      "key": "enemy_ritual_overlord",
+      "pngBytes": 2869601,
+      "webpBytes": 1533778,
+      "rgbaSHA256": "29e93b3baee744811e749564a76aedbdd29a75c6bb854ee5809f8a6a25de09d5"
+    },
+    {
+      "key": "enemy_ritual_warden",
+      "pngBytes": 1426452,
+      "webpBytes": 783538,
+      "rgbaSHA256": "e1a46e3f4b3e9e7c6f52a5d5e2f39e6eae29340f69a657c5fed5a285b8d634a9"
+    },
+    {
+      "key": "enemy_walk_cultist",
+      "pngBytes": 20747,
+      "webpBytes": 14778,
+      "rgbaSHA256": "8e36caf60f1d799e7576b5debc5866575092870f30f10dec7d3a8c396587d828"
+    },
+    {
+      "key": "enemy_walk_gargoyle",
+      "pngBytes": 27452,
+      "webpBytes": 16744,
+      "rgbaSHA256": "716926e66a19abb39a9744be8fda1dbed9cb601e8bcb2b0092e91a60f15340b1"
+    },
+    {
+      "key": "enemy_walk_hound",
+      "pngBytes": 11636,
+      "webpBytes": 7852,
+      "rgbaSHA256": "d7c7cfba13f6c5591c51c90ccc3125b048c85fd70f97f94c0c267e6e9f187e3f"
+    },
+    {
+      "key": "enemy_walk_overlord",
+      "pngBytes": 46919,
+      "webpBytes": 32110,
+      "rgbaSHA256": "44cbfe1a9dc6106f9fad4e5d7d62270e0422fee8e8b7edbfb1fc1c30e3784416"
+    },
+    {
+      "key": "enemy_walk_reaper",
+      "pngBytes": 23102,
+      "webpBytes": 15984,
+      "rgbaSHA256": "a140b9bff87d27b5376458f017e8e236311e77bd547a3067f308e4cec34d71c6"
+    },
+    {
+      "key": "enemy_walk_skeleton",
+      "pngBytes": 16516,
+      "webpBytes": 11190,
+      "rgbaSHA256": "230c819c4f4e6e8fa39dee15d829e2bdec02bb7fb7a073258d45d023f2802e24"
+    },
+    {
+      "key": "enemy_walk_slime",
+      "pngBytes": 20550,
+      "webpBytes": 16284,
+      "rgbaSHA256": "9bef0340c63a97cc25e08c333351732ec5003d50470715f6ffd38d22fd6a82ae"
+    },
+    {
+      "key": "enemy_walk_warden",
+      "pngBytes": 16349,
+      "webpBytes": 11574,
+      "rgbaSHA256": "8d85368486725ce51867c7c22fb2fbdf5bfb7d801b8c85018439dfb72634e60f"
+    },
+    {
+      "key": "enemy_walk_wraith",
+      "pngBytes": 30170,
+      "webpBytes": 22120,
+      "rgbaSHA256": "83325d0844809885a1dd7dc8b6a6cd14cb2e8d90736c6d70b6e2e61d308dedd3"
+    },
+    {
+      "key": "gargoyle",
+      "pngBytes": 11068,
+      "webpBytes": 7036,
+      "rgbaSHA256": "80d5f2e8ce88e1831118c7d34b6622ce510c85f070dca3c6f5dd4876edbee29f"
+    },
+    {
+      "key": "ground",
+      "pngBytes": 14491,
+      "webpBytes": 10690,
+      "rgbaSHA256": "c12d7a84ee6b86b4a322a09d68c974f312952054e155029685e97323e46a0cfd"
+    },
+    {
+      "key": "ground_ember",
+      "pngBytes": 12103,
+      "webpBytes": 9358,
+      "rgbaSHA256": "a9da552b52a9e7256498ca0bb0011ce0bdbde722d25ce47416fda87990fe4e83"
+    },
+    {
+      "key": "ground_moon",
+      "pngBytes": 1865,
+      "webpBytes": 586,
+      "rgbaSHA256": "610a6bcf35970a95563d12331436fec67607554862d0cadd85d7320e7c7de4ad"
+    },
+    {
+      "key": "hound",
+      "pngBytes": 4079,
+      "webpBytes": 2872,
+      "rgbaSHA256": "2827ef48b6aff7574c3c7fa5d139c9f4a8f21cdb07619308ca46c853c53b6d2a"
+    },
+    {
+      "key": "orb",
+      "pngBytes": 3057,
+      "webpBytes": 1912,
+      "rgbaSHA256": "9923d08f076a9932beff10a62aa012737d8ad8bcc281868e36da058077794030"
+    },
+    {
+      "key": "overlord",
+      "pngBytes": 12625,
+      "webpBytes": 8762,
+      "rgbaSHA256": "0477f2ff65e9297e207d52446151aba05368dd6ed02ed7582448e25fd32a5553"
+    },
+    {
+      "key": "prop_arch",
+      "pngBytes": 10455,
+      "webpBytes": 6640,
+      "rgbaSHA256": "2f106e386fc02bd708dd390bc848e8fb963cfd4849bc762aaec8be97f15e15be"
+    },
+    {
+      "key": "prop_brazier",
+      "pngBytes": 5958,
+      "webpBytes": 3728,
+      "rgbaSHA256": "900cd9f59d9954c0b9b5a0acca54add4a396cd93ebb186302164e03044df8599"
+    },
+    {
+      "key": "prop_charred",
+      "pngBytes": 7521,
+      "webpBytes": 4620,
+      "rgbaSHA256": "7f8e144cc1c8f93474c493aa8f76a4daf04dd30f0e310768c4413b08e13cf028"
+    },
+    {
+      "key": "prop_obelisk",
+      "pngBytes": 5825,
+      "webpBytes": 3718,
+      "rgbaSHA256": "5ecde1a9d900dc6471fb28903d3773a826c52439f0089851e113fd07da4f9839"
+    },
+    {
+      "key": "prop_tomb",
+      "pngBytes": 5075,
+      "webpBytes": 3128,
+      "rgbaSHA256": "f162f2d0f3a30df5a8b36356932fb2a204f1ad6c152d30b19a530a9fea17929d"
+    },
+    {
+      "key": "prop_tree",
+      "pngBytes": 14457,
+      "webpBytes": 8256,
+      "rgbaSHA256": "ddb57ff2c9fe563136c16a5a6d24eaf928af7eb2812825b7fb862932b7194ef1"
+    },
+    {
+      "key": "prop_wall",
+      "pngBytes": 5166,
+      "webpBytes": 3470,
+      "rgbaSHA256": "520e4f69a8dda3f7d2b7a97da743801b27191585c55046c1d7eccc3750d7f781"
+    },
+    {
+      "key": "reaper",
+      "pngBytes": 8915,
+      "webpBytes": 6024,
+      "rgbaSHA256": "5715103299a179d75d4e7ee03d707a317f1652c1b8a1d5f0e8adb2639ff47974"
+    },
+    {
+      "key": "skeleton",
+      "pngBytes": 7936,
+      "webpBytes": 5622,
+      "rgbaSHA256": "75a7a8cb5a4a47a17b2e9e72135ce4e2ffe0143a0b9f6bdc070a369003fe04d7"
+    },
+    {
+      "key": "slime",
+      "pngBytes": 6131,
+      "webpBytes": 4618,
+      "rgbaSHA256": "ab509b63cc514bb2a102ff285af1c11137740f29a9d7508f42beaf7a3f8fd83a"
+    },
+    {
+      "key": "warden",
+      "pngBytes": 7713,
+      "webpBytes": 5632,
+      "rgbaSHA256": "4e5fdb291dae158053a514fc8ffc672164ffdf873b9fa6b5a15e61c5ef93ce7e"
+    },
+    {
+      "key": "witch_E",
+      "pngBytes": 8720,
+      "webpBytes": 6640,
+      "rgbaSHA256": "e5a7c1ac1f5b5382af64799a5f37adaf97ebe26f0c3c50b9697e25f056edcd97"
+    },
+    {
+      "key": "witch_N",
+      "pngBytes": 9450,
+      "webpBytes": 7308,
+      "rgbaSHA256": "c8c36653d0e28c9904f6139e6d62a70169f0e1d59e83e9632e37164ad3e278c5"
+    },
+    {
+      "key": "witch_NE",
+      "pngBytes": 9593,
+      "webpBytes": 7178,
+      "rgbaSHA256": "11236abaf7afef027ee7f0fcbc36ea5ab58b41bb5dc0504ce09c59f74a6b7ce0"
+    },
+    {
+      "key": "witch_NW",
+      "pngBytes": 10085,
+      "webpBytes": 7692,
+      "rgbaSHA256": "0f56c2035d2bd5719a7a5a6db0e282e3428c1fa575cec6cd993122850a9e4bff"
+    },
+    {
+      "key": "witch_S",
+      "pngBytes": 11775,
+      "webpBytes": 8900,
+      "rgbaSHA256": "a031f7fc283f16ba0b0c47dc57ee729534ee0a7e9c935307ad321b5a17d75eb2"
+    },
+    {
+      "key": "witch_SE",
+      "pngBytes": 10697,
+      "webpBytes": 8222,
+      "rgbaSHA256": "206fdfa6af33f63f2e447a0c4296b09c2905b590acbbb01858e9d889ff67b4f2"
+    },
+    {
+      "key": "witch_SW",
+      "pngBytes": 11138,
+      "webpBytes": 8418,
+      "rgbaSHA256": "b9874ff9f56301f65fa8ceda136f0bd633b2f7fd2dbc7dfbf2460948b6c5fcdb"
+    },
+    {
+      "key": "witch_W",
+      "pngBytes": 9201,
+      "webpBytes": 7084,
+      "rgbaSHA256": "46a9b4539ecc370d8d813227760d72ba5f1d56c02ef92183a0497ea7b586efa7"
+    },
+    {
+      "key": "witch_atlas_E",
+      "pngBytes": 105380,
+      "webpBytes": 83618,
+      "rgbaSHA256": "d62e1c44dd3a74dfc2258f11cc34c0fafe8679f3fe1ed09949c8e12cceb8ad82"
+    },
+    {
+      "key": "witch_atlas_N",
+      "pngBytes": 122293,
+      "webpBytes": 88916,
+      "rgbaSHA256": "f6b13ba53087f3d237d32ef56fb0057cbfe480719624b932c1089ffc7aba3e2f"
+    },
+    {
+      "key": "witch_atlas_NE",
+      "pngBytes": 132599,
+      "webpBytes": 99644,
+      "rgbaSHA256": "527eba18ec47c677809d2433c43fe2dae3a86d59fe7c78f76a49d8f794a51e15"
+    },
+    {
+      "key": "witch_atlas_NW",
+      "pngBytes": 142245,
+      "webpBytes": 108898,
+      "rgbaSHA256": "ce6f71d4b033a4ea7b9369e7608607013b4737d469a5fcdb513540e69fd1d755"
+    },
+    {
+      "key": "witch_atlas_S",
+      "pngBytes": 146440,
+      "webpBytes": 112562,
+      "rgbaSHA256": "ed322262dda09f82acfce0c63aea31958250f8d7296d0ae97c5673d1be3d4111"
+    },
+    {
+      "key": "witch_atlas_SE",
+      "pngBytes": 150729,
+      "webpBytes": 117918,
+      "rgbaSHA256": "14ad99f05c9054f2294305fa819cd8c7572d54710e0043bd877c40bfd67c4fb3"
+    },
+    {
+      "key": "witch_atlas_SW",
+      "pngBytes": 153269,
+      "webpBytes": 120512,
+      "rgbaSHA256": "f8b1f2f72d6d90a2ef9a51f5e1e42c82ae346ad668bfd28978d305d5e683df0c"
+    },
+    {
+      "key": "witch_atlas_W",
+      "pngBytes": 117601,
+      "webpBytes": 94442,
+      "rgbaSHA256": "4287b6d04aba7feafd39279f2efd43daf6b2be3f51a74d14bb7a7152ce580f29"
+    },
+    {
+      "key": "wraith",
+      "pngBytes": 8126,
+      "webpBytes": 6060,
+      "rgbaSHA256": "becfe49895c7fb58620f2c8a641bc114ef5674c57f9efb24acd68b7b2b15223f"
+    }
+  ],
+  "pngBytes": 18810779,
+  "webpBytes": 11973448,
+  "conversionSeconds": 204.449
+}

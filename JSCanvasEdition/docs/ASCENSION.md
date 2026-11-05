@@ -1,44 +1,64 @@
-# Ascension Foundations — v0.8.0
+# Ascension power and progression — v0.8.1
 
-Ascension is persistent, rare progression. It is neither character level nor adaptive BUILD POWER; the existing boss combat-tier value remains entirely separate. The registry in `src/data/tiers.js` owns every identifier, order, era, palette, crest, theme, requirement, trial reference, unlock implementation flag, achievement, notification, accessibility label and historical-recognition eligibility flag.
+Ascension is separate from character level, BUILD POWER and boss combat tier. Open **T**, the HUD or Grimoire to see independent requirements, exact bonuses, the preceding-rank damage increase and cumulative abilities. All 15 promotions now have playable ordeals; no promotion is granted just for reaching a wave.
 
-| Tier | Era | Earliest target wave | Minimum level | Normalized developed ranks |
-| --- | --- | ---: | ---: | ---: |
-| -E | Awakening | 1 | 1 | 0 |
-| +E | Awakening | 4 | 4 | 7 |
-| -D | Awakening | 8 | 8 | 11 |
-| +D | Awakening | 14 | 12 | 15 |
-| -C | Awakening | 22 | 18 | 19 |
-| +C | Awakening | 32 | 26 | 23 |
-| -B | Ascendance | 45 | 35 | 27 |
-| +B | Ascendance | 60 | 45 | 31 |
-| -A | Ascendance | 78 | 60 | 35 |
-| +A | Ascendance | 99 | 75 | 39 |
-| -S | Sovereignty | 124 | 95 | 43 |
-| +S | Sovereignty | 151 | 115 | 47 |
-| Local Power | Dominion | 187 | 140 | 51 |
-| Areal Power | Dominion | 225 | 170 | 55 |
-| Big Power | Dominion | 275 | 210 | 59 |
-| National Power | Dominion | 335 | 260 | 63 |
+## Development gates
 
-The target wave is the first wave *following* the required completed progress: +E needs three completed waves. Each noninitial stage also requires at least two learned schools (more at later stages), normalized ranks, verified guardian victories, elite victories from -D onward, and evolution/mastery evidence from +C onward. The registry contains the exact independent conditions. One school's contribution saturates at 8 for evaluation; its actual spell rank and combat effect remain unlimited. BUILD POWER is reported as context, never substituted for a missing requirement.
+Wave floors are lower than v0.8.0. The old fixed eight-rank contribution and “one mastery point is enough” rule no longer govern live advancement. Each tier requires several schools trained deeply, total mastery ranks, distinct mastered schools, later distinct evolutions, verified guardians and elite victories. A rank-400 spell cannot replace missing schools. One mastery point in many schools cannot replace total mastery investment. Levels and actual spell/talent ranks remain unlimited.
 
-## Implemented versus future content
+| Rank | Completed waves | Level | Schools at training rank | Mastery ranks / schools | Evolutions | Spell damage |
+| --- | ---: | ---: | --- | --- | ---: | ---: |
+| -E | 0 | 1 | 0 at rank 0 | 0 / 0 | 0 | ×1.00 |
+| +E | 1 | 8 | 2 at rank 3 | 0 / 0 | 0 | ×1.18 |
+| -D | 2 | 18 | 2 at rank 5 | 1 / 1 | 0 | ×1.38 |
+| +D | 3 | 28 | 3 at rank 8 | 3 / 2 | 1 | ×1.62 |
+| -C | 5 | 42 | 3 at rank 12 | 6 / 2 | 2 | ×1.90 |
+| +C | 8 | 60 | 4 at rank 18 | 10 / 3 | 2 | ×2.25 |
+| -B | 12 | 82 | 4 at rank 25 | 16 / 3 | 3 | ×2.65 |
+| +B | 18 | 110 | 5 at rank 34 | 24 / 4 | 3 | ×3.12 |
+| -A | 26 | 145 | 5 at rank 46 | 34 / 4 | 4 | ×3.70 |
+| +A | 36 | 185 | 6 at rank 62 | 46 / 5 | 4 | ×4.40 |
+| -S | 50 | 235 | 6 at rank 82 | 60 / 5 | 5 | ×5.25 |
+| +S | 68 | 295 | 7 at rank 108 | 78 / 6 | 5 | ×6.30 |
+| Local Power | 90 | 365 | 7 at rank 140 | 100 / 6 | 6 | ×7.60 |
+| Areal Power | 118 | 445 | 8 at rank 180 | 126 / 7 | 6 | ×9.20 |
+| Big Power | 152 | 535 | 8 at rank 228 | 156 / 8 | 7 | ×11.20 |
+| National Power | 195 | 640 | 9 at rank 285 | 190 / 9 | 8 | ×13.70 |
 
-All 16 stages can be inspected with **T** or the HUD/Grimoire Ascension button. The four-era ladder distinguishes earned, legacy-recognized, unmet, trial-available and future-trial states with text as well as color. Next-stage details show actual/required values and historical credit. Earned identity adds one restrained crest below the existing player label; it adds no new sprite atlases, particles or statistical multipliers.
+Guardian victories must independently meet the completed-wave floor. From -D onward elite victories must reach three times the stage order. These remain separate proofs. Requirements are visible in full in the panel. A high-wave character with shallow rank-VIII schools and one mastery point per school can still be missing depth, mastery investment and evolution.
 
-New characters start at -E. The **First Ember** trial can newly award +E. The other unique trials are registered explicitly as unavailable. Latent aspects, specializations, advanced interactions, enhanced Coven identities, summoning and Dominion powers are descriptors only; none is equipped, multiplied into combat or presented as a working ability. Qualified historical characters can receive meaningful early recognition through +C without a false claim that any unique future trial was passed. See [MIGRATION.md](MIGRATION.md).
+## Powers that affect actual combat
 
-## First Ember
+Bonuses are derived from the earned tier on use. Base `damage`, `maxHp`, armor and cooldown stats are not multiplied or rewritten in saves, preventing repeated-load stacking. General spell damage grows roughly 17–22% per promotion. Each stage also adds 2.5 percentage points of incoming-damage reduction, 1% movement, 3% ritual recovery, 2.5% dash recovery and 2% Aegis recovery. At National Power that means ×13.7 base spell output, 37.5% damage reduction and 15% movement, before conditional bonuses. Automatic spell cadence remains controlled by existing build stats.
 
-During preparation, meet the +E requirements, open Ascension and choose **BEGIN FIRST EMBER**. Survive 20 simulation seconds, move at least 250 units and use Veilstep once. Existing impact-warning geometry is placed at the player's position at deterministic four-second intervals, with the existing 1.2-second warning. Move out, dash or use Aegis. A caught warning fails the demonstration without damaging the character, deleting a wave or issuing loot. There are no trial enemies, bosses, XP or gold to farm.
+- **+E — Kindled Focus**: 18% more spell damage; rank bonuses apply without changing your stored stats.
+- **-D — Emberwake**: Veilstep releases a damaging 90-unit pulse during combat.
+- **+D — Runic Channel**: Directed rituals recover faster, alongside stronger spellcraft.
+- **-C — Briar Convergence**: Deal 20% more damage to slowed, frozen or exposed foes.
+- **+C — Evolved Resonance**: Evolved or mastered spell schools deal 25% more damage.
+- **-B — Veil Fracture**: Emberwake exposes foes for 2 seconds.
+- **+B — Flow State**: A successful dash removes 2 seconds from the directed ritual cooldown.
+- **-A — Winterwake**: Emberwake slows foes for 2 seconds and briefly freezes ordinary enemies.
+- **+A — Coven Bond**: Demon power rises by 15%; Aegis absorbs 20% more damage.
+- **-S — Sovereign Edge**: Deal 20% more damage to bosses and elite enemies.
+- **+S — Ashbound Renewal**: Defeating an elite or principal boss heals 3% vitality and removes 2 seconds from Aegis recovery.
+- **Local Power — Commanding Presence**: Directed rituals slow nearby ordinary foes within 220 units.
+- **Areal Power — Areal Reach**: Emberwake reaches 180 units; directed rituals deal 25% more damage.
+- **Big Power — Unbroken Aegis**: Raising Aegis clears casting silence and grants 2 seconds of seal grace.
+- **National Power — National Mandate**: Directed rituals also release a 260-unit damaging, exposing pulse.
 
-The preparation countdown suspends during the trial and all blocking menus. Victory explicitly records `first-ember` and advances once to +E. Repeating a completed trial or calling advancement without a verified trial cannot award another milestone. Failed trials clear only trial effects and can be retried. Reloading an unfinished trial interrupts it, returns to the saved preparation time and grants nothing; the result is explained in the panel. Later ordinary death/retry preserves the awarded tier and trial record.
+Early milestones add Emberwake dash damage, faster ritual recovery, control-target damage and evolved/mastered-school resonance. Later milestones add dash exposure, cooldown refunds, short ordinary-enemy freeze, stronger Demon/Aegis, boss/elite damage, kill renewal, ritual control, larger dash reach, casting-seal cleansing and National Mandate's ritual pulse. All are cumulative. Pulses run once on existing actions, with no extra projectile population or persistent area timers. Combat pulse/kill effects do not run in preparation, menus or trials. Commanding Presence does not slow bosses. New pulse damage appears in the death damage report.
 
-`Ascension.evaluate(player, game, tierId)` is pure: it returns detailed requirements, missing conditions, eligibility, implementation status and trial/advancement availability. `advance` is a separate guarded operation. State schema 1 stores monotonic current/highest tier, the unlocked prefix, completed wave/guardian evidence, verified trials, recognition metadata and bounded history. Import validates these records rather than deriving a new tier on every frame.
+Adaptive guardians account for only 35% of Ascension's logarithmic base offense/defense gain. This acknowledges earned power without cancelling the benefit; deterministic tests compare actual damage gain against the adapted guardian health increase. Existing guardian snapshots keep their saved health and clocks.
 
-## Calibration and limits
+## Promotion ordeals
 
-Run `node tools/progression_probe.mjs` for the actual XP formula, guaranteed completion bonuses and six synthetic legacy examples. The +E level floor requires 42 total XP; three nonflawless completion bonuses total 42 gold, before enemy/boss drops. A spell tome starts at 24 gold and an oath at 14, increasing with wave. Requirements intentionally combine gifts, learned schools and combat evidence; minimum level alone is insufficient.
+First Ember remains the 20-second, 250-unit, one-dash introduction. Higher ordeals last `20 + 2 × stage order` seconds, require `350 + 80 × stage order` movement and `1 + ceil(stage order / 2)` dashes. Warning radius grows and warning delay/interval shrink. From +D, crossing seals join aimed warnings; from -C, shock rings use the same safe inner core and directional gap as actual combat. The ordeal uses nonlethal existing geometry and no enemies, XP, gold or collectible rewards.
 
-The existing five-wave stability fixture still reaches level 52 with 1,734 kills, but it uses a deliberately strong, protected bot and is **not** an average-player model. Late wave targets remain provisional, and no live balancing claim is made for wave 335 or the unavailable advanced trials. New trials must be playtested before enabling their descriptor flags. Next work for v0.8.1 is a real -D trial and the first implemented latent aspect, with gameplay, migration and UI verification before activation.
+Start an eligible ordeal during preparation. Its clock advances only with simulation; preparation's countdown suspends. A caught warning without dash invulnerability/Aegis fails the ordeal. Completion checks the elapsed time, movement, dashes and current requirements again, then awards the next stage once. Missing or premature outcomes cannot promote. An unfinished ordeal reloads as interrupted, preserving preparation and earned tiers. Origin rebasing adjusts the movement origin so it cannot fabricate distance.
+
+## Existing saves and calibration
+
+Already-earned v0.8.0 tiers remain earned and receive their derived combat powers. Historical v2/v3 recognition still uses frozen v0.8.0 rules through +C, independent of new live balance. It never invents unique ordeal completions. See [MIGRATION.md](MIGRATION.md).
+
+The table is a designed progression target, not measured average-player completion time. Tests demonstrate independent gates and all fifteen actual ordeals, not long-run human balance through National Power. Run `node tools/progression_probe.mjs` for the actual XP/economy formulas and registry requirements. Future balance changes should use real play observations while preserving earned milestones.

@@ -56,7 +56,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
   };
   N.outgoingMultiplier=(p,e,source)=>{
     const q=p.progress;
-    return (q.activeOath==='ember'?1.1:1)*(q.demonTime>0?(q.demonPower??1.8):1)*(1+(q.mastery[source]||0)*.06)*(e.level>=p.level?1+q.talents.focus*.03:1)*
+    return N.AscensionPower.outgoing(p,e,source)*(q.activeOath==='ember'?1.1:1)*(q.demonTime>0?(q.demonPower??1.8):1)*(1+(q.mastery[source]||0)*.06)*(e.level>=p.level?1+q.talents.focus*.03:1)*
       (e.slow>0||e.frozen>0?1+q.talents.frostbite*.05:1)*(e.exposed>0?1.12:1);
   };
   N.applyBurn=(e,seconds,damage,source)=>{e.burn=Math.max(e.burn,seconds);if(damage>=e.burnDamage||e.burnTick<=0){e.burnDamage=damage;e.burnSource=source;}e.burnTick=Math.max(.1,e.burnTick);};

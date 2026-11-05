@@ -27,4 +27,4 @@ async function main(){
  const py="from PIL import Image\nfrom pathlib import Path\nimport sys\na,b=map(Path,sys.argv[1:])\nfor kind in ['allied','hazards','mechanisms']:\n f=[Image.open(a/f'{kind}-{i}.png').convert('RGB') for i in range(24)]\n f[8].save(b/f'{kind}-v525.png')\n f[0].save(b/f'{kind}-v525.gif',save_all=True,append_images=f[1:],duration=85,loop=0,optimize=False)\n";
  const result=spawnSync('python3',['-c',py,temp,out],{encoding:'utf8'});if(result.status!==0)throw Error(result.stderr);fs.rmSync(temp,{recursive:true,force:true});console.log('Rendered 72 field/unique-mechanism frames using the actual runtime renderers.');
 }
-main().catch(e=>{console.error(e);process.exitCode=1;});
+main().then(()=>require('./preview-assets.cjs')()).catch(e=>{console.error(e);process.exitCode=1;});
