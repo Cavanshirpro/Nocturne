@@ -19,6 +19,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
         log(boss?1:coverage)+(projectile?multi+accuracy:0)+Math.log1p(.06*(q.mastery?.[id]||0))+(p.relics?.[N.WEAPONS[id].relic]&&rank>=4?.16:0));
     }
     if(w.orbit>0)spells.push(damage+log((.34+.09*w.orbit)/.65)+.35*Math.log1p(w.orbit));
+    if(w.orbit>=4&&p.relics?.cinder){const r=w.orbit,C=N.CINDER_HALO;spells.push(damage+log(C.damage+C.damagePerRank*r)+log(N.haloEmbers(r))-log(N.haloInterval(p))+Math.log1p(.06*(q.mastery?.orbit||0))+log(.65));}
     const special=q.special||'slash',rank=q.arsenal?.[special]||1;
     const ritual=special==='frostfall'?(2.2+.3*rank)/12:special==='soulstorm'?(1.3+.2*rank)*(boss?1.5:4)/14:(3.6+.4*rank)/8;
     spells.push(damage+log(ritual)+Math.log1p(.06*(rank-1)));

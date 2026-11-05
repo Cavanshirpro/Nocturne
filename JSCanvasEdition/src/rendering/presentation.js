@@ -20,6 +20,11 @@ function projectile(c,b,g,hostile=false){
 }
 function effect(c,e,g){
  const t=1-e.life/e.total,low=g.quality==='low',still=g.reducedMotion;
+ if(e.kind==='cinder'){
+  c.save();c.strokeStyle=e.color;c.lineWidth=low?1.4:2.2;c.beginPath();c.moveTo(e.x,e.y);
+  c.quadraticCurveTo((e.x+e.x2)/2,(e.y+e.y2)/2-24,e.x2,e.y2);c.stroke();
+  c.fillStyle='#ffe0a7';c.beginPath();c.arc(e.x2,e.y2,still?3:3+(1-t)*3,0,TAU);c.fill();c.restore();return true;
+ }
  if(e.kind==='muzzle'){c.save();c.translate(e.x,e.y);c.strokeStyle=e.color;c.lineWidth=1.1;const r=2+(still?0:t*4);c.beginPath();c.moveTo(-r,0);c.lineTo(r,0);c.moveTo(0,-r);c.lineTo(0,r);c.stroke();c.restore();return true;}
  if(e.kind==='impact'){
   c.save();c.translate(e.x,e.y);const r=Math.min(22,Math.max(3,e.radius))*(.3+t*.7);c.strokeStyle=e.color;c.lineWidth=low?1.3:1.8;c.beginPath();for(let i=0;i<(low?3:5);i++){const a=i*TAU/(low?3:5)+(e.seed||0),inner=r*(.35+t*.2);c.moveTo(Math.cos(a)*inner,Math.sin(a)*inner);c.lineTo(Math.cos(a)*r,Math.sin(a)*r);}c.stroke();if(t<.3){c.fillStyle='#f1dfd0';c.fillRect(-1,-1,2,2);}c.restore();return true;

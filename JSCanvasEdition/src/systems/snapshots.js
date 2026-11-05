@@ -42,7 +42,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     if(w.enemies.some(e=>e.tactics!==undefined&&!N.Warfare.validTactics(e.tactics)||e.summonedBy!==undefined&&(!Number.isSafeInteger(e.summonedBy)||e.summonedBy<=0||e.summonedBy>w.nextId||![1,2].includes(e.summonDepth))))return false;
     if(w.enemies.filter(e=>e.guardian).length>1||w.enemies.some(e=>e.guardian&&w.sanctum?.bossId!==e.id))return false;
     if(w.areas!==undefined&&(!Array.isArray(w.areas)||w.areas.length>4096||!w.areas.every(a=>['meteor','thorn','rift','veil'].includes(a.kind)&&finite(a,['x','y','radius','delay','duration','damage','rank','weight','age','tick','pulses'])&&a.radius>0&&a.duration>0&&a.delay>=0&&a.damage>=0&&Number.isSafeInteger(a.rank)&&a.rank>=1&&a.weight>0&&a.age>=0&&typeof a.evolved==='boolean')))return false;
-    if(['meteor','lance','thorn','rift','rapid','cannon','burst','glacier'].some(id=>w.spellTimers[id]!==undefined&&!Number.isFinite(w.spellTimers[id])))return false;
+    if(['meteor','lance','thorn','rift','rapid','cannon','burst','glacier','halo'].some(id=>w.spellTimers[id]!==undefined&&!Number.isFinite(w.spellTimers[id])))return false;
     if(w.overlordSpawned!==undefined&&typeof w.overlordSpawned!=='boolean')return false;
     if(w.enemies.some(e=>e.facing!==undefined&&!['N','NE','E','SE','S','SW','W','NW'].includes(e.facing)||e.summonTimer!==undefined&&!Number.isFinite(e.summonTimer)))return false;
     if(Array.isArray(w.projectiles)&&w.projectiles.some(b=>b.source!==undefined&&![...N.SPELL_IDS,...Object.keys(N.SPECIALS)].includes(b.source)||b.color!==undefined&&!/^#[0-9a-fA-F]{6}$/.test(b.color)||['blast','freeze','expose'].some(k=>b[k]!==undefined&&(!Number.isFinite(b[k])||b[k]<0))))return false;

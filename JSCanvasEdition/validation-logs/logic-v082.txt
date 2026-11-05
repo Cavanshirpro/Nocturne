@@ -1,0 +1,343 @@
+PASS all 64 procedural assets are real lossless WebP files
+PASS normalized diagonal movement and all eight facings
+PASS spatial hash handles negative coordinates and excludes dead enemies
+PASS swept segment collision catches fast projectiles and handles zero length
+PASS auto aim chooses closest living enemy
+PASS finite pools recycle without overwriting live objects
+PASS particle burst expires in 300ms and projectile trails retain 5 positions
+PASS spawn approach radius is fixed in world units and visible arrivals are telegraphed
+PASS level up pauses time, offers 3 distinct gifts and applies one
+PASS large XP awards queue every level without dropping overflow
+PASS locked shop slot and price survive reroll and next wave shop
+PASS all locked slots prevent paid rerolls; unaffordable purchase is inert
+PASS buy deducts exact price, clears lock and prevents duplicate purchase
+PASS wave transition banks drops and finishes queued levels before shopping
+PASS invulnerability blocks repeat damage and death ends the simulation
+PASS pause/resume freezes world, clears keys, and never closes level/shop menus
+PASS restart clears progression, retained shop items and effects
+  51605 fixed updates; 1628 kills; level 49
+PASS five-wave fixed-step integration stays finite, defeats Warden and respects caps
+PASS three covens start with distinct, explicit stats and spells
+PASS dash is directional, grants invulnerability and respects cooldown and pause
+PASS all eight spell evolutions require both rank IV and their own relic, in either order
+PASS lightning chains to distinct living enemies and reports only actual damage
+PASS nova slows nearby foes, freezes only when evolved and excludes distant foes
+PASS orbit hit cooldown bounds damage; evolved wisps add burn damage
+PASS piercing orbs hit front-to-back once per enemy across frames
+PASS telegraphed hazards wait before dealing damage; dash protects on activation
+PASS hostile projectile swept collision cannot tunnel through player
+PASS hound advertises a fixed charge line and cultist fires at range
+PASS final guardian appears once and gates fifth-wave completion
+PASS wave checkpoint resumes exact stats without healing or multiplying gold
+PASS merchant checkpoint retains sold slots, lock prices, reroll cost and exact finances
+PASS checkpoint validation rejects incomplete, nonfinite and out-of-range data
+PASS blocked local storage never prevents startup, shopping or gameplay
+PASS settings and achievements persist; death records once and preserves a same-wave retry
+PASS grimoire returns to the same level choices or merchant without rerolling
+PASS drop collection is idempotent and healing cannot exceed maximum
+PASS eligible spell progression always appears in level choices and shop slots are unique
+  ash: 110 vitality; 10 kills; 2 gold
+  moon: 90 vitality; 21 kills; 9 gold
+  storm: 85 vitality; 16 kills; 4 gold
+PASS first wave is survivable for every coven without modifying health or damage
+PASS Shattered Moon crit explosion damages nearby enemies and counts each hit once
+PASS elite kill pays enhanced drops once and stores an achievement
+PASS flawless rewards are earned only with no vitality damage
+PASS partially chosen levels do not overwrite a valid wave-start checkpoint
+PASS every finite combat pool enforces its cap and can be cleared
+PASS critical hit-stop has a cooldown instead of freezing on every chained hit
+PASS Warden approach remains at 700 units with a warning when visible
+PASS packed witch atlases have 24 frames in five clips and enemies have four frames
+PASS walk phase is distance based, diagonal safe and independent of update rate
+PASS walk drawing crops the correct facing sheet and frame
+PASS footsteps require actual normal walking; dash leaves bounded fading echoes
+PASS reduced motion suppresses dash echoes and walking dust
+PASS paused simulation freezes walk, spell and remnant animation clocks
+PASS cosmetic draw frequency and extra particles do not change gameplay randomness
+PASS all 29 sound recipes schedule finite, bounded voices and clean up their nodes
+PASS sound limits are per event and important warnings take priority over footsteps
+PASS volume, ambience and foreground muting do not change player state
+PASS new sound settings save and legacy version 2 checkpoints remain usable
+PASS unavailable Web Audio and missing stereo panning fail gracefully
+PASS legacy single save migrates once into Save 1, preserving the original bytes
+PASS failed migration write retains the old save and retries on the next launch
+PASS new ritual allocates a new slot; switching restores independent witches and gold
+PASS slot names persist, removals leave other slots intact and ids are never reused
+PASS 24-slot limit cannot silently overwrite a ritual
+PASS backup import adds slots and invalid backup changes nothing
+PASS exact snapshot retains world clocks, unique enemies, loot, hazards and shots
+PASS invalid world snapshot and duplicate entity ids are rejected before load
+PASS autosave runs at ten simulation seconds and pause saves exact progress
+PASS slot chronicles and death affect only the active chapter
+PASS camera zoom clamps, persists and does not change movement or spell targeting
+PASS projectile speed upgrades expand targeting and travel without a ceiling
+PASS multicast grows full volley power and batches counts above the visual budget
+PASS stats beyond every former cap survive a save and keep upgrading
+PASS cast and hurt clips use priority, complete and return to locomotion
+PASS spawn portals block attacks and damage until their warning expires
+PASS late builds still get three usable level-up gifts and a safe shop
+  late-wave balance: {"still":{"state":"dead","hp":0,"lost":345.6799999999974,"time":30.399999999999554},"moving":{"state":"playing","hp":320,"lost":0,"time":76.7666666666636}}
+PASS late-game reference build cannot survive by standing still, while moving avoids curses
+PASS encounter director mixes 80% weaker, 15% middle and 5% veterans at level 100
+PASS director defers new veterans when the living group already has many
+PASS enemy level increases vitality, speed and damage without an upper level ceiling
+PASS swift, armored, mending and volatile enemies have real distinct mechanics
+PASS new spells unlock at 4, 7, 10 and 14, with unlimited ranks and all learned spells active
+PASS milestone level choice guarantees the newest unlearned spell
+PASS meteor warns before striking; its evolution produces two damaging pulses
+PASS Soul Lance hits foes in its line and leaves off-axis foes untouched
+PASS Thorn Sigil stays where cast, slows, and respects its pulse timer
+PASS Abyss Rift pulls nearby enemies and its evolved closing pulse deals damage
+PASS talent and mastery ranks keep growing and have real combat effects
+PASS buying a next-wave oath is saved, applies once, and loading cannot refill its shield
+PASS fractional XP and gold oath rewards accumulate accurately for small drops
+PASS refill restores bought slots while preserving locked merchandise and exact price
+PASS new enemy traits, learned spells and active spell areas survive exact saves
+PASS multi-crits work above 100% and armor ratings increase without a hard cap
+PASS very fast casts retain their aggregate damage instead of stopping at frame rate
+PASS huge spell range queries populated cells rather than iterating empty world space
+PASS enemy atlas renders walk, attack, hurt and death crops with real clip boundaries
+PASS audio starts quiet and never creates a looping noise buffer
+PASS floating origin keeps extreme movement drawable and preserves relative world state
+PASS actual v3 merchant data migrates armor, learned spells and genuinely empty stock
+PASS ordinary enemy health does not rubber-band to player damage or wave
+PASS low-level mix transitions gently and levels remain uncapped
+PASS right-click special charge increases damage and respects a directed cone
+PASS special cycling observes unlocks and cannot bypass shared recovery
+PASS special cooldown and charge freeze while game is paused
+PASS Winter Dominion freezes ordinary foes while bosses resist
+PASS Soulstorm launches a full ring of piercing, attributed projectiles
+PASS three jewels bank essence; manual transformation buffs movement and damage and expires
+PASS Demon fear reverses pursuit, cancels charge, and stops cultist attacks
+PASS bosses resist fear and Overlords summon smaller weaker minions
+PASS seventh wave interlude Overlord must be defeated before merchant
+PASS new automatic spells unlock at 3/6/9/12 and keep unlimited ranks
+PASS new automatic projectiles preserve spell source and differentiated behavior
+PASS glacier impact detonates an area, slows and freezes neighbors
+PASS new form, ritual, projectile, overlord and jewel state round-trip exactly
+PASS actual v4 data upgrades without resetting armor, spells, or checkpoint
+PASS enemy atlas has eight rows and correct facing for all six states
+PASS new snapshot validation rejects corrupted form and projectile content
+PASS essence banks above 100 without automatic activation, including during an active form
+PASS stacked manual form consumes complete charges and increases duration, damage and speed
+PASS manual activation is inert while paused, at the shop, dead, or below the cost
+PASS banked essence and long boosted forms round-trip without spending or duration caps
+PASS legacy v5 active form receives base boost defaults and never auto-spends old essence
+PASS damage feedback uses actual vitality lost and is independent of a saturated number pool
+PASS healing pickup reports only restored vitality and never shows overheal
+PASS regeneration coalesces feedback, does not flood events, and stops at maximum vitality
+PASS player feedback freezes with the world and renders outlined damage and healing in low quality
+PASS low-health edges appear only below 30 percent and disappear on healing
+PASS every ordinary wave creates a stable distant sanctum and cannot end on the timer
+PASS sanctum approach summons exactly one guardian and only its death ends the wave
+PASS every sanctum has a Final Sovereign and ordinary spawns stop during the final hunt
+PASS a surviving invasion becomes the final guardian without duplicate bosses
+PASS final guardian stays in its arena even when the player runs beyond recall distance
+PASS waiting and fighting sanctums round-trip with exact location, boss HP and identity
+PASS legacy elapsed waves still require a newly generated final sanctum
+PASS corrupt sanctums and non-finite form boosts are rejected without throwing
+PASS floating origin rebases sanctum, guardian and radar objective together
+PASS radar includes the sanctum on phone and desktop independently of camera zoom
+PASS radar adapts its grid for distant objectives without an unbounded draw loop
+PASS Demon HUD shows real stacks, previews growth and keeps meter widths within bounds
+PASS Final Sovereign health follows whole-build sustained damage instead of the old fivefold floor
+PASS final stats lock at encounter start and never mirror subsequent player damage
+PASS an invasion ascends once into a fully healed Sovereign without duplicating its entity
+PASS ordinary invasion Overlords retain their original stats and attack behavior
+PASS Hellfire Salvo has a warning before ten rapid, finite projectiles
+PASS enraged Sovereign increases its salvo to fourteen shots and shortens recovery
+PASS Ash Meteors warn at fixed target positions before their damage becomes active
+PASS Soul Reaping is directional: sidestepping the warned arc avoids its damage
+PASS Dread Aegis absorbs player spells, expires, and does not heal the guardian
+PASS guardian windups, partial wards and salvo clocks freeze during pause
+PASS guardian attack, aim, partial ward and health survive an exact world save
+PASS v0.6.0 fighting guardian upgrades once while preserving health fraction and identity
+PASS corrupt guardian state is rejected instead of bypassing attack or ward recovery
+PASS floating origin rebases stored guardian aim with the arena and player
+PASS player Aegis scales with vitality and level without consuming essence or gold
+PASS Aegis absorbs damage after armor and before a Stone oath; overflow hits vitality
+PASS Aegis blocks a rapid burst while respecting per-hit immunity and its finite charge
+PASS Aegis expires at 2.5s and cannot be raised again until its eight-second recovery ends
+PASS Aegis charge and cooldown persist without a free refill on continue or pause
+PASS shield activation is inert in menus, on death, and during recovery
+PASS corrupt shield capacity or timers are rejected while missing legacy shield fields migrate
+PASS Aegis HUD previews capacity and displays active charge and recovery within bounds
+PASS death preserves the chapter and build, retains floor(gold/2), and saves a same-wave retry
+PASS closing on the death screen and reloading retains the retry without a second penalty
+PASS each distinct death halves the current wallet once, including odd or empty wallets
+PASS fatal enemy contact, projectiles and floor hazards all preserve a valid recovery checkpoint
+PASS pending level-up gifts survive death and are offered before replaying the wave
+PASS death only updates the active save slot and preserves other chapters byte-for-byte
+PASS storage failure still allows a same-session retry with exactly one gold deduction
+PASS retry retains the current oath, prepared oath and merchant locks without consuming a second oath
+PASS shop stats increase encounter pressure without a level gain
+PASS offense, vitality, armor, regeneration and mobility all contribute independently
+PASS learned spells, mastery, talents and evolution relics contribute to build strength
+PASS wallet, wounds, stored essence and temporary Demon form never inflate permanent pressure
+PASS each equipped ritual uses its own rank and cooldown in the damage estimate
+PASS extreme multiplicative builds keep finite budgets while ordinary pressure stays bounded
+PASS mid-wave difficulty refresh is gradual and leaves current enemy health untouched
+PASS weaker and veteran bands remain mixed even at maximum gear pressure
+PASS spawn budget prevents a backlog and resumes after a slot opens
+PASS invasions are power-aware, capped, and frequent for strong builds with weak-build spacing
+PASS an invasion spawns once and cannot duplicate an existing live boss
+PASS wave plan, random invasion decision and refresh clock survive exact continue
+PASS death resets the refresh clock but preserves the same wave plan and invasion roll
+PASS legacy checkpoints without a difficulty plan receive one on load
+PASS corrupt difficulty timers, probabilities and mixed bands are rejected
+PASS a same-level merchant build produces a stronger guardian without the old health ceiling
+PASS guardian per-hit ceilings prevent a high reference damage stat from one-shotting weak builds
+PASS guardian opening rotation exposes seven distinct warned powers
+PASS soul constellation leaves a gap along the locked aim and deals bounded damage
+PASS Rift Step locks a warned destination inside the sanctum instead of tracking the player
+PASS Triune Lances hold their aim and are absorbed by the player Aegis
+PASS guardian reacts to distant or close players only after the opening rotation
+PASS v0.6.1 guardian migration preserves health, ward fractions and warning clocks once
+PASS new guardian power state including Rift destination survives save and world rebase
+PASS animated atlas blending is disabled for low quality, reduced motion and frozen actors
+PASS cosmetic enemy motion consumes no encounter RNG and freezes with the simulation
+PASS strong guardians enlarge the arena and ranged attacks with player range
+PASS outer seal reduces remote chip damage without healing or resetting the guardian
+PASS leaving the arena prompts attacks at the distant player instead of a safe leash exploit
+PASS all eleven high-tier powers have readable warnings before their effect
+PASS high-tier guardians recover faster, fire longer bursts and maintain independent pressure
+PASS Starfall locks a forward trail instead of homing after its warning
+PASS Twin Gates warn two fixed portals and release finite crossfire fans
+PASS shockwave annuli have a safe core and a visible directional gap
+PASS Void Seal is dodgeable, short and cannot repeatedly chain casting lockouts
+PASS casting seal cancels charge and suppresses new auto spells but leaves dash and Aegis usable
+PASS casting seal pauses spell debt instead of unleashing accumulated attacks on expiry
+PASS reactive wards catch burst damage, remain finite and have a recovery period
+PASS boss dodge predicts a projectile with a tell and real movement, without invulnerability
+PASS bosses hold their aim during attack warnings instead of dodging mid-telegraph
+PASS strong guardians summon Overlords and their commanders summon soldiers without recursion
+PASS army and commander caps hold under repeated summoning and existing crowded worlds
+PASS summoned armies scale with whole-build damage and have usable spawn warnings
+PASS a commander death never breaks the primary sanctum seal
+PASS world saves retain army roles, primary boss identity, seal and ring warnings and dodge state
+PASS casting suppression saves exactly, freezes on pause and clears on death retry
+PASS v0.6.2 guardians gain tactics once without changing their existing health
+PASS corrupt new hazards, tactical clocks, army roles and suppression are rejected
+PASS attack-specific boss poses override continuous hurt and use four distinct ritual clips
+PASS high-tier attack floors retain pressure against huge armor while respecting hit ceilings
+PASS rapid impacts cannot pin a guardian or shift its main attack warning
+PASS v0.7.0 appearance is read-only across fully upgraded player, enemies and all eleven boss poses
+PASS all twelve learned spells coexist as distinct model attachments including evolutions and mastery
+PASS model appearance updates after a real shop upgrade and exact save without cosmetic save fields
+PASS all thirteen permanent stat categories affect bounded visible equipment grades
+PASS level regalia, all talents, relics and unlocked specials remain visible together
+PASS Demon form selects its own model atlas and stronger forms produce greater regalia
+PASS deliberate special casting advances frames while automatic fire leaves locomotion free
+PASS eleven attack intents select eleven distinct boss atlas regions despite continuous hurt
+PASS enemy traits, ranks and summoned roles produce distinct visible descriptors
+PASS full model drawing at all eight facings emits finite geometry with balanced canvas state
+PASS reduced motion disables cloth and recoil while functional emitters keep exact positions
+PASS ward facets consume no charge and the grimoire portrait never changes player coordinates
+PASS 0.7.1 sprite blending respects quality and motion without changing animation state
+PASS 0.7.2 context menu capture survives charging level-up and preserves editable menus
+PASS 0.7.2 radar remains local, clamps distant goals and respects short screens
+PASS 0.7.2 minimap marker work stays bounded for dense swarms
+PASS 0.7.2 every permanent upgrade category changes actual drawn equipment
+PASS 0.7.3 automatic projectile families start at their visible satellite and never body-cast
+PASS 0.7.3 lightning, beam and targeted areas show emission without automatic gestures
+PASS 0.7.3 hostile and guardian salvos use the common emitter; remote portals stay remote
+PASS 0.7.3 orbital origin survives exact saves and is quality-independent
+PASS 0.7.3 passive ring grades and active module shapes grow without unbounded geometry
+PASS 0.7.5 cosmetic cloth momentum responds to speed and settles without actor writes
+PASS 0.7.5 intact low-quality and non-OffscreenCanvas fallbacks never shift rigid anatomy
+PASS 0.7.4 field identities distinguish ally Thorn from healing and hostile silence
+PASS 0.7.4 shock ring opening and inner circle remain safe in the visible geometry
+PASS 0.7.4 overlapping ally fields group visually with bounded plans and no simulation mutation
+PASS 0.7.4 every hostile boundary remains drawn when allied clutter reaches its cap
+PASS 0.7.4 orbital mechanics and passive ring animations have distinct bounded identities
+PASS 0.7.5 visible cloth masks isolate three materials in every form, facing and clip
+PASS 0.7.5 packed enemy textures retain every logical frame with smaller decoded area
+PASS 0.7.5 nearest allied fields cannot be lost between sampling strides
+PASS 0.7.5 imminent and expiration art keep exact warning and collision timing
+PASS 0.7.5 every satellite grade, evolution and mastery renders within a fixed path budget
+PASS 0.7.5 render-only systems never consume gameplay RNG or mutate hazards and actors
+PASS 0.7.5 environment uses distinct deterministic biomes and bounded landmark caches
+PASS 0.7.6 all nine anatomical motion profiles are distinct and freeze cleanly
+PASS 0.7.6 hound charge artwork keeps its locked real charge direction without changing facing state
+PASS 0.7.6 hostile progression has five bounded grades and distinct existing roles
+PASS 0.7.6 every family and trait draws finite, balanced, read-only art in both qualities and reduced motion
+PASS 0.7.6 boss stages follow existing windup and release timers for all eleven powers
+PASS 0.7.6 an idle active ward uses a steady guard pose instead of repeated chanting
+PASS 0.7.6 ordinary hostile automatic fire keeps real origins and does not cast the body repeatedly
+PASS 0.7.6 private directional critical feedback never enters actor snapshots or gameplay RNG
+PASS 0.7.6 actual summon hierarchy yields commander and soldier art without changing any spawn data
+PASS 0.7.6 defeat fragments consume no pools and introduce no reward or lifetime delay
+
+264 test groups passed; 0 failed.
+✔ high wave, level and shallow ranks cannot replace depth, mastery and evolution (89.3773ms)
+✔ school depth and total mastery remain independent gates after wave requirements pass (30.8543ms)
+✔ all fifteen actual ordeals are completable once, preserve preparation and reload exact powers (2509.132ms)
+✔ every tier has strictly stronger actual offense, defense and recovery without rewriting base stats (348.8484ms)
+✔ earned Ascension has a net benefit against adaptive guardians instead of being fully cancelled (34.9907ms)
+✔ Emberwake damages nearby foes, upgrades control and never creates extra enemy/projectile populations (19.2954ms)
+✔ rank combat actions cannot farm or alter preparation, trials or paused menus (19.9239ms)
+✔ Coven Bond changes real Aegis and Demon power; Unbroken Aegis clears a seal (23.9508ms)
+✔ conditional school/control/boss/ritual bonuses are applied through the real damage pipeline (18.3309ms)
+✔ National Mandate triggers from the real ritual, and principal/elite renewal is once per kill (20.4816ms)
+✔ advanced unfinished trials interrupt safely and malformed future completion IDs are rejected (20.9138ms)
+✔ world-origin rebasing cannot fabricate trial movement (19.4753ms)
+✔ Commanding Presence respects boss resistance while slowing ordinary foes (18.8727ms)
+✔ an already-recognized weak legacy build keeps its tier and never compounds saved base damage (33.8612ms)
+✔ all 16 stages have stable independent descriptors and implemented rank powers (84.1984ms)
+✔ requirements are pure, detailed, and cannot be replaced by extreme level or BUILD POWER (36.3141ms)
+✔ First Ember runs existing telegraphs, movement and dash, awards only once (79.4144ms)
+✔ a stationary character fails without wave, vitality, gold or reward corruption (31.6961ms)
+✔ a premature completion callback cannot award a tier or consume its trial (27.8786ms)
+✔ unfinished trial reload is interrupted and cannot grant an automatic victory (31.6039ms)
+✔ tier and verified trial survive ordinary death, exact reload and JSON backup (70.5905ms)
+✔ malformed, nonmonotonic and unbounded trial state is rejected (25.2537ms)
+✔ loader validates all paths before decoding and never starts a save on failure (89.5117ms)
+✔ measured loading progress reaches exactly 55 images and successful decodes are shared (31.8622ms)
+✔ missing files and decode failures identify their path and can be retried (31.5466ms)
+✔ guardian completion clears the victory shake, red flash and hit stop before exploration (101.4073ms)
+✔ new ability feedback during preparation decays and blocking menus still freeze simulation (35.7271ms)
+✔ restoring preparation on the same engine clears stale combat feedback (31.4243ms)
+✔ Cinder Halo damages and ignites a midrange enemy without any wisp contact (28.7596ms)
+✔ ordinary Moon Wisps retain contact behavior and require rank IV plus the relic for ranged fire (26.2228ms)
+✔ one target receives the full ember budget; a volley distributes that budget over distinct targets (55.7517ms)
+✔ targeting rejects out-of-range, dead and spawning foes and deterministically selects the nearest (26.939ms)
+✔ rank and haste increase actual ranged output while effects and projectile population stay bounded (28.1207ms)
+✔ pause, casting seals and preparation prevent ranged farming and release no queued burst (26.7876ms)
+✔ exact ranged cooldown and ignition survive checkpoint reload without an immediate extra volley (29.8227ms)
+✔ old snapshots without the optional halo clock load safely and malformed clocks are rejected (29.4465ms)
+✔ quality, reduced motion and a full cosmetic pool cannot remove ranged damage (93.2786ms)
+✔ new legacy classification is deterministic, conservative and non-destructive (96.9438ms)
+✔ early legacy classification is deterministic, conservative and non-destructive (38.3277ms)
+✔ wave20 legacy classification is deterministic, conservative and non-destructive (34.4125ms)
+✔ wave50 legacy classification is deterministic, conservative and non-destructive (30.7233ms)
+✔ wave150 legacy classification is deterministic, conservative and non-destructive (31.2195ms)
+✔ extreme legacy classification is deterministic, conservative and non-destructive (33.6151ms)
+✔ active and shop phases distinguish attempted versus completed waves and retain stock (39.953ms)
+✔ legacy v2 single-save container and original key remain recoverable (27.2498ms)
+✔ multiple populated chapters migrate independently; malformed chapter data is retained for recovery (60.4515ms)
+✔ storage write failure never removes the v3 source; the next launch retries safely (31.0037ms)
+✔ backup import, repeated legacy imports and repeated reloads cannot grant gold, items or fake trials (26.1845ms)
+✔ old optional ability fields are recoverable without inventing missing guardian evidence (28.8108ms)
+✔ retry checkpoint retains the one-time half-gold penalty through migration (20.6119ms)
+✔ invalid world is recoverable, invalid current container is never overwritten (23.8956ms)
+✔ an active legacy Sovereign keeps its identity, health and attack clocks after migration (30.6091ms)
+✔ legacy migration, three true guardian completions, preparation reload and a death/retry compose safely (32.4187ms)
+✔ survival timer and invasion victory cannot bypass the required guardian (112.5508ms)
+✔ all centralized preparation durations match their boundary waves (28.6738ms)
+✔ preparation permits movement without ordinary spawning or free loot (34.3001ms)
+✔ pause, merchant, grimoire, ascension and inactive simulation cannot consume preparation time (27.9782ms)
+✔ merchant stock, locks, rerolls and purchases survive repeated visits and reloads (33.725ms)
+✔ automatic start and a stale manual callback cannot double-heal, skip a wave or reroll its invasion (26.7489ms)
+✔ manual early start applies the prepared oath once and preserves location (30.7593ms)
+✔ reloaded preparation retains exact timer, no rewards repeat, and level-up choices block start (32.0553ms)
+✔ closing on the guardian reward or between pending gifts preserves both reward and exact choices (28.856ms)
+✔ a level-up at the countdown deadline cannot lose a gift or start two waves (30.3378ms)
+✔ switching chapters during preparation keeps each timer, character and resources independent (34.6926ms)
+ℹ tests 64
+ℹ suites 0
+ℹ pass 64
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3392.7273

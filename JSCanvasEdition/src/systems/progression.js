@@ -10,7 +10,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
   N.SPELL_IDS=['bolt','orbit','lightning','nova','meteor','lance','thorn','rift','rapid','cannon','burst','glacier'];
   N.WEAPONS=Object.freeze({
     bolt:{name:'Arcane Bolt',icon:'✧',color:'#eee5ff',unlock:1,evolution:'Shattered Moon',relic:'mirror',text:'Targets within 430 units. Orbs travel 490 units. Projectile speed also expands range; multicast has no count ceiling.',evolved:'Orbs pierce +1 foe; critical hits explode for 45% damage within 70 units.'},
-    orbit:{name:'Moon Wisps',icon:'☽',color:'#e8ba93',unlock:1,evolution:'Cinder Halo',relic:'cinder',text:'1 + rank wisps orbit nearby. Contact damage has a shared 0.65s cooldown per enemy.',evolved:'Contacts ignite foes for two seconds.'},
+    orbit:{name:'Moon Wisps',icon:'☽',color:'#e8ba93',unlock:1,evolution:'Cinder Halo',relic:'cinder',text:'1 + rank wisps orbit nearby. Contact damage has a shared 0.65s cooldown per enemy.',evolved:'Keeps contact ignition and automatically lashes nearby enemies at 360 + 4√rank range. Ember volleys every 1.8s scale with rank and haste, distribute all embers over up to six targets, and ignite for 3s.'},
     lightning:{name:'Chain Lightning',icon:'ϟ',color:'#b6e4ec',unlock:1,evolution:'Thunder Crown',relic:'conductor',text:'Starts within 390 + 18 per additional rank units, chains 170 + 10 per additional rank units to 2 + rank enemies.',evolved:'Two more jumps, 210-unit chains and a short stun.'},
     nova:{name:'Frost Nova',icon:'❄',color:'#b6d6ef',unlock:1,evolution:'Absolute Winter',relic:'permafrost',text:'Slowing pulse within 100 + 17 per rank units.',evolved:'Normal enemies freeze for 0.5s; Wardens resist the freeze.'},
     meteor:{name:'Ember Meteor',icon:'☄',color:'#f0ac7e',unlock:4,evolution:'Solar Ruin',relic:'sunstone',text:'Marks a foe within 370 units. After 0.65s, a meteor strikes a 65 + 7 per rank area.',evolved:'The impact ignites survivors for 3s and leaves a second shockwave.'},
@@ -22,6 +22,10 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     glacier:{name:'Glacial Seed',icon:'❅',color:'#b5e5f2',unlock:12,evolution:'Winter Star',relic:'iceheart',text:'A frost orb detonates on contact, damaging and slowing a circular area.',evolved:'Its blast freezes ordinary foes for 0.6 seconds; bosses resist.'},
     rift:{name:'Abyss Rift',icon:'◉',color:'#aaadee',unlock:14,evolution:'Event Horizon',relic:'voidglass',text:'A 2.2s vortex within 350 units pulls enemies inward and pulses every 0.5s.',evolved:'The closing vortex detonates. Wardens resist its pull.'}
   });
+  N.CINDER_HALO=Object.freeze({range:360,rangePerRootRank:4,interval:1.8,hastePerRank:.08,damage:.6,damagePerRank:.12,maxTargets:6,burnSeconds:3,burnDamage:.2});
+  N.haloEmbers=rank=>1+Math.floor(Math.log2(1+rank/4));
+  N.haloRange=rank=>N.CINDER_HALO.range+N.CINDER_HALO.rangePerRootRank*Math.sqrt(rank);
+  N.haloInterval=p=>Math.max(Number.MIN_VALUE,N.CINDER_HALO.interval/(1+N.CINDER_HALO.hastePerRank*Math.max(0,p.weapons.orbit-4))*(p.attackInterval/.56));
   N.TALENTS=Object.freeze({
     scavenger:{name:'Scavenger pact',icon:'◈',level:3,text:'Every 10 kills: +1 gold per rank. No rank ceiling.'},
     kindling:{name:'Cinder script',icon:'♨',level:5,text:'Arcane critical hits ignite survivors. Burn strength grows with rank.'},

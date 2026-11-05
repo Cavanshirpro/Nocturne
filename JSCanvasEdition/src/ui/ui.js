@@ -17,7 +17,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
   ACHIEVEMENTS.push(...N.ASCENSION_TIERS.slice(1).map(t=>({id:t.achievement.id,name:t.achievement.title,text:'Earn or historically recognize the '+t.name+' Ascension milestone.'})));
   const RELICS={
     mirror:{name:'Lunar Mirror',icon:'◈',text:'+8% damage. Rank IV+ Bolt evolves into Shattered Moon.',cost:30,apply:p=>p.damage*=1.08},
-    cinder:{name:'Cinder Seed',icon:'❧',text:'+0.2 regeneration. Rank IV+ Wisps evolve into Cinder Halo.',cost:28,apply:p=>p.regen+=.2},
+    cinder:{name:'Cinder Seed',icon:'❧',text:'+0.2 regeneration. Rank IV+ Wisps evolve into Cinder Halo: automatic ranged ember lashes and ignition.',cost:28,apply:p=>p.regen+=.2},
     conductor:{name:'Storm Conductor',icon:'ϟ',text:'+5 critical percentage points. Rank IV+ Lightning evolves into Thunder Crown.',cost:30,apply:p=>p.critChance+=.05},
     permafrost:{name:'Permafrost Shard',icon:'❄',text:'+10 maximum vitality; heal 10. Rank IV+ Nova evolves into Absolute Winter.',cost:28,apply:p=>{p.maxHp+=10;p.heal(10);}},
     sunstone:{name:'Cracked Sunstone',icon:'☀',text:'+8% damage. Rank IV+ Meteor evolves into Solar Ruin.',cost:32,level:4,apply:p=>p.damage*=1.08},

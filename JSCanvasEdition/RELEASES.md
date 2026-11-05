@@ -2,6 +2,15 @@
 
 Versions use **MAJOR.MINOR.PATCH** with MAJOR **0** during initial development. These notes use the canonical numbering; historical source snapshots, comparison images and validation logs may contain previous labels. See the [complete mapping and release policy](../VERSIONING.md).
 
+## v0.8.2 — Steady Preparation & Cinder Halo · 5 November 2026
+
+- Fixed perpetual camera shake after guardian victory: preparation clears victory shake/hit-stop/red flash immediately, and new ability feedback decays while exploring. Reloading preparation also clears stale feedback.
+- Cinder Halo retains its contact ignition and gains automatic midrange ember lashes. Rank IV reaches 368 world units and sends two embers every 1.8 seconds before haste; higher ranks increase range, ember count, damage and cadence. Embers focus on a single foe or split over up to six distinct nearby foes, igniting for three seconds.
+- Ember lashes use the actual orbiting wisp origins and existing cosmetic pools. Damage is independent of quality/reduced-motion or cosmetic capacity; no new projectile population is introduced. Casting seals and preparation/trial states block the ranged attack.
+- The optional ranged cooldown saves/restores exactly; older snapshots without it retain a safe initial delay. Existing school mastery, Ascension and damage reporting apply. The build estimator includes a conservative ranged contribution while existing active guardians keep their snapshot health.
+- Validation: 264 existing regression groups, 64 tests (12 new), 88 real Chromium Canvas/UI checks and 27 acceptance checks passed. The isolated midrange fixture now deals 310.24 damage over ten seconds, compared with zero contact-only damage at that distance.
+- See the [patch notes and verification](docs/PATCH_v082.md). Runtime WebP artwork, license text and earned rank records are preserved.
+
 ## v0.8.1 — Ascension Power & WebP · 5 November 2026
 
 - Rebalanced Ascension around deep school training, total mastery ranks, distinct mastery/evolution and independent guardian/elite evidence. Wave floors are lower; character level or shallow rank-IV breadth no longer substitutes for development.

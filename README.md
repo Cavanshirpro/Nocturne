@@ -2,7 +2,7 @@
 
 **A dark-fantasy arena survival game.** Build a spell arsenal, gather Demon Essence and survive the Hollow until its Final Sovereign falls.
 
-**Current version: <!-- version -->v0.8.1<!-- /version --> · Initial development · JSCanvasEdition**
+**Current version: <!-- version -->v0.8.2<!-- /version --> · Initial development · JSCanvasEdition**
 
 [Download the latest release](https://github.com/Cavanshirpro/Nocturne/releases/latest) · [Play locally](#play-locally) · [Controls & game guide](JSCanvasEdition/README.md) · [Release history](JSCanvasEdition/RELEASES.md)
 
@@ -11,6 +11,12 @@
 *Existing combat renderer, retained from v0.7.x: spell satellites, enemy roles and boss warnings.*
 
 ## See the game
+
+### Cinder Halo now reaches the fight
+
+![Actual Cinder Halo ember lashes reaching enemies beyond wisp contact range](JSCanvasEdition/previews/cinder-halo-v082.webp)
+
+Rank-IV Moon Wisps plus Cinder Seed evolve into Cinder Halo. Automatic ember volleys now reach 368 world units and ignite distant foes; the orbiting contact effect remains. Wave completion also clears lingering camera shake. [v0.8.2 behavior and checks](JSCanvasEdition/docs/PATCH_v082.md)
 
 ### Ascension power and an explorable world cycle
 
@@ -74,7 +80,7 @@ Nocturne is organized into editions: independent implementations of the same gam
 
 | Edition | Technology | Status |
 | --- | --- | --- |
-| [JSCanvasEdition](JSCanvasEdition/README.md) | HTML5 Canvas, JavaScript, CSS | Playable · <!-- version -->v0.8.1<!-- /version --> |
+| [JSCanvasEdition](JSCanvasEdition/README.md) | HTML5 Canvas, JavaScript, CSS | Playable · <!-- version -->v0.8.2<!-- /version --> |
 | PyGameEdition | Python, Pygame | Planned; no implementation yet |
 
 ## Development and releases

@@ -1,0 +1,25 @@
+{
+  "method": "Isolated stationary 10-second, rank-IV Cinder fixture, one enemy 240 units away, no crits or other attacks. Old contact-only behavior is represented by disabling only the new ranged timer. Not a win-rate model.",
+  "results": [
+    {
+      "ranged": false,
+      "seconds": 10,
+      "distance": 240,
+      "rank": 4,
+      "playerDamage": 14,
+      "enemyDamage": 0,
+      "attributedOrbitDamage": 0,
+      "burning": false
+    },
+    {
+      "ranged": true,
+      "seconds": 10,
+      "distance": 240,
+      "rank": 4,
+      "playerDamage": 14,
+      "enemyDamage": 310.2400000001653,
+      "attributedOrbitDamage": 310.24000000000007,
+      "burning": true
+    }
+  ]
+}

@@ -24,16 +24,16 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
   }
   class Combat {
     constructor(game){
-      this.game=game;this.cooldown=0;this.candidates=[];this.areaCandidates=[];
+      this.game=game;this.cooldown=0;this.candidates=[];this.areaCandidates=[];this.haloTargets=[];this.wispPoint={x:0,y:0};
       this.projectiles=new Pool(()=>new Projectile(),240);this.particles=new Pool(()=>({}),650);this.numbers=new Pool(()=>({}),55);
       this.hostile=new Pool(()=>({}),180);this.hazards=new Pool(()=>({}),24);this.effects=new Pool(()=>({}),80);
       this.remnants=new Pool(()=>({}),96);this.areas=new Pool(()=>({}),Infinity);
-      this.spellTimers={lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2,rapid:.15,cannon:1.3,burst:.9,glacier:1.1};this.wispHits=new Map();this.mapClock=0;
+      this.spellTimers={lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2,rapid:.15,cannon:1.3,burst:.9,glacier:1.1,halo:.4};this.wispHits=new Map();this.mapClock=0;
       this.audioEngine=new N.AudioEngine(game);this.soundEnabled=false;
     }
     clear(){
       for(const pool of [this.projectiles,this.particles,this.numbers,this.hostile,this.hazards,this.effects,this.remnants,this.areas])pool.clear();
-      this.wispHits.clear();Object.assign(this.spellTimers,{lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2,rapid:.15,cannon:1.3,burst:.9,glacier:1.1});this.mapClock=0;
+      this.wispHits.clear();Object.assign(this.spellTimers,{lightning:.5,nova:1,meteor:1.2,lance:.8,thorn:1.5,rift:2,rapid:.15,cannon:1.3,burst:.9,glacier:1.1,halo:.4});this.haloTargets.length=0;this.mapClock=0;
     }
     get audio(){return this.audioEngine.context;}
     get soundEnabled(){return this.audioEngine.enabled;}
@@ -123,9 +123,9 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
     }
     updateWisps(){
       const p=this.game.player,rank=p.weapons.orbit;if(!rank)return;
-      const logical=1+rank,count=Math.min(logical,32),radius=70+rank*4;
+      const logical=1+rank,count=Math.min(logical,32);
       for(let i=0;i<count;i++){
-        const angle=this.game.time*2.3+i*Math.PI*2/count,x=p.x+Math.cos(angle)*radius,y=p.y-12+Math.sin(angle)*radius*.78;
+        const {x,y}=N.Orbitals.wispOrigin(p,i,count,this.wispPoint);
         this.game.hash.query(x-65,y-65,x+65,y+65,this.areaCandidates);
         for(const e of this.areaCandidates)if(e.alive&&e.spawnDelay<=0&&(e.x-x)**2+(e.y-12-y)**2<(e.radius+11)**2&&(this.wispHits.get(e.id)||-1)<this.game.time){
           this.wispHits.set(e.id,this.game.time+.65);this.spellHit(e,(.34+.09*rank)*logical/count,'orbit');
@@ -133,6 +133,23 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
           if(p.evolved('orbit')&&e.alive){N.applyBurn(e,2,p.damage*.16,'orbit');}
         }
       }
+    }
+    cinderHalo(casts=1){
+      const g=this.game,p=g.player,rank=p.weapons.orbit,C=N.CINDER_HALO;
+      if(g.state!=='playing'||N.WaveCycle.preparing(g)||p.ascension.pendingTrial||p.progress.silenceTime>0||!p.evolved('orbit'))return false;
+      const range=N.haloRange(rank),logical=N.haloEmbers(rank),targets=this.haloTargets;targets.length=0;
+      g.hash.query(p.x-range-70,p.y-range-70,p.x+range+70,p.y+range+70,this.areaCandidates);
+      for(const e of this.areaCandidates)if(e.alive&&e.spawnDelay<=0&&N.dist2(p,e)<=range*range)targets.push(e);
+      targets.sort((a,b)=>N.dist2(p,a)-N.dist2(p,b)||a.id-b.id);
+      const count=Math.min(targets.length,logical,C.maxTargets);if(!count)return false;
+      const weight=logical/count*casts,wisps=Math.min(32,1+rank);
+      for(let i=0;i<count;i++){
+        const e=targets[i],origin=N.Orbitals.wispOrigin(p,Math.floor(i*wisps/count),wisps,this.wispPoint);
+        this.effect('cinder',origin.x,origin.y,e.x,e.y-12,0,'#f1b075',.28);
+        this.spellHit(e,(C.damage+C.damagePerRank*rank)*weight,'orbit');
+        if(e.alive)N.applyBurn(e,C.burnSeconds,p.damage*C.burnDamage*weight,'orbit');
+      }
+      this.sound('orbit',targets[0].x);return true;
     }
     addArea(kind,x,y,radius,delay,duration,damage,rank=1,evolved=false,weight=1){
       const area=this.areas.acquire();
@@ -202,6 +219,11 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
           const interval=Math.max(Number.MIN_VALUE,base/(1+.11*(p.weapons[id]-1))*(p.attackInterval/.56)),casts=Math.max(1,Math.floor(-this.spellTimers[id]/interval)+1);
           if(this[id])this[id](casts);else this.directedSpell(id,casts);this.spellTimers[id]+=casts*interval;
         }
+      }
+      if(p.evolved('orbit')&&!N.WaveCycle.preparing(this.game)){
+        this.spellTimers.halo-=dt;
+        if(sealed)this.spellTimers.halo=Math.max(0,this.spellTimers.halo);
+        else if(this.spellTimers.halo<=0){const interval=N.haloInterval(p),casts=Math.max(1,Math.floor(-this.spellTimers.halo/interval)+1);if(this.cinderHalo(casts))this.spellTimers.halo+=casts*interval;else this.spellTimers.halo=0;}
       }
       this.updateAreas(dt);
       if(!sealed)this.updateWisps();this.mapClock-=dt;
@@ -280,7 +302,7 @@ This file is part of Nocturne. See the distribution's LICENSE and NOTICE files.
       if(p.weapons.orbit){
         const count=Math.min(32,1+p.weapons.orbit),radius=70+p.weapons.orbit*4;c.strokeStyle='#bcb1d022';c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y-12,radius,radius*.78,0,0,Math.PI*2);c.stroke();
         for(let i=0;i<count;i++){
-          const a=this.game.time*2.3+i*Math.PI*2/count,x=p.x+Math.cos(a)*radius,y=p.y-12+Math.sin(a)*radius*.78;
+          const {x,y}=N.Orbitals.wispOrigin(p,i,count,this.wispPoint);
           N.Orbitals.wisp(c,p,x,y);
         }
       }

@@ -1,6 +1,6 @@
 # Nocturne — Witch of Ash: JSCanvasEdition
 
-**<!-- version -->v0.8.1<!-- /version --> · Ascension Power & WebP · Initial development**
+**<!-- version -->v0.8.2<!-- /version --> · Steady Preparation & Cinder Halo · Initial development**
 
 The HTML5 Canvas and JavaScript edition of [Nocturne — Witch of Ash](../README.md). Survive the Hollow, build a spell arsenal, gather loot and defeat each wave's Final Sovereign.
 
@@ -11,6 +11,12 @@ The HTML5 Canvas and JavaScript edition of [Nocturne — Witch of Ash](../README
 *Existing combat demonstration from v0.7.x; its artwork and combat rules are retained.*
 
 ## Visual examples
+
+### Cinder Halo — v0.8.2
+
+![Automatic Cinder Halo lashes from real wisps to distant enemies](previews/cinder-halo-v082.webp)
+
+Rank-IV Moon Wisps plus Cinder Seed unlock automatic ember volleys at 368 world units. The evolution retains contact ignition and adds three-second ranged ignition, focusing on one foe or distributing its embers over several. [Patch behavior and verification](docs/PATCH_v082.md)
 
 ### Ascension power and preparation — v0.8.1
 
@@ -52,7 +58,7 @@ Open **[visual-gallery.html](visual-gallery.html)** locally for the complete ani
 
 ## Current release
 
-**<!-- version -->v0.8.1<!-- /version --> — Ascension Power & WebP** strengthens school-depth, mastery and evolution gates, adds real cumulative rank powers and makes all 15 promotion ordeals playable. Runtime images and static previews use verified lossless WebP. Earned tiers, unlimited base progression, existing active guardian snapshots, half-gold death recovery and AGPLv3-or-later licensing are preserved.
+**<!-- version -->v0.8.2<!-- /version --> — Steady Preparation & Cinder Halo** fixes persistent camera shake after guardian victory and gives evolved Moon Wisps a real midrange attack. The optional ranged cooldown saves exactly; earned ranks, existing saves, lossless WebP artwork and AGPLv3-or-later licensing are preserved.
 
 Start with [architecture](docs/ARCHITECTURE.md), [Ascension](docs/ASCENSION.md), [migration](docs/MIGRATION.md), [assets](docs/ASSETS.md), [wave cycle](docs/WAVE_CYCLE.md) and the [executed technical report](docs/IMPLEMENTATION_REPORT.md). [RELEASES.md](RELEASES.md) contains the history. Earlier renderer design/measurement documents remain historical references.
 

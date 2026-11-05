@@ -4,7 +4,7 @@ Copyright (C) 2026 Javanshir Gurbanzade. See LICENSE and NOTICE. */
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict'),{pathToFileURL}=require('url'),{chromium}=require('playwright');
 const {spawnSync}=require('child_process');
 async function capture(page,target){const png=await page.screenshot({type:'png'}),r=spawnSync('python',['-c','from PIL import Image;import sys,io;Image.open(io.BytesIO(sys.stdin.buffer.read())).save(sys.argv[1],format="WEBP",lossless=True,quality=100,method=4,exact=True)',target],{input:png});if(r.status!==0)throw Error(String(r.stderr));}
-const root=path.resolve(__dirname,'..'),report={engine:'Chromium',checks:[],layouts:[],errors:[],screenshots:[]};
+const root=path.resolve(__dirname,'..'),releaseVersion=fs.readFileSync(path.join(root,'..','VERSION'),'utf8').trim(),versionSuffix='v'+releaseVersion.replaceAll('.',''),report={engine:'Chromium',checks:[],layouts:[],errors:[],screenshots:[]};
 const server=http.createServer((req,res)=>{
   const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
   if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
@@ -21,7 +21,7 @@ async function main(){
   for(const touch of [false,true]){
     const context=await browser.newContext({hasTouch:touch,isMobile:touch,viewport:{width:touch?390:1440,height:touch?844:900}}),page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
     const startup=await ready(page,base+'/index.html#verification');
-    check('HTTP startup '+(touch?'touch':'desktop'),await page.evaluate(()=>Object.keys(Nocturne.game.images).length===55&&Nocturne.VERSION==='0.8.1'));
+    check('HTTP startup '+(touch?'touch':'desktop'),await page.evaluate(version=>Object.keys(Nocturne.game.images).length===55&&Nocturne.VERSION===version,releaseVersion));
     report.layouts.push({touch,startupMilliseconds:startup});
     for(const [width,height] of touch?[[390,844],[390,640],[844,390]]:[[1440,900],[1240,660]]){
       await page.setViewportSize({width,height});await prepare(page);
@@ -31,7 +31,7 @@ async function main(){
       check('Ascension has no horizontal overflow '+width+'x'+height,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.click('#close-ascension');
     }
     if(!touch){
-      await page.setViewportSize({width:1440,height:900});await prepare(page);await capture(page,path.join(root,'previews/preparation-v081.webp'));report.screenshots.push('previews/preparation-v081.webp');
+      await page.setViewportSize({width:1440,height:900});await prepare(page);await capture(page,path.join(root,`previews/preparation-${versionSuffix}.webp`));report.screenshots.push(`previews/preparation-${versionSuffix}.webp`);
       await page.click('#open-merchant');const remaining=await page.evaluate(()=>Nocturne.game.cycle.remaining);await page.evaluate(()=>Nocturne.game.update(3));check('Merchant blocks simulation timer',await page.evaluate(()=>Nocturne.game.cycle.remaining)===remaining);await page.click('#leave-merchant');
       await page.click('#open-ascension');await page.click('#begin-ascension-trial');check('Trial starts from real UI',await page.evaluate(()=>!!Nocturne.game.player.ascension.pendingTrial));
       await page.evaluate(()=>{const g=Nocturne.game;g.input.x=1;g.player.dash();for(let i=0;i<1220&&g.player.ascension.pendingTrial;i++)g.update(1/60);g.input.clear();});check('Trial earns +E',await page.evaluate(()=>Nocturne.game.player.ascension.currentTier==='e-plus'));
@@ -40,7 +40,14 @@ async function main(){
       await page.click('#start-next-wave');check('Early wave starts once',await page.evaluate(()=>{const g=Nocturne.game;return g.wave===4&&g.cycle.phase==='COMBAT'&&!Nocturne.WaveCycle.start(g);}));
       const fixture=JSON.parse(fs.readFileSync(path.join(root,'tests/fixtures/legacy/wave150.json'),'utf8'));await page.evaluate(d=>{const g=Nocturne.game;g.save.importData(JSON.stringify(d));g.continueRun();},fixture);
       check('Legacy summary and +C recognition are visible',await page.evaluate(()=>Nocturne.game.state==='ascension'&&Nocturne.game.player.ascension.currentTier==='c-plus'&&!!document.querySelector('.legacy-recognition')));
-      await page.setViewportSize({width:1440,height:1200});await capture(page,path.join(root,'previews/ascension-v081.webp'));report.screenshots.push('previews/ascension-v081.webp');await page.setViewportSize({width:1440,height:2100});await page.evaluate(()=>Nocturne.AscensionUI.render(Nocturne.game,'c-plus'));await capture(page.locator('.ascension-detail'),path.join(root,'previews/rank-power-v081.webp'));report.screenshots.push('previews/rank-power-v081.webp');
+      await page.setViewportSize({width:1440,height:1200});await capture(page,path.join(root,`previews/ascension-${versionSuffix}.webp`));report.screenshots.push(`previews/ascension-${versionSuffix}.webp`);await page.setViewportSize({width:1440,height:2100});await page.evaluate(()=>Nocturne.AscensionUI.render(Nocturne.game,'c-plus'));await capture(page.locator('.ascension-detail'),path.join(root,`previews/rank-power-${versionSuffix}.webp`));report.screenshots.push(`previews/rank-power-${versionSuffix}.webp`);
+    }
+    if(!touch){
+      await page.setViewportSize({width:1280,height:800});await page.evaluate(()=>{
+        const N=Nocturne,g=N.game;g.reset('moon');g.player.level=18;g.player.xpNeeded=Math.floor(8+17*5+17**1.25);g.save.rename(g.save.active.id,'Cinder Halo preview');g.player.weapons.orbit=4;g.player.relics.cinder=true;g.player.critChance=0;g.combat.clear();g.combat.cooldown=99;g.time=1.25;
+        for(const [x,y] of [[250,70],[-230,-80]]){const e=new N.Enemy(g,'gargoyle',x,y,++g.nextId);e.maxHp=e.hp=10000;e.speed=0;g.enemies.push(e);g.hash.insert(e);}
+        g.combat.spellTimers.halo=0;g.combat.update(1/60);N.Difficulty.refresh(g);document.getElementById('wave-banner').classList.remove('visible');g.state='paused';g.ui.hide();g.ui.hudFrame=3;g.ui.updateHUD();g.draw();
+      });await capture(page,path.join(root,`previews/cinder-halo-${versionSuffix}.webp`));report.screenshots.push(`previews/cinder-halo-${versionSuffix}.webp`);
     }
     await context.close();
   }
@@ -51,5 +58,5 @@ async function main(){
   check('No unexpected browser page errors',report.errors.length===0);
 }
 main().catch(error=>{report.failure=error.stack;console.error(error);process.exitCode=1;}).finally(async()=>{
-  fs.writeFileSync(process.env.NOCTURNE_VERIFY_RESULT||path.join(root,'validation-logs/rank-browser-v081.json'),JSON.stringify(report,null,2));if(browser)await browser.close();server.close();
+  fs.writeFileSync(process.env.NOCTURNE_VERIFY_RESULT||path.join(root,`validation-logs/browser-${versionSuffix}.json`),JSON.stringify(report,null,2));if(browser)await browser.close();server.close();
 });

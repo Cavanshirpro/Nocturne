@@ -1,5 +1,7 @@
 # v0.8.1 — Ascension Power & WebP
 
+For the current camera-shake fix and Cinder Halo upgrade, see [v0.8.2 patch verification](PATCH_v082.md). The measurements below describe v0.8.1.
+
 Prepared 5 November 2026. This release addresses shallow non-wave Ascension gates, cosmetic-only rank differences and the size of PNG assets. [The previous v0.8.0 foundation report](IMPLEMENTATION_REPORT_v080.md) remains historical evidence.
 
 ## Player-facing changes
